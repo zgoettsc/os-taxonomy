@@ -109,7 +109,7 @@ This dataset is **multi-licensed** — read this before you use or redistribute 
 
 Any use must credit:
 
-> Marble Skill Taxonomy (v1) · © Marble · https://withmarble.com · licensed under ODbL 1.0 (database) and CC BY-SA 4.0 (content).
+> Marble Skill Taxonomy (v1) · © Generative Spark, Inc. (Marble) · https://withmarble.com · licensed under ODbL 1.0 (database) and CC BY-SA 4.0 (content).
 
 Plus the upstream notices in [PROVENANCE.md](PROVENANCE.md) for any curriculum standards you use. See [CITATION.cff](CITATION.cff) for a formal citation.
 
