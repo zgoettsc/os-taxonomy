@@ -4,6 +4,13 @@ An open, structured taxonomy of **what children learn** across the primary/eleme
 
 > **Version:** `v1` · **Topics:** 1,590 · **Prerequisite edges:** 3,221 · **Subjects:** 8
 
+## See it
+
+https://github.com/withmarbleapp/os-taxonomy/raw/main/media/curriculum-viz.mp4
+
+Every dot is a micro-topic, colored by subject; height is age; each thread is a prerequisite. Explore it interactively at [withmarble.com/curriculum](https://withmarble.com/curriculum) — tap any concept to trace everything a learner must master before it.
+
+
 ## What this is
 
 Most curriculum data is either a flat list of standards or locked inside a product. This dataset is a **connected graph of learning**:
