@@ -63,14 +63,46 @@ photo / generate) layers in beside it without changing any caller.
 - **Licensing** is tracked per asset; commercial-incompatible sources are avoided
   by default (matters more if the product goes commercial).
 
+## Free photo adapters (`pipeline/photo-sources.mjs`)
+
+Real, working adapters for the `nasa` and `photo` strategies:
+
+- **NASA Image Library** — `searchNasa()` hits the public images API; results are
+  public domain, attributed `NASA/<center>`.
+- **Wikimedia Commons** — `searchCommons()` queries the Commons API and keeps only
+  permissive licenses, **ranked CC0/PD > CC-BY > CC-BY-SA**, skipping NC/ND
+  (commercial-safe posture); records license + attribution (HTML stripped).
+
+Each has a **pure parser** (`parseNasaResponse` / `parseCommonsResponse`) that is
+unit-tested against representative payloads, so the extraction is verified even
+where live network is unavailable.
+
+## The generation bake-off (`pipeline/bakeoff.mjs`)
+
+For `generate` topics, `runBakeoff()` fans the brief out to several vendors
+(Firefly / Imagen / FLUX / Recraft / Ideogram), then **Claude looks at the
+candidates** (`claudeJudge`, vision + structured-output ranking) and scores each
+0–10 on age-appropriateness, factual accuracy, house-style match, artifacts, and
+composition — picking a winner and flagging problems. Design rules:
+
+- **Library-build time, not per request** (N× cost; images are generate-once and
+  shared across all families, so it's bounded per topic).
+- **Best used to select a primary vendor per style category** from a sample, then
+  generate the library with the winner — keeps the house style consistent instead
+  of a patchwork.
+- **Pre-filter, not final word:** Claude's ranking cuts the reviewer's load; a
+  human still passes the `reviewed` gate.
+- Stores full provenance: candidate vendors, Claude's scores + reasons, winner.
+
 ## Honest status
 
-- **Built & runnable (offline):** the source router + brief builder
-  (`image-brief.mjs`), the provider seam with a mock (`image-provider.mjs`), and
-  Track-1 procedural art.
-- **Needs a vendor key to produce real images:** the `generate` adapter (wire a
-  chosen image-gen vendor) and the `photo`/`nasa` fetchers (wire the open image
-  APIs). The seam is done; the credentials/endpoints are the remaining work.
-- *(An image-gen model isn't available in the dev session used to build this, so
-  the real rasters are produced once a vendor is wired — the pipeline is ready
-  for them.)*
+- **Built & runnable offline (mock):** source router (`image-brief.mjs`), provider
+  seam (`image-provider.mjs`), the bake-off + judge flow (`bakeoff.mjs`), Track-1
+  procedural art, and the photo-source **parsers** (unit-tested).
+- **Needs network + credentials to produce real assets:** the live NASA/Wikimedia
+  fetches and the vendor image-gen + Claude-judge calls. The code is written to
+  real API shapes; only the endpoints/keys are pending.
+- *This dev environment's network policy blocks external hosts (NASA, Wikimedia,
+  and image vendors all 403 at the proxy), so live images are produced when the
+  code runs with network access — or after switching the environment's network
+  policy to allow those hosts. The seams and parsers are done and tested.*
