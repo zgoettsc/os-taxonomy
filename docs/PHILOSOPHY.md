@@ -59,6 +59,10 @@ visible, growing progress artifact (motivation + accountability made physical).
   dated entries, dividers.
 - **Two sections:** a **Skills workbook** (Lane 1 below) and a series of **Unit
   booklets** (Lane 2 below).
+- **Each contains two kinds of page:** *book pages* to **learn** from
+  (illustrated lessons, stories, facts, worked examples) and *worksheets* to
+  **practice** with. The learn page always precedes its practice — teach first,
+  then drill.
 - **Open to learn, closed to test.** The binder is reference during learning;
   exams are closed-binder and unassisted (else re-reading undercuts the testing
   effect).
