@@ -1,0 +1,19 @@
+{
+  "name": "@marble/engine",
+  "version": "0.1.0",
+  "description": "Pure TypeScript learning engine (graph + scheduler) shared by the app and server.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --test --experimental-strip-types \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "@types/node": "^22.0.0"
+  },
+  "license": "(ODbL-1.0 AND CC-BY-SA-4.0)"
+}
