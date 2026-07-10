@@ -101,15 +101,25 @@ Add only when the simple version proves it's worth it:
 - **Adaptive diagnostic**: replace age+checklist placement with frontier-finding.
 - **Targeted remediation**: key-prerequisite links + auto-remedial reviews.
 
-## Build decisions to make at the right time (not yet)
+## Build decisions — resolved
 
-- **Tech stack for the surfaces** — the parent app (native iOS vs cross-platform
-  vs web) and the student testing screen. Deferred until Phase 5; the engine
-  (Phases 1–4) can be built stack-agnostic (data + Node scripts) first.
-- **Where per-child data lives** — local vs synced; privacy-first, no child PII
-  published (consistent with the taxonomy's stance).
+See [`architecture.md`](architecture.md) for the full decision record.
+
+- **Tech stack** — Supabase (Postgres + Auth + Storage) backend; shared
+  TypeScript engine; React Native + Expo apps (iOS first, App Store path) with a
+  native PencilKit module for pencil tracing; offline content pipeline. The
+  engine (Phases 1–4) is still built stack-agnostic and can be validated on a CLI
+  or throwaway web view before the mobile build.
+- **Where per-child data lives** — cloud (Supabase), multi-tenant with row-level
+  security; **not** on-device (survives lost devices, multi-device, multi-family).
+- **Privacy/compliance** — COPPA/FERPA/GDPR-K now in scope because we store
+  children's data for multiple families; build privacy-first (consent, data
+  minimization, isolation, no ad tracking).
+
+## Still open
+
 - **Reviewer workflow at scale** — who reviews generated content beyond the
-  parent, if this ever grows past personal use.
+  parent as the shared content library grows.
 
 ## Suggested next concrete step
 
