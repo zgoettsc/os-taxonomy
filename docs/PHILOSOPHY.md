@@ -150,6 +150,12 @@ These are commitments, not preferences:
   productive struggle rather than handing out hints.
 - **Never water down.** Bite-sizing into micro-topics must still span the full
   range of cases (including boundary/hard ones), not cherry-pick the easy ones.
+- **Practice is unlimited and on-demand.** The research is explicit that
+  different children need different *amounts* of practice, so worksheets are
+  never capped at a fixed number. A parent can generate as many fresh,
+  non-repeating sheets as they judge necessary; because practice is
+  code-generated, every extra sheet has new problems and a correct answer key by
+  construction.
 
 ## 7. Accountability is a feature, not an afterthought
 
