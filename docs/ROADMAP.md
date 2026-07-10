@@ -101,6 +101,27 @@ Add only when the simple version proves it's worth it:
 - **Adaptive diagnostic**: replace age+checklist placement with frontier-finding.
 - **Targeted remediation**: key-prerequisite links + auto-remedial reviews.
 
+## Phase 8 — Signature AI innovations (post-core)
+
+The differentiators that define the product, scheduled once the core loop
+(engine + scheduler + basic content pipeline) works. Full detail and the full
+tier list in [`differentiation.md`](differentiation.md). **Tier 1 is
+prioritized** — these are the signature features:
+
+- **The Coach Brief** — a ~2-minute personalized parent briefing before each
+  session (what to teach, the child's current misconception, the fix, what to say
+  when stuck). Upskills the human instead of replacing them.
+- **Misconception diagnosis from written work** — photograph a finished
+  worksheet; a vision model infers *why* the child erred and generates targeted
+  remediation (the paper↔AI closed loop).
+- **Truly generated (not selected) content** — the exact item a child needs now,
+  at their level, in their interest, targeting their weak spot.
+
+Tier 2 (voice reading tutor, off-screen manipulatives, auto records/portfolio)
+and Tier 3 (cross-subject mastery pacing, bounded Socratic partner, Pencil stroke
+analysis, connection weaving) follow. All stay behind the content-integrity gates
+and the calm-screen rule.
+
 ## Build decisions — resolved
 
 See [`architecture.md`](architecture.md) for the full decision record.
