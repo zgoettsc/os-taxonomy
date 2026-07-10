@@ -1,0 +1,360 @@
+<title>Marble — Parent app (daily loop)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#f1f2ee; --card:#fbfbf8; --card2:#f4f5ef;
+    --ink:#23271f; --soft:#5d6353; --faint:#8a9079;
+    --line:#e1e3da; --line2:#eceee6;
+    --moss:#4c7a34; --moss-soft:#e7eedd; --moss-ink:#33571f;
+    --clay:#c07542; --clay-soft:#f4e6da;
+    --amber:#b07d1e; --amber-soft:#f4ead0;
+    --berry:#b23a6b; --berry-soft:#f6e0e9;
+    --shadow:0 10px 34px -16px rgba(35,39,31,.42);
+    --shadow-sm:0 2px 8px -3px rgba(35,39,31,.28);
+    --disp:ui-rounded,"SF Pro Rounded","Segoe UI Rounded",system-ui,sans-serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --r:16px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#14170f; --card:#1e241a; --card2:#232a1e;
+      --ink:#eceee4; --soft:#9aa38c; --faint:#727a63;
+      --line:#2c3326; --line2:#262d20;
+      --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
+      --clay:#e0a075; --clay-soft:#33271c;
+      --amber:#d8ac5a; --amber-soft:#312a17;
+      --berry:#e07aa2; --berry-soft:#32202a;
+      --shadow:0 14px 40px -18px rgba(0,0,0,.7);
+      --shadow-sm:0 2px 10px -4px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f1f2ee; --card:#fbfbf8; --card2:#f4f5ef; --ink:#23271f; --soft:#5d6353; --faint:#8a9079;
+    --line:#e1e3da; --line2:#eceee6; --moss:#4c7a34; --moss-soft:#e7eedd; --moss-ink:#33571f;
+    --clay:#c07542; --clay-soft:#f4e6da; --amber:#b07d1e; --amber-soft:#f4ead0;
+    --berry:#b23a6b; --berry-soft:#f6e0e9; --shadow:0 10px 34px -16px rgba(35,39,31,.42);
+  }
+  :root[data-theme="dark"]{
+    --ground:#14170f; --card:#1e241a; --card2:#232a1e; --ink:#eceee4; --soft:#9aa38c; --faint:#727a63;
+    --line:#2c3326; --line2:#262d20; --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
+    --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a; --amber-soft:#312a17;
+    --berry:#e07aa2; --berry-soft:#32202a; --shadow:0 14px 40px -18px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);line-height:1.5;
+    -webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:20px 14px 40px}
+  .lede{max-width:420px;text-align:center;color:var(--soft);font-size:.86rem;margin:0 auto 16px}
+  .lede b{color:var(--ink)}
+
+  /* phone shell */
+  .app{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);
+    border-radius:30px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+    min-height:760px;position:relative}
+  @media(min-width:800px){ .app{max-width:440px} }
+
+  /* top bar */
+  .top{display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line2)}
+  .kid{display:flex;align-items:center;gap:9px;border:0;background:transparent;cursor:pointer;font:inherit;color:var(--ink);padding:4px;border-radius:12px}
+  .kid:hover{background:var(--card2)}
+  .ava{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#fff;font-size:.95rem}
+  .kid .nm{font-family:var(--disp);font-weight:700;letter-spacing:-.01em}
+  .kid .age{color:var(--faint);font-size:.72rem}
+  .kid svg{color:var(--faint)}
+  .streak{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:var(--berry-soft);
+    color:var(--berry);font-weight:700;font-size:.8rem;padding:6px 10px;border-radius:20px;font-variant-numeric:tabular-nums}
+  .tbtn{border:0;background:transparent;color:var(--faint);cursor:pointer;padding:6px;border-radius:10px;display:grid;place-items:center}
+  .tbtn:hover{background:var(--card2);color:var(--ink)}
+
+  /* views */
+  .scroll{flex:1;overflow-y:auto;padding:16px 16px 12px}
+  .view{display:none;flex-direction:column;gap:14px}
+  .view.on{display:flex;animation:rise .28s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .eyebrow{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0}
+
+  /* coach brief — the hero */
+  .brief{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);
+    border-radius:var(--r);padding:16px 16px 18px;position:relative;overflow:hidden}
+  .brief .sprout{position:absolute;right:-8px;top:-6px;color:var(--moss);opacity:.22}
+  .brief h2{font-family:var(--disp);font-size:1.22rem;letter-spacing:-.015em;margin:6px 0 2px;text-wrap:balance}
+  .brief .focus{font-size:.82rem;color:var(--moss-ink);font-weight:600;margin-bottom:12px}
+  .brief dl{display:flex;flex-direction:column;gap:11px;margin:0}
+  .brief .row{display:flex;gap:10px}
+  .brief .k{flex:none;width:74px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);padding-top:2px}
+  .brief .v{font-size:.92rem;color:var(--ink)}
+  .brief .say{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:9px 11px;font-style:italic;color:var(--soft)}
+
+  /* plan list */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .card-h{display:flex;align-items:baseline;justify-content:space-between;padding:14px 16px 8px}
+  .card-h h3{font-family:var(--disp);font-size:1.05rem;margin:0;letter-spacing:-.01em}
+  .card-h .meta{font-size:.76rem;color:var(--faint);font-variant-numeric:tabular-nums}
+  ul.items{list-style:none;margin:0;padding:0 6px 6px}
+  ul.items li{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:12px}
+  ul.items li+li{border-top:1px solid var(--line2)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .it-main{flex:1;min-width:0}
+  .it-name{font-size:.9rem;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it-sub{font-size:.72rem;color:var(--faint)}
+  .chip{flex:none;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:20px}
+  .chip.new{background:var(--moss-soft);color:var(--moss-ink)}
+  .chip.review{background:var(--amber-soft);color:var(--amber)}
+  .chip.unit{background:var(--berry-soft);color:var(--berry)}
+  .chip.practice{background:var(--clay-soft);color:var(--clay)}
+
+  /* buttons */
+  .actions{display:flex;flex-direction:column;gap:9px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;border:0;font:inherit;font-weight:650;
+    padding:14px;border-radius:14px;cursor:pointer;font-size:.98rem}
+  .btn.primary{background:var(--moss);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn.primary:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--moss);color:var(--moss)}
+  .btn:focus-visible{outline:3px solid var(--moss-soft);outline-offset:2px}
+
+  /* plan view subject rows */
+  .subj{padding:13px 16px}
+  .subj+.subj{border-top:1px solid var(--line2)}
+  .subj .r1{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .subj .r1 .nm{font-weight:650;font-size:.95rem}
+  .subj .r1 .ct{margin-left:auto;font-size:.74rem;color:var(--faint);font-variant-numeric:tabular-nums}
+  .bar{height:8px;background:var(--line2);border-radius:20px;overflow:hidden;display:flex}
+  .bar>i{display:block;height:100%}
+  .bar .m{background:var(--moss)} .bar .l{background:var(--clay)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:var(--soft);padding:4px 2px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+  /* record view */
+  .rec li{display:flex;align-items:center;gap:10px;padding:12px 10px}
+  .rec li+li{border-top:1px solid var(--line2)}
+  .toggle{margin-left:auto;display:inline-flex;background:var(--card2);border-radius:20px;padding:3px}
+  .toggle button{border:0;background:transparent;font:inherit;font-size:.74rem;font-weight:650;color:var(--soft);
+    padding:6px 11px;border-radius:16px;cursor:pointer}
+  .toggle button[aria-pressed="true"][data-v="pass"]{background:var(--moss);color:#fff}
+  .toggle button[aria-pressed="true"][data-v="again"]{background:var(--clay);color:#fff}
+
+  /* tab bar */
+  .tabs{display:flex;border-top:1px solid var(--line2);background:var(--card)}
+  .tabs button{flex:1;border:0;background:transparent;color:var(--faint);font:inherit;font-size:.68rem;font-weight:600;
+    padding:10px 4px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .tabs button svg{width:22px;height:22px}
+  .tabs button[aria-selected="true"]{color:var(--moss)}
+
+  /* toast */
+  .toast{position:absolute;left:16px;right:16px;bottom:78px;background:var(--ink);color:var(--ground);
+    border-radius:14px;padding:12px 14px;font-size:.85rem;box-shadow:var(--shadow);transform:translateY(140%);
+    transition:transform .32s cubic-bezier(.2,.8,.2,1);display:flex;gap:10px;align-items:center}
+  .toast.show{transform:none}
+  .toast b{color:#fff}
+  :root[data-theme="light"] .toast b, @media(prefers-color-scheme:light){}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<p class="lede"><b>Marble — parent app.</b> The daily loop: read the coaching, print today's packet, record how it went. Tap around — switch child, change tabs, record grades and watch tomorrow adapt.</p>
+
+<div class="app" id="app">
+  <div class="top">
+    <button class="kid" id="kidBtn" aria-label="Switch child">
+      <span class="ava" id="ava"></span>
+      <span><span class="nm" id="kidName"></span> <span class="age" id="kidAge"></span></span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <span class="streak" id="streak" title="Day streak"></span>
+    <button class="tbtn" id="theme" aria-label="Toggle theme">
+      <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+    </button>
+  </div>
+
+  <div class="scroll">
+    <!-- TODAY -->
+    <section class="view on" id="v-today" role="tabpanel">
+      <div class="brief">
+        <svg class="sprout" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22V11"/><path d="M12 14c0-3 2.4-5 5.5-5C17.5 12 15 14 12 14z"/><path d="M12 11C12 8 9.6 6 6.5 6 6.5 9 9 11 12 11z"/></svg>
+        <p class="eyebrow">Today's coaching</p>
+        <h2 id="b-topic"></h2>
+        <p class="focus" id="b-focus"></p>
+        <dl>
+          <div class="row"><span class="k">Watch for</span><span class="v" id="b-watch"></span></div>
+          <div class="row"><span class="k">The fix</span><span class="v" id="b-fix"></span></div>
+          <div class="row"><span class="k">If stuck</span><span class="v say" id="b-say"></span></div>
+        </dl>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Today's packet</h3><span class="meta" id="p-meta"></span></div>
+        <ul class="items" id="p-list"></ul>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="printBtn">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>
+          Print today's packet
+        </button>
+        <button class="btn ghost" id="toRecord">Record how it went →</button>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section class="view" id="v-plan" role="tabpanel">
+      <p class="eyebrow" style="padding:2px">Curriculum · where <span id="plan-name"></span> stands</p>
+      <div class="card" id="subjects"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--moss)"></i>Mastered</span>
+        <span><i class="sw" style="background:var(--clay)"></i>In progress</span>
+        <span><i class="sw" style="background:var(--line)"></i>Ready / ahead</span>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Ready to learn next</h3><span class="meta">unlocked</span></div>
+        <ul class="items" id="ready-list"></ul>
+      </div>
+    </section>
+
+    <!-- RECORD -->
+    <section class="view" id="v-record" role="tabpanel">
+      <p class="eyebrow" style="padding:2px">Grade today's sheet · mark each one</p>
+      <div class="card"><ul class="items rec" id="rec-list"></ul></div>
+      <button class="btn primary" id="saveBtn">Save &amp; update the plan</button>
+      <p style="font-size:.78rem;color:var(--faint);text-align:center;margin:0">Passed twice on different days = mastered. Misses come back sooner.</p>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-view="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Today</button>
+    <button role="tab" aria-selected="false" data-view="plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V5M4 19h16"/><path d="M8 16v-4M13 16V8M18 16v-6"/></svg>Plan</button>
+    <button role="tab" aria-selected="false" data-view="record">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Record</button>
+  </nav>
+</div>
+
+<script>
+const SUBJ_COLOR = { Math:'#4c7a34', English:'#c07542', Science:'#2b8a8f', History:'#9a6b3f' };
+const KIDS = [
+  { id:'ada', name:'Ada', age:6, tint:'#4c7a34', streak:12,
+    brief:{ topic:'Fluent adding & subtracting within 5', subject:'Math',
+      focus:"Today's focus, ~5 minutes",
+      watch:'She recounts from 1 every time instead of counting on from the bigger number.',
+      fix:'Cover the first group, say its number out loud, then count on the rest.',
+      say:'“You already know it’s 3 — start there and count up: four, five.”' },
+    packet:[
+      {name:'Fluent adding & subtracting within 5',subj:'Math',kind:'new'},
+      {name:'Number bonds to 5',subj:'Math',kind:'review'},
+      {name:'Basic Nouns & Verbs',subj:'English',kind:'new'},
+      {name:'Rhyming words',subj:'English',kind:'review'},
+      {name:'Animal Camouflage',subj:'Science',kind:'unit'} ],
+    subjects:[
+      {name:'Math',mastered:14,learning:2,ready:5},
+      {name:'English',mastered:9,learning:1,ready:4},
+      {name:'Science',mastered:6,learning:2,ready:7} ],
+    ready:[ {name:'Adding & subtracting within 10',subj:'Math'},
+            {name:'Capital letters for names',subj:'English'},
+            {name:'Living & non-living things',subj:'Science'} ] },
+  { id:'leo', name:'Leo', age:8, tint:'#c07542', streak:5,
+    brief:{ topic:'Adding & subtracting with regrouping', subject:'Math',
+      focus:"Today's focus, ~8 minutes",
+      watch:'He forgets to carry the ten when the ones sum passes 9.',
+      fix:'Say “ten ones make one ten” as he writes the little 1 above the tens.',
+      say:'“Twelve ones — that’s one ten and two. Where does the ten go?”' },
+    packet:[
+      {name:'Adding with regrouping',subj:'Math',kind:'new'},
+      {name:'Times tables: 3s',subj:'Math',kind:'review'},
+      {name:'Expanded noun phrases',subj:'English',kind:'new'},
+      {name:'Reading for meaning',subj:'English',kind:'practice'},
+      {name:'The Water Cycle',subj:'Science',kind:'unit'} ],
+    subjects:[
+      {name:'Math',mastered:41,learning:3,ready:6},
+      {name:'English',mastered:33,learning:2,ready:5},
+      {name:'Science',mastered:22,learning:1,ready:8} ],
+    ready:[ {name:'Multiplying two-digit numbers',subj:'Math'},
+            {name:'Fronted adverbials',subj:'English'},
+            {name:'States of matter',subj:'Science'} ] },
+];
+const CHIP_LABEL = { new:'New', review:'Review', unit:'Unit', practice:'Practice' };
+let kidIdx = 0, recState = {};
+
+const $ = (s)=>document.querySelector(s);
+const kid = ()=>KIDS[kidIdx];
+
+function renderTop(){
+  const k=kid();
+  $('#ava').textContent=k.name[0]; $('#ava').style.background=k.tint;
+  $('#kidName').textContent=k.name; $('#kidAge').textContent='· age '+k.age;
+  $('#streak').innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-.5-3 2 2 3.5 4.5 3.5 7a7 7 0 1 1-14 0c0-3 2-5 3-7 .8 1.6 1 3 1 4a2 2 0 0 0 2-2c0-2-1-3-3-3 0 0 3-1 3-4z"/></svg>'+k.streak+' days';
+}
+function renderToday(){
+  const b=kid().brief;
+  $('#b-topic').textContent=b.topic; $('#b-focus').textContent=b.subject+' · '+b.focus;
+  $('#b-watch').textContent=b.watch; $('#b-fix').textContent=b.fix; $('#b-say').textContent=b.say;
+  const p=kid().packet;
+  $('#p-meta').textContent=p.length+' items · ~'+(p.length*4)+' min';
+  $('#p-list').innerHTML=p.map(it=>row(it)).join('');
+}
+function row(it){
+  return `<li><span class="dot" style="background:${SUBJ_COLOR[it.subj]||'#888'}"></span>
+    <span class="it-main"><span class="it-name">${it.name}</span><span class="it-sub">${it.subj}</span></span>
+    <span class="chip ${it.kind}">${CHIP_LABEL[it.kind]}</span></li>`;
+}
+function renderPlan(){
+  $('#plan-name').textContent=kid().name;
+  $('#subjects').innerHTML=kid().subjects.map(s=>{
+    const tot=s.mastered+s.learning+s.ready;
+    const mp=(s.mastered/tot*100), lp=(s.learning/tot*100);
+    return `<div class="subj"><div class="r1"><span class="dot" style="background:${SUBJ_COLOR[s.name]}"></span>
+      <span class="nm">${s.name}</span><span class="ct">${s.mastered} mastered · ${s.learning} learning</span></div>
+      <div class="bar"><i class="m" style="width:${mp}%"></i><i class="l" style="width:${lp}%"></i></div></div>`;
+  }).join('');
+  $('#ready-list').innerHTML=kid().ready.map(r=>
+    `<li><span class="dot" style="background:${SUBJ_COLOR[r.subj]}"></span>
+     <span class="it-main"><span class="it-name">${r.name}</span><span class="it-sub">${r.subj}</span></span>
+     <span class="chip new">Ready</span></li>`).join('');
+}
+function renderRecord(){
+  const p=kid().packet;
+  $('#rec-list').innerHTML=p.map((it,i)=>{
+    const v=recState[i]||'pass';
+    return `<li><span class="dot" style="background:${SUBJ_COLOR[it.subj]}"></span>
+      <span class="it-main"><span class="it-name">${it.name}</span><span class="it-sub">${it.subj}</span></span>
+      <span class="toggle" data-i="${i}">
+        <button data-v="pass" aria-pressed="${v==='pass'}">Got it</button>
+        <button data-v="again" aria-pressed="${v==='again'}">Practice</button></span></li>`;
+  }).join('');
+}
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id==='v-'+name));
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.view===name));
+  if(name==='plan')renderPlan(); if(name==='record')renderRecord();
+}
+let toastT;
+function toast(html){ const t=$('#toast'); t.innerHTML=html; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3400); }
+
+// events
+$('#kidBtn').onclick=()=>{ kidIdx=(kidIdx+1)%KIDS.length; recState={}; renderTop(); renderToday();
+  showView('today'); };
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+$('#toRecord').onclick=()=>showView('record');
+$('#printBtn').onclick=()=>toast('<b>Sent to printer</b> — today\'s packet + answer key. Filed in the binder.');
+$('#rec-list').onclick=(e)=>{ const btn=e.target.closest('button[data-v]'); if(!btn)return;
+  const i=btn.parentElement.dataset.i; recState[i]=btn.dataset.v; renderRecord(); };
+$('#saveBtn').onclick=()=>{
+  const vals=kid().packet.map((_,i)=>recState[i]||'pass');
+  const got=vals.filter(v=>v==='pass').length, again=vals.length-got;
+  if(kid().subjects[0]) kid().subjects[0].mastered += Math.min(1,got);
+  kid().streak++; renderTop();
+  toast(`<b>Plan updated.</b> ${got} on track${again?`, ${again} comes back sooner`:''}. Streak ${kid().streak} 🌱`);
+  showView('today');
+};
+$('#theme').onclick=()=>{ const r=document.documentElement;
+  const dark=(r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'))==='dark';
+  r.setAttribute('data-theme', dark?'light':'dark'); };
+
+renderTop(); renderToday();
+</script>
