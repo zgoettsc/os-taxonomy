@@ -8,7 +8,7 @@
     --line:#e0e4d6; --line2:#ebeee3;
     --moss:#4c7a34; --moss-soft:#e5efd7; --moss-ink:#33571f;
     --clay:#c07542; --clay-soft:#f4e6da;
-    --amber:#b07d1e; --amber-soft:#f5ecd2;
+    --amber:#b07d1e;
     --berry:#b23a6b; --berry-soft:#f6e0e9;
     --sci:#2b8a8f; --sci-soft:#d9edee;
     --good:#4c7a34; --nudge:#c07542;
@@ -20,13 +20,11 @@
   @media (prefers-color-scheme:dark){:root{
     --ground:#12150e; --card:#1d231a; --card2:#232a1e; --ink:#edf0e6; --soft:#9aa38c; --faint:#727a63;
     --line:#2c3326; --line2:#262d20; --moss:#8cc063; --moss-soft:#25301b; --moss-ink:#bfe0a2;
-    --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a; --amber-soft:#312a17;
+    --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a;
     --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#1b2b2c;
     --good:#8cc063; --nudge:#e0a075;
     --shadow:0 16px 46px -18px rgba(0,0,0,.72); --shadow-sm:0 3px 12px -5px rgba(0,0,0,.6);
   }}
-  :root[data-theme="light"]{--ground:#eef1e8;--card:#fbfcf8;--card2:#f1f4ea;--ink:#242a1d;--soft:#5d6353;--faint:#8a9079;--line:#e0e4d6;--line2:#ebeee3;--moss:#4c7a34;--moss-soft:#e5efd7;--moss-ink:#33571f;--clay:#c07542;--clay-soft:#f4e6da;--amber:#b07d1e;--amber-soft:#f5ecd2;--berry:#b23a6b;--berry-soft:#f6e0e9;--sci:#2b8a8f;--sci-soft:#d9edee;--good:#4c7a34;--nudge:#c07542;--shadow:0 14px 40px -18px rgba(35,39,31,.4)}
-  :root[data-theme="dark"]{--ground:#12150e;--card:#1d231a;--card2:#232a1e;--ink:#edf0e6;--soft:#9aa38c;--faint:#727a63;--line:#2c3326;--line2:#262d20;--moss:#8cc063;--moss-soft:#25301b;--moss-ink:#bfe0a2;--clay:#e0a075;--clay-soft:#33271c;--amber:#d8ac5a;--amber-soft:#312a17;--berry:#e07aa2;--berry-soft:#32202a;--sci:#5ab6bb;--sci-soft:#1b2b2c;--good:#8cc063;--nudge:#e0a075;--shadow:0 16px 46px -18px rgba(0,0,0,.72)}
   *{box-sizing:border-box} html,body{margin:0}
   body{background:var(--ground);color:var(--ink);font-family:var(--body);line-height:1.45;-webkit-font-smoothing:antialiased;
     min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 14px 40px}
@@ -34,76 +32,81 @@
   .lede b{color:var(--ink)}
   .app{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:32px;
     box-shadow:var(--shadow);overflow:hidden;min-height:788px;position:relative;display:flex;flex-direction:column}
-  button{font:inherit}
+  a{text-decoration:none;color:inherit}
 
-  /* screens */
+  /* hidden radios drive the whole flow — no JS needed */
+  .nav{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
   .screen{display:none;flex:1;flex-direction:column;padding:26px 22px 24px}
-  .screen.on{display:flex;animation:rise .32s ease}
+  #s-pick:checked~.screens #v-pick,
+  #s-today:checked~.screens #v-today,
+  #s-q1:checked~.screens #v-q1,
+  #s-q2:checked~.screens #v-q2,
+  #s-trace:checked~.screens #v-trace,
+  #s-done:checked~.screens #v-done{display:flex;animation:rise .3s ease}
+  .screens{flex:1;display:flex;flex-direction:column}
   @keyframes rise{from{transform:translateY(8px)}to{transform:none}}
   @keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
-  .disp{font-family:var(--disp)}
 
-  /* profile picker */
   .hi{font-family:var(--disp);font-size:1.55rem;font-weight:800;letter-spacing:-.02em;text-align:center;margin:8px 0 2px}
   .sub{text-align:center;color:var(--soft);font-size:.95rem;margin:0 0 26px}
-  .who{display:flex;flex-direction:column;gap:14px;margin-top:6px}
-  .pick{display:flex;align-items:center;gap:16px;background:var(--card2);border:1.5px solid var(--line);border-radius:22px;padding:16px 18px;cursor:pointer;text-align:left;transition:transform .12s,border-color .12s}
-  .pick:hover{border-color:var(--moss)} .pick:active{transform:scale(.98)}
+  .who{display:flex;flex-direction:column;gap:14px}
+  .pick{display:flex;align-items:center;gap:16px;background:var(--card2);border:1.5px solid var(--line);border-radius:22px;padding:16px 18px;cursor:pointer}
+  .pick:active{transform:scale(.98)}
   .pick .ava{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;color:#fff;font-size:1.5rem;flex:none}
   .pick .nm{font-family:var(--disp);font-weight:750;font-size:1.25rem;letter-spacing:-.01em}
   .pick .todo{color:var(--soft);font-size:.85rem}
   .pick .go{margin-left:auto;color:var(--faint)}
 
-  /* today */
   .thead{display:flex;align-items:center;gap:12px;margin-bottom:4px}
-  .thead .ava{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;color:#fff;font-size:1.1rem}
+  .thead .ava{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;color:#fff;font-size:1.1rem;background:#4c7a34}
   .thead .t{font-family:var(--disp);font-weight:750;font-size:1.2rem}
   .thead .d{color:var(--faint);font-size:.8rem}
-  .exit{margin-left:auto;border:0;background:var(--card2);color:var(--faint);width:38px;height:38px;border-radius:12px;cursor:pointer;display:grid;place-items:center}
+  .exit{margin-left:auto;background:var(--card2);color:var(--faint);width:38px;height:38px;border-radius:12px;cursor:pointer;display:grid;place-items:center}
   .progress-dots{display:flex;gap:7px;margin:20px 0 8px}
-  .progress-dots i{flex:1;height:7px;border-radius:5px;background:var(--line);transition:background .3s}
-  .progress-dots i.done{background:var(--moss)} .progress-dots i.now{background:var(--amber)}
+  .progress-dots i{flex:1;height:7px;border-radius:5px;background:var(--line)}
+  .progress-dots i.now{background:var(--amber)}
   .tcount{text-align:center;color:var(--soft);font-size:.86rem;margin:2px 0 18px}
   .tcount b{color:var(--ink);font-family:var(--disp)}
   .tasks{display:flex;flex-direction:column;gap:12px}
-  .task{display:flex;align-items:center;gap:15px;background:var(--card2);border:1.5px solid var(--line);border-radius:20px;padding:16px 18px;cursor:pointer;text-align:left;transition:transform .12s,border-color .12s}
-  .task:hover{border-color:var(--moss)} .task:active{transform:scale(.99)}
-  .task[disabled]{opacity:.5;cursor:default} .task.finished{border-color:var(--moss-soft)}
+  .task{display:flex;align-items:center;gap:15px;background:var(--card2);border:1.5px solid var(--line);border-radius:20px;padding:16px 18px;cursor:pointer}
+  .task:active{transform:scale(.99)}
   .task .ic{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;flex:none}
   .task .ic svg{width:26px;height:26px}
   .task .nm{font-family:var(--disp);font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
   .task .kind{color:var(--soft);font-size:.8rem}
   .task .st{margin-left:auto;color:var(--faint)}
-  .task.finished .st{color:var(--good)}
 
-  /* generic task frame */
   .qtop{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-  .qtop .back{border:0;background:var(--card2);color:var(--faint);width:38px;height:38px;border-radius:12px;cursor:pointer;display:grid;place-items:center}
-  .qtop .qd{display:flex;gap:6px;flex:1;justify-content:center}
-  .qtop .qd i{width:9px;height:9px;border-radius:50%;background:var(--line)}
-  .qtop .qd i.done{background:var(--moss)} .qtop .qd i.now{background:var(--amber);transform:scale(1.25)}
-  .qtop .pill{background:var(--card2);color:var(--soft);font-size:.75rem;font-weight:700;padding:6px 11px;border-radius:20px;font-variant-numeric:tabular-nums}
+  .qtop .back{background:var(--card2);color:var(--faint);width:38px;height:38px;border-radius:12px;cursor:pointer;display:grid;place-items:center}
+  .qtop .pill{margin-left:auto;background:var(--card2);color:var(--soft);font-size:.75rem;font-weight:700;padding:6px 11px;border-radius:20px;font-variant-numeric:tabular-nums}
   .prompt{text-align:center;margin:auto 0}
   .prompt .lab{color:var(--soft);font-size:.9rem;margin-bottom:14px}
-  .prompt .q{font-family:var(--disp);font-weight:800;font-size:3.4rem;letter-spacing:-.02em;line-height:1.05;margin:0 0 6px}
-  .prompt .q.small{font-size:2.1rem}
+  .prompt .q{font-family:var(--disp);font-weight:800;font-size:3.2rem;letter-spacing:-.02em;line-height:1.05;margin:0}
+  .prompt .q.small{font-size:2rem}
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:auto}
-  .opt{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:22px 10px;font-family:var(--disp);font-weight:800;font-size:1.9rem;cursor:pointer;transition:transform .1s,border-color .12s,background .12s;font-variant-numeric:tabular-nums}
-  .opt:hover{border-color:var(--moss)} .opt:active{transform:scale(.97)}
-  .opt.good{border-color:var(--good);background:var(--moss-soft);color:var(--moss-ink);animation:pop .32s ease}
-  .opt.bad{border-color:var(--nudge);background:var(--clay-soft);color:var(--clay)}
-  .opt[disabled]{cursor:default}
-  .feedback{text-align:center;font-family:var(--disp);font-weight:750;font-size:1.05rem;height:26px;margin-top:14px}
-  .feedback.good{color:var(--good)} .feedback.nudge{color:var(--nudge)}
+  .opt{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:20px 10px;font-family:var(--disp);font-weight:800;font-size:1.7rem;cursor:pointer;text-align:center;font-variant-numeric:tabular-nums;position:relative}
+  .opt:active{transform:scale(.97)}
+  .opt.sm{font-size:1.25rem}
+  .oi{position:absolute;opacity:0;width:0;height:0}
+  /* correct pick */
+  .oi.right:checked + .opt{border-color:var(--good);background:var(--moss-soft);color:var(--moss-ink);animation:pop .32s ease}
+  .oi.wrong:checked + .opt{border-color:var(--nudge);background:var(--clay-soft);color:var(--clay)}
+  .feedback{text-align:center;font-family:var(--disp);font-weight:750;font-size:1.05rem;height:26px;margin-top:14px;color:transparent}
+  .qwrap:has(.oi.right:checked) .feedback{color:var(--good)}
+  .qwrap:has(.oi.right:checked) .feedback::after{content:"Yes! 🌱"}
+  .qwrap:has(.oi.wrong:checked):not(:has(.oi.right:checked)) .feedback{color:var(--nudge)}
+  .qwrap:has(.oi.wrong:checked):not(:has(.oi.right:checked)) .feedback::after{content:"Try again"}
+  .qwrap{display:flex;flex-direction:column;flex:1}
+  .nextbtn{margin-top:14px;opacity:.4;pointer-events:none}
+  .qwrap:has(.oi.right:checked) .nextbtn{opacity:1;pointer-events:auto}
 
-  /* tracing */
-  .trace-wrap{display:flex;flex-direction:column;flex:1}
   .trace-lab{text-align:center;color:var(--soft);font-size:.92rem;margin:6px 0 12px}
   .trace-lab b{color:var(--ink);font-family:var(--disp)}
   .canvas-box{position:relative;flex:1;min-height:300px;background:var(--card2);border:1.5px solid var(--line);border-radius:24px;overflow:hidden;touch-action:none}
   .canvas-box canvas{position:absolute;inset:0;width:100%;height:100%}
   .guide{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:15rem;color:var(--line);user-select:none;pointer-events:none;line-height:1}
   .midline{position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--line);pointer-events:none}
+  .nojs-hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:.78rem;color:var(--faint);padding:0 20px}
   .trace-tools{display:flex;gap:11px;margin-top:14px}
   .trace-tools .btn{flex:1}
 
@@ -111,12 +114,8 @@
   .btn.primary{background:var(--moss);color:#fff;box-shadow:var(--shadow-sm)}
   .btn.primary:active{transform:translateY(1px)}
   .btn.ghost{background:var(--card2);color:var(--ink);border:1.5px solid var(--line)}
-  .btn.ghost:hover{border-color:var(--moss);color:var(--moss)}
-  .btn:disabled{opacity:.45;cursor:default}
-  .btn:focus-visible{outline:3px solid var(--moss-soft);outline-offset:2px}
 
-  /* done wall */
-  .done{align-items:center;justify-content:center;text-align:center;gap:0}
+  .done{align-items:center;justify-content:center;text-align:center}
   .burst{width:120px;height:120px;display:grid;place-items:center;margin-bottom:18px;animation:pop .5s ease}
   .burst svg{width:120px;height:120px;color:var(--moss)}
   .done h1{font-family:var(--disp);font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
@@ -126,242 +125,153 @@
   .done .stat .n{font-family:var(--disp);font-weight:800;font-size:1.7rem;color:var(--moss);font-variant-numeric:tabular-nums}
   .done .stat .l{font-size:.72rem;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
   .done .close{color:var(--soft);font-size:.85rem;margin-top:2px}
-  .theme{position:absolute;top:16px;right:16px;border:0;background:transparent;color:var(--faint);cursor:pointer;padding:6px;border-radius:10px;z-index:5;display:grid;place-items:center}
-  .theme:hover{color:var(--ink)}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
-<p class="lede"><b>Marble — student screen.</b> A calm, finite tool: a few tasks, instant feedback, letter-tracing, then a clear "you're done." No feed, no autoplay, no rewards to chase. Open in a browser to try it.</p>
+<p class="lede"><b>Marble — student screen.</b> A calm, finite tool: a few tasks, instant feedback, letter-tracing, then a clear "you're done." <b>Tap through it</b> — pick a name, do the tasks, reach the done wall.</p>
 
-<div class="app" id="app">
-  <button class="theme" id="theme" aria-label="Toggle theme"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg></button>
+<div class="app">
+  <input class="nav" type="radio" name="screen" id="s-pick" checked>
+  <input class="nav" type="radio" name="screen" id="s-today">
+  <input class="nav" type="radio" name="screen" id="s-q1">
+  <input class="nav" type="radio" name="screen" id="s-q2">
+  <input class="nav" type="radio" name="screen" id="s-trace">
+  <input class="nav" type="radio" name="screen" id="s-done">
 
-  <!-- PROFILE PICKER (static so it always shows) -->
-  <section class="screen on" id="s-pick">
-    <h1 class="hi">Who's here?</h1>
-    <p class="sub">Tap your picture to start.</p>
-    <div class="who" id="who">
-      <button class="pick" data-kid="0">
-        <span class="ava" style="background:#4c7a34">A</span>
-        <span><span class="nm">Ada</span><br><span class="todo">3 things to do</span></span>
-        <span class="go"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
-      </button>
-      <button class="pick" data-kid="1">
-        <span class="ava" style="background:#c07542">L</span>
-        <span><span class="nm">Leo</span><br><span class="todo">3 things to do</span></span>
-        <span class="go"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
-      </button>
-    </div>
-  </section>
+  <div class="screens">
+    <!-- PROFILE -->
+    <section class="screen" id="v-pick">
+      <h1 class="hi">Who's here?</h1>
+      <p class="sub">Tap your picture to start.</p>
+      <div class="who">
+        <label class="pick" for="s-today">
+          <span class="ava" style="background:#4c7a34">A</span>
+          <span><span class="nm">Ada</span><br><span class="todo">3 things to do</span></span>
+          <span class="go"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+        <label class="pick" for="s-today">
+          <span class="ava" style="background:#c07542">L</span>
+          <span><span class="nm">Leo</span><br><span class="todo">3 things to do</span></span>
+          <span class="go"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+      </div>
+    </section>
 
-  <!-- TODAY -->
-  <section class="screen" id="s-today">
-    <div class="thead">
-      <span class="ava" id="t-ava" style="background:#4c7a34">A</span>
-      <span><span class="t" id="t-name">Ada</span><br><span class="d">Today's tasks</span></span>
-      <button class="exit" id="t-exit" aria-label="Switch user"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M15 12H5"/></svg></button>
-    </div>
-    <div class="progress-dots" id="t-dots"></div>
-    <p class="tcount" id="t-count"><b>3</b> things to do</p>
-    <div class="tasks" id="t-list"></div>
-  </section>
+    <!-- TODAY -->
+    <section class="screen" id="v-today">
+      <div class="thead">
+        <span class="ava">A</span>
+        <span><span class="t">Ada</span><br><span class="d">Today's tasks</span></span>
+        <label class="exit" for="s-pick" aria-label="Switch user"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M15 12H5"/></svg></label>
+      </div>
+      <div class="progress-dots"><i class="now"></i><i></i><i></i></div>
+      <p class="tcount"><b>3</b> things to do</p>
+      <div class="tasks">
+        <label class="task" for="s-q1">
+          <span class="ic" style="background:var(--moss-soft);color:var(--moss)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8l3-3M5 8l3 3M19 16H5M19 16l-3-3M19 16l-3 3"/></svg></span>
+          <span><span class="nm">Adding within 5</span><br><span class="kind">Quick math</span></span>
+          <span class="st"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+        <label class="task" for="s-q2">
+          <span class="ic" style="background:var(--clay-soft);color:var(--clay)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M6 8h9a3 3 0 0 1 0 6H6"/></svg></span>
+          <span><span class="nm">Rhyming words</span><br><span class="kind">Listen &amp; tap</span></span>
+          <span class="st"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+        <label class="task" for="s-trace">
+          <span class="ic" style="background:var(--clay-soft);color:var(--clay)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M4 20l1-4 11-11a2.8 2.8 0 0 1 4 4L9 20z"/></svg></span>
+          <span><span class="nm">Trace letters</span><br><span class="kind">Handwriting</span></span>
+          <span class="st"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+      </div>
+    </section>
 
-  <!-- QUIZ -->
-  <section class="screen" id="s-quiz">
-    <div class="qtop">
-      <button class="back" id="q-back" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <span class="qd" id="q-dots"></span>
-      <span class="pill" id="q-pill">1 / 5</span>
-    </div>
-    <div class="prompt">
-      <div class="lab" id="q-lab">What is</div>
-      <p class="q" id="q-text">3 + 2</p>
-    </div>
-    <div class="opts" id="q-opts"></div>
-    <div class="feedback" id="q-fb"></div>
-  </section>
+    <!-- QUIZ 1: math -->
+    <section class="screen" id="v-q1">
+      <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">Math</span></div>
+      <div class="qwrap">
+        <div class="prompt"><div class="lab">What is</div><p class="q">3 + 2</p></div>
+        <div class="opts">
+          <input class="oi wrong" type="radio" name="q1" id="q1a"><label class="opt" for="q1a">8</label>
+          <input class="oi right" type="radio" name="q1" id="q1b"><label class="opt" for="q1b">5</label>
+          <input class="oi wrong" type="radio" name="q1" id="q1c"><label class="opt" for="q1c">6</label>
+          <input class="oi wrong" type="radio" name="q1" id="q1d"><label class="opt" for="q1d">4</label>
+        </div>
+        <div class="feedback"></div>
+        <label class="btn primary nextbtn" for="s-q2">Next →</label>
+      </div>
+    </section>
 
-  <!-- TRACING -->
-  <section class="screen" id="s-trace">
-    <div class="qtop">
-      <button class="back" id="tr-back" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <span class="qd" id="tr-dots"></span>
-      <span class="pill" id="tr-pill">1 / 3</span>
-    </div>
-    <div class="trace-wrap">
-      <p class="trace-lab">Trace the <b id="tr-letter">a</b> — use your finger or pencil.</p>
+    <!-- QUIZ 2: rhyming -->
+    <section class="screen" id="v-q2">
+      <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">English</span></div>
+      <div class="qwrap">
+        <div class="prompt"><div class="lab">Which word rhymes with</div><p class="q small">cat</p></div>
+        <div class="opts">
+          <input class="oi right" type="radio" name="q2" id="q2a"><label class="opt sm" for="q2a">hat</label>
+          <input class="oi wrong" type="radio" name="q2" id="q2b"><label class="opt sm" for="q2b">dog</label>
+          <input class="oi wrong" type="radio" name="q2" id="q2c"><label class="opt sm" for="q2c">sun</label>
+          <input class="oi wrong" type="radio" name="q2" id="q2d"><label class="opt sm" for="q2d">cup</label>
+        </div>
+        <div class="feedback"></div>
+        <label class="btn primary nextbtn" for="s-trace">Next →</label>
+      </div>
+    </section>
+
+    <!-- TRACE -->
+    <section class="screen" id="v-trace">
+      <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">Handwriting</span></div>
+      <p class="trace-lab">Trace the <b>a</b> — use your finger or pencil.</p>
       <div class="canvas-box" id="tr-box">
         <div class="midline"></div>
-        <div class="guide" id="tr-guide">a</div>
+        <div class="guide">a</div>
         <canvas id="tr-canvas"></canvas>
+        <div class="nojs-hint" id="nojsHint">Open in a web browser to draw here with your finger or Apple Pencil.</div>
       </div>
       <div class="trace-tools">
-        <button class="btn ghost" id="tr-clear">Clear</button>
-        <button class="btn primary" id="tr-next">Next letter</button>
+        <button class="btn ghost" id="tr-clear" type="button">Clear</button>
+        <label class="btn primary" for="s-done">Done →</label>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- DONE -->
-  <section class="screen done" id="s-done">
-    <div class="burst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9" fill="var(--moss-soft)"/><path d="M8 12.5l2.5 2.5L16 9" stroke="var(--moss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <h1>All done, <span id="d-name">Ada</span>!</h1>
-    <p>You finished everything for today. Nice work — see you tomorrow.</p>
-    <div class="stats">
-      <div class="stat"><div class="n" id="d-tasks">3</div><div class="l">Tasks</div></div>
-      <div class="stat"><div class="n" id="d-right">9</div><div class="l">Got right</div></div>
-    </div>
-    <p class="close">You can close the screen now.</p>
-  </section>
+    <!-- DONE -->
+    <section class="screen done" id="v-done">
+      <div class="burst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9" fill="var(--moss-soft)"/><path d="M8 12.5l2.5 2.5L16 9" stroke="var(--moss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1>All done, Ada!</h1>
+      <p>You finished everything for today. Nice work — see you tomorrow.</p>
+      <div class="stats">
+        <div class="stat"><div class="n">3</div><div class="l">Tasks</div></div>
+        <div class="stat"><div class="n">2</div><div class="l">Quizzes</div></div>
+      </div>
+      <label class="btn ghost" for="s-pick" style="cursor:pointer">Back to start</label>
+      <p class="close">You can close the screen now.</p>
+    </section>
+  </div>
 </div>
 
 <script>
-const KIDS=[
- {id:'ada',name:'Ada',tint:'#4c7a34',
-  tasks:[
-   {type:'quiz',name:'Adding within 5',kind:'Quick math',subj:'Math',lab:'What is',
-    qs:[['3 + 2',5],['1 + 4',5],['2 + 2',4],['4 + 1',5],['3 + 1',4]]},
-   {type:'quiz',name:'Rhyming words',kind:'Listen & tap',subj:'English',lab:'Which word rhymes with',small:true,
-    qs:[['cat',['hat','dog','sun','cup'],'hat'],['bee',['tree','ball','fish','moon'],'tree'],['star',['car','book','leaf','hand'],'car']]},
-   {type:'trace',name:'Trace letters',kind:'Handwriting',subj:'English',letters:['a','b','c']},
-  ]},
- {id:'leo',name:'Leo',tint:'#c07542',
-  tasks:[
-   {type:'quiz',name:'Times tables: 3s',kind:'Quick math',subj:'Math',lab:'What is',
-    qs:[['3 × 4',12],['3 × 7',21],['3 × 6',18],['3 × 9',27],['3 × 8',24]]},
-   {type:'quiz',name:'Spelling patterns',kind:'Listen & tap',subj:'English',lab:'Which spelling is right',small:true,
-    qs:[['',['friend','frend','freind','frennd'],'friend'],['',['becuase','because','becose','becaus'],'because'],['',['peple','poeple','people','peeple'],'people']]},
-   {type:'trace',name:'Trace letters',kind:'Cursive',subj:'English',letters:['g','h','k']},
-  ]},
-];
-const ICON={
-  Math:{c:'--moss',s:'--moss-soft',svg:'<path d="M5 8h14M5 8l3-3M5 8l3 3M19 16H5M19 16l-3-3M19 16l-3 3"/>'},
-  English:{c:'--clay',s:'--clay-soft',svg:'<path d="M4 4h16v16H4z" opacity=".0"/><path d="M6 4v16M6 8h9a3 3 0 0 1 0 6H6"/>'},
-  Science:{c:'--sci',s:'--sci-soft',svg:'<path d="M9 3h6M10 3v6l-5 8a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-8V3"/>'},
-};
-const $=s=>document.querySelector(s);
-let ki=0, ti=0, qi=0, right=0, task=null, trLi=0;
-
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));}
-function kid(){return KIDS[ki];}
-
-/* ---------- today ---------- */
-function taskIcon(subj){const m=ICON[subj]||ICON.Math;return `<span class="ic" style="background:var(${m.s});color:var(${m.c})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${m.svg}</svg></span>`;}
-function renderToday(){
-  const k=kid();
-  $('#t-ava').textContent=k.name[0];$('#t-ava').style.background=k.tint;$('#t-name').textContent=k.name;
-  const done=k.tasks.filter(t=>t.done).length, n=k.tasks.length, left=n-done;
-  $('#t-count').innerHTML=left>0?`<b>${left}</b> thing${left>1?'s':''} to do`:`All done for today 🌱`;
-  $('#t-dots').innerHTML=k.tasks.map((t,i)=>`<i class="${t.done?'done':(i===k.tasks.findIndex(x=>!x.done)?'now':'')}"></i>`).join('');
-  const firstUndone=k.tasks.findIndex(t=>!t.done);
-  $('#t-list').innerHTML=k.tasks.map((t,i)=>{
-    const active=i===firstUndone;
-    return `<button class="task ${t.done?'finished':''}" data-t="${i}" ${(!t.done&&!active)?'disabled':''}>
-      ${taskIcon(t.subj)}
-      <span><span class="nm">${t.name}</span><br><span class="kind">${t.kind}</span></span>
-      <span class="st">${t.done?'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 13l4 4L19 7"/></svg>':'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>'}</span>
-    </button>`;}).join('');
-  show('s-today');
-}
-function openTask(i){ti=i;task=kid().tasks[i];if(task.type==='quiz'){qi=0;startQuiz();}else{trLi=0;startTrace();}}
-
-/* ---------- quiz ---------- */
-function startQuiz(){renderQ();show('s-quiz');}
-function renderQ(){
-  const q=task.qs[qi], n=task.qs.length;
-  $('#q-pill').textContent=`${qi+1} / ${n}`;
-  $('#q-lab').textContent=task.lab;
-  $('#q-dots').innerHTML=task.qs.map((_,i)=>`<i class="${i<qi?'done':(i===qi?'now':'')}"></i>`).join('');
-  $('#q-fb').textContent='';$('#q-fb').className='feedback';
-  let text, answer, choices;
-  if(Array.isArray(q[1])){ text=q[0]; choices=q[1].slice(); answer=q[2]; }
-  else { text=q[0]; answer=q[1]; choices=makeChoices(answer); }
-  $('#q-text').textContent=text||'?';
-  $('#q-text').className='q'+(task.small?' small':'');
-  const opts=$('#q-opts');
-  opts.innerHTML=choices.map(c=>`<button class="opt" data-a="${c}">${c}</button>`).join('');
-  opts.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(b,answer));
-}
-function makeChoices(ans){
-  const set=new Set([ans]);let d=1;
-  while(set.size<4){const cand=ans+(d%2?d:-d);if(cand>0)set.add(cand);d++;}
-  const arr=[...set];
-  // deterministic shuffle by answer value (no Math.random needed for demo determinism)
-  for(let i=arr.length-1;i>0;i--){const j=(ans*7+i*13)%(i+1);[arr[i],arr[j]]=[arr[j],arr[i]];}
-  return arr;
-}
-let locked=false;
-function pick(btn,answer){
-  if(locked)return;
-  const chosen=btn.dataset.a, ok=String(chosen)===String(answer);
-  const fb=$('#q-fb');
-  if(ok){
-    locked=true;btn.classList.add('good');right++;
-    fb.textContent='Yes! 🌱';fb.className='feedback good';
-    setTimeout(()=>{locked=false;qi++;if(qi<task.qs.length)renderQ();else finishTask();},760);
-  }else{
-    btn.classList.add('bad');btn.disabled=true;
-    fb.textContent='Try again';fb.className='feedback nudge';
+// Progressive enhancement: the letter-tracing canvas. Everything else is pure CSS/HTML.
+(function(){
+  var cv=document.getElementById('tr-canvas');
+  if(!cv||!cv.getContext) return;
+  var hint=document.getElementById('nojsHint'); if(hint) hint.style.display='none';
+  var ctx=cv.getContext('2d'), drawing=false;
+  function size(){
+    var box=document.getElementById('tr-box'), r=box.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineWidth=12; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle=(getComputedStyle(document.documentElement).getPropertyValue('--moss')||'#4c7a34').trim();
   }
-}
-
-/* ---------- tracing ---------- */
-let ctx,drawing=false,cv;
-function startTrace(){
-  cv=$('#tr-canvas');ctx=cv.getContext('2d');
-  renderTrace();sizeCanvas();show('s-trace');
-  requestAnimationFrame(sizeCanvas);
-}
-function sizeCanvas(){
-  const box=$('#tr-box'),r=box.getBoundingClientRect();
-  const dpr=window.devicePixelRatio||1;
-  cv.width=r.width*dpr;cv.height=r.height*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.lineWidth=12;ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--moss').trim()||'#4c7a34';
-}
-function renderTrace(){
-  const n=task.letters.length;
-  $('#tr-pill').textContent=`${trLi+1} / ${n}`;
-  $('#tr-letter').textContent=task.letters[trLi];
-  $('#tr-guide').textContent=task.letters[trLi];
-  $('#tr-dots').innerHTML=task.letters.map((_,i)=>`<i class="${i<trLi?'done':(i===trLi?'now':'')}"></i>`).join('');
-  $('#tr-next').textContent=trLi<n-1?'Next letter':'Done';
-  if(ctx)ctx.clearRect(0,0,cv.width,cv.height);
-}
-function pos(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return[t.clientX-r.left,t.clientY-r.top];}
-function down(e){e.preventDefault();drawing=true;const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(x,y);}
-function move(e){if(!drawing)return;e.preventDefault();const[x,y]=pos(e);ctx.lineTo(x,y);ctx.stroke();}
-function up(){drawing=false;}
-
-/* ---------- flow ---------- */
-function finishTask(){kid().tasks[ti].done=true;afterTask();}
-function afterTask(){
-  const allDone=kid().tasks.every(t=>t.done);
-  if(allDone)showDone();else renderToday();
-}
-function showDone(){
-  $('#d-name').textContent=kid().name;
-  $('#d-tasks').textContent=kid().tasks.length;
-  $('#d-right').textContent=right;
-  show('s-done');
-}
-
-/* ---------- wiring ---------- */
-document.querySelectorAll('.pick').forEach(b=>b.onclick=()=>{ki=+b.dataset.kid;right=0;kid().tasks.forEach(t=>delete t.done);renderToday();});
-$('#t-list').addEventListener('click',e=>{const b=e.target.closest('.task[data-t]');if(!b||b.disabled)return;openTask(+b.dataset.t);});
-$('#t-exit').onclick=()=>show('s-pick');
-$('#q-back').onclick=()=>renderToday();
-$('#tr-back').onclick=()=>renderToday();
-$('#tr-clear').onclick=()=>ctx&&ctx.clearRect(0,0,cv.width,cv.height);
-$('#tr-next').onclick=()=>{if(trLi<task.letters.length-1){trLi++;renderTrace();}else finishTask();};
-$('#theme').onclick=()=>{const r=document.documentElement,dark=(r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'))==='dark';r.setAttribute('data-theme',dark?'light':'dark');if(ctx)sizeCanvas();};
-window.addEventListener('resize',()=>{if($('#s-trace').classList.contains('on'))sizeCanvas();});
-// canvas pointer events bound once
-addEventListener('DOMContentLoaded',()=>{});
-(function bindCanvas(){
-  const c=$('#tr-canvas');
-  c.addEventListener('mousedown',down);c.addEventListener('mousemove',move);addEventListener('mouseup',up);
-  c.addEventListener('touchstart',down,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',up);
+  function pos(e){var r=cv.getBoundingClientRect(), t=e.touches?e.touches[0]:e; return [t.clientX-r.left, t.clientY-r.top];}
+  function down(e){e.preventDefault(); drawing=true; var p=pos(e); ctx.beginPath(); ctx.moveTo(p[0],p[1]);}
+  function move(e){if(!drawing)return; e.preventDefault(); var p=pos(e); ctx.lineTo(p[0],p[1]); ctx.stroke();}
+  function up(){drawing=false;}
+  cv.addEventListener('mousedown',down); cv.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:false}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up);
+  var clr=document.getElementById('tr-clear'); if(clr) clr.addEventListener('click',function(){ctx.clearRect(0,0,cv.width,cv.height);});
+  // size when the trace screen becomes visible (radio toggled)
+  var tr=document.getElementById('s-trace');
+  if(tr) tr.addEventListener('change',function(){ if(tr.checked) requestAnimationFrame(size); });
+  window.addEventListener('resize',function(){ if(tr&&tr.checked) size(); });
+  size();
 })();
 </script>
