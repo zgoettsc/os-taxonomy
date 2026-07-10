@@ -1,5 +1,12 @@
 # Differentiation & AI-Enabled Innovations
 
+> ## Empowering parents, not screens.
+>
+> *The tagline. Every other edtech product races to replace the teacher with a
+> screen and maximize the child's screen time. We do the opposite: we use AI to
+> turn a present, loving parent into an expert tutor — keeping the child mostly on
+> paper and always on the rails of real learning science.*
+
 Why this product wins, and the future directions AI newly makes possible. The
 guiding discipline: **every AI feature must serve the physics of learning
 ([`PHILOSOPHY.md`](PHILOSOPHY.md) §6) and stay behind the content-integrity gates

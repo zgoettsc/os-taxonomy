@@ -1,5 +1,7 @@
 # Project Philosophy
 
+> **Empowering parents, not screens.**
+
 The north-star design principles for the homeschool tool we're building on top of
 the Marble taxonomy. This captures decisions we've **committed to**; genuinely
 open questions are listed at the end. Grounded in
