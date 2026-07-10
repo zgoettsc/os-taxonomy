@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { americanize as A } from './americanize.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const read = (f) => JSON.parse(fs.readFileSync(path.join(dir, '..', 'data', f), 'utf8'));
@@ -75,9 +76,9 @@ for (const [subject, list] of Object.entries(bySubject)) {
   console.log(`\n=== ${subject} (${list.length}) ===`);
   let domain = null;
   for (const t of list) {
-    if (t.domain !== domain) { domain = t.domain; console.log(`\n  ${domain}`); }
-    console.log(`  • ${t.name}  [${t.ageRangeStart}-${t.ageRangeEnd}]`);
-    const check = (t.assessmentPrompt || (t.evidence && t.evidence[0]) || '')
+    if (t.domain !== domain) { domain = t.domain; console.log(`\n  ${A(domain)}`); }
+    console.log(`  • ${A(t.name)}  [${t.ageRangeStart}-${t.ageRangeEnd}]`);
+    const check = A((t.assessmentPrompt || (t.evidence && t.evidence[0]) || ''))
       .replaceAll('{{name}}', name);
     if (check) console.log(`      ✓ ${check}`);
   }

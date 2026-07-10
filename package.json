@@ -9,6 +9,7 @@
   "scripts": {
     "validate": "node scripts/validate.mjs",
     "plan": "node scripts/homeschool-plan.mjs",
-    "demo": "node scripts/demo-content.mjs"
+    "demo": "node scripts/demo-content.mjs",
+    "worksheet": "node scripts/worksheet.mjs"
   }
 }

@@ -3,17 +3,22 @@
   "name": "Basic Nouns & Verbs",
   "subject": "English",
   "domain": "Grammar & Punctuation",
-  "ageRange": [5, 6],
-  "standards": ["ccss-ela:L.K.1b", "uk-nc-2013:Eng_Y1_WVGP_05"],
+  "ageRange": [
+    5,
+    6
+  ],
+  "standards": [
+    "ccss-ela:L.K.1b",
+    "uk-nc-2013:Eng_Y1_WVGP_05"
+  ],
   "prerequisites": [],
-
   "parent": {
     "whyItMatters": "Nouns and verbs are the two load-bearing words in every sentence — a 'thing' and what it 'does'. Once your child can spot them, everything downstream (expanded noun phrases, sentence types, editing their own writing) has something to hang on. This is the first real grammar vocabulary they'll use for years.",
     "howToTeach": "Don't lead with definitions — lead with sorting. Nouns are words you can put 'a' or 'the' in front of (a dog, the school). Verbs are things you can DO right now (run, eat, jump — act them out!). Physically acting verbs out and pointing at nouns beats any worksheet at this age.",
     "watchFor": [
       "Thinking a noun must be a physical object — abstract nouns like 'day' or 'name' also count, but don't push these yet.",
       "Confusing a verb with the whole action phrase ('runs fast' — the verb is just 'runs').",
-      "Labelling adjectives as nouns because they sit next to one ('red ball' — 'ball' is the noun)."
+      "Labeling adjectives as nouns because they sit next to one ('red ball' — 'ball' is the noun)."
     ],
     "tryAtHome": [
       "Noun hunt: walk through a room naming every 'thing' you see (all nouns).",
@@ -21,30 +26,86 @@
       "Sentence detective: in 'The cat sleeps', point to the thing (cat) and the doing (sleeps)."
     ]
   },
-
   "student": {
     "intro": "Every sentence has two special jobs. A NOUN is a naming word — a person, a place, or a thing (dog, park, cup). A VERB is a doing word — something you can DO (run, eat, jump). Ready to catch some nouns and verbs?",
     "readingLevelAge": 6,
     "examples": [
-      { "show": "The DOG runs.", "say": "'Dog' is a thing — that's the noun. 'Runs' is doing — that's the verb!" },
-      { "show": "Mum COOKS dinner.", "say": "'Mum' and 'dinner' are things (nouns). 'Cooks' is the doing word (verb)." },
-      { "show": "🏃 jump  ✏️ pencil  🍎 apple  😴 sleep", "say": "Which can you DO? jump and sleep are verbs. pencil and apple are things — nouns." }
+      {
+        "show": "The DOG runs.",
+        "say": "'Dog' is a thing — that's the noun. 'Runs' is doing — that's the verb!"
+      },
+      {
+        "show": "Mom COOKS dinner.",
+        "say": "'Mom' and 'dinner' are things (nouns). 'Cooks' is the doing word (verb)."
+      },
+      {
+        "show": "🏃 jump  ✏️ pencil  🍎 apple  😴 sleep",
+        "say": "Which can you DO? jump and sleep are verbs. pencil and apple are things — nouns."
+      }
     ]
   },
-
   "practice": {
     "generator": null,
     "count": 6,
     "items": [
-      { "kind": "mcq", "prompt": "Is 'book' a noun (a thing) or a verb (a doing word)?", "choices": ["noun", "verb"], "answerIndex": 0 },
-      { "kind": "mcq", "prompt": "Is 'jump' a noun or a verb?", "choices": ["noun", "verb"], "answerIndex": 1 },
-      { "kind": "mcq", "prompt": "Is 'school' a noun or a verb?", "choices": ["noun", "verb"], "answerIndex": 0 },
-      { "kind": "mcq", "prompt": "Is 'eat' a noun or a verb?", "choices": ["noun", "verb"], "answerIndex": 1 },
-      { "kind": "mcq", "prompt": "In 'The dog runs', which word is the verb?", "choices": ["The", "dog", "runs"], "answerIndex": 2 },
-      { "kind": "mcq", "prompt": "In 'Mum cooks dinner', which word is a noun?", "choices": ["cooks", "dinner", "and"], "answerIndex": 1 }
+      {
+        "kind": "mcq",
+        "prompt": "Is 'book' a noun (a thing) or a verb (a doing word)?",
+        "choices": [
+          "noun",
+          "verb"
+        ],
+        "answerIndex": 0
+      },
+      {
+        "kind": "mcq",
+        "prompt": "Is 'jump' a noun or a verb?",
+        "choices": [
+          "noun",
+          "verb"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "kind": "mcq",
+        "prompt": "Is 'school' a noun or a verb?",
+        "choices": [
+          "noun",
+          "verb"
+        ],
+        "answerIndex": 0
+      },
+      {
+        "kind": "mcq",
+        "prompt": "Is 'eat' a noun or a verb?",
+        "choices": [
+          "noun",
+          "verb"
+        ],
+        "answerIndex": 1
+      },
+      {
+        "kind": "mcq",
+        "prompt": "In 'The dog runs', which word is the verb?",
+        "choices": [
+          "The",
+          "dog",
+          "runs"
+        ],
+        "answerIndex": 2
+      },
+      {
+        "kind": "mcq",
+        "prompt": "In 'Mom cooks dinner', which word is a noun?",
+        "choices": [
+          "cooks",
+          "dinner",
+          "and"
+        ],
+        "answerIndex": 1
+      }
     ]
   },
-
   "assessment": {
     "masteryCriteria": [
       "Use common nouns accurately in sentences (e.g. 'dog', 'school', 'book')",
@@ -52,10 +113,34 @@
       "Identify nouns and verbs in simple sentences when prompted"
     ],
     "items": [
-      { "id": "n1", "kind": "mcq", "prompt": "Which of these is a VERB (a doing word)?", "choices": ["table", "swim", "happy", "cat"], "answerIndex": 1, "evidenceRef": 2 },
-      { "id": "n2", "kind": "mcq", "prompt": "In the sentence 'The bird flies', which word is the NOUN?", "choices": ["The", "bird", "flies"], "answerIndex": 1, "evidenceRef": 2 },
       {
-        "id": "n3", "kind": "constructed",
+        "id": "n1",
+        "kind": "mcq",
+        "prompt": "Which of these is a VERB (a doing word)?",
+        "choices": [
+          "table",
+          "swim",
+          "happy",
+          "cat"
+        ],
+        "answerIndex": 1,
+        "evidenceRef": 2
+      },
+      {
+        "id": "n2",
+        "kind": "mcq",
+        "prompt": "In the sentence 'The bird flies', which word is the NOUN?",
+        "choices": [
+          "The",
+          "bird",
+          "flies"
+        ],
+        "answerIndex": 1,
+        "evidenceRef": 2
+      },
+      {
+        "id": "n3",
+        "kind": "constructed",
         "prompt": "Make up your own sentence that has a naming word (noun) and a doing word (verb) in it.",
         "rubric": [
           "The response is a sentence (a group of words expressing a complete thought).",
@@ -67,17 +152,28 @@
       }
     ]
   },
-
   "provenance": {
     "generatedBy": "Claude (opus 4.8), seeded from Marble taxonomy fields (description, evidence, assessmentPrompt, standards L.K.1b / Eng_Y1_WVGP_05). MCQ answer keys hand-verified; constructed item judged against an evidence-derived rubric (parent checkbox or LLM-as-judge), not auto-graded.",
     "grounding": [
-      { "title": "CCSS ELA L.K.1b (source standard, in curriculum-standards.json)", "url": "http://www.corestandards.org/ELA-Literacy/L/K/", "license": "public standard", "verified": true },
-      { "title": "UK National Curriculum English Y1 (source standard, in curriculum-standards.json)", "url": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study", "license": "OGL v3.0", "verified": true }
+      {
+        "title": "CCSS ELA L.K.1b (source standard, in curriculum-standards.json)",
+        "url": "http://www.corestandards.org/ELA-Literacy/L/K/",
+        "license": "public standard",
+        "verified": true
+      },
+      {
+        "title": "UK National Curriculum English Y1 (source standard, in curriculum-standards.json)",
+        "url": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study",
+        "license": "OGL v3.0",
+        "verified": true
+      }
     ],
-    "verification": ["MCQ keys hand-verified against standard", "constructed rubric derived from evidence[]"],
+    "verification": [
+      "MCQ keys hand-verified against standard",
+      "constructed rubric derived from evidence[]"
+    ],
     "reviewed": false,
     "reviewer": null
   },
-
   "license": "CC-BY-SA-4.0"
 }

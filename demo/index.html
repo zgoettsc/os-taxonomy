@@ -174,7 +174,7 @@ const CONTENT = {
     name:"Fluent adding & subtracting within 5", age:"Ages 5–6", standard:"CCSS K.OA.5",
     parent:{
       why:"Recalling small sums without counting frees your child's attention for bigger ideas — place value, adding within 20, word problems all lean on this being automatic.",
-      watch:["Recounting from 1 every time instead of counting on — a sign the facts aren't memorised yet.",
+      watch:["Recounting from 1 every time instead of counting on — a sign the facts aren't memorized yet.",
              "Always using fingers even for 2+1 — fine early, but the goal is recall.",
              "Answering 5 for '2 − 5' — check they know you can't take away more than you have."],
       criteria:["Answer 2 + 3 quickly without counting on fingers","Answer 5 − 2 from recall","Complete a set of within-5 facts accurately and quickly"]
@@ -195,13 +195,13 @@ const CONTENT = {
     },
     lesson:{intro:"A NOUN is a naming word — a person, place, or thing (dog, park, cup). A VERB is a doing word — something you can DO (run, eat, jump).",
       examples:[["The DOG runs.","'Dog' is a thing — the noun. 'Runs' is doing — the verb!"],
-                ["Mum COOKS dinner.","'Mum' and 'dinner' are nouns. 'Cooks' is the verb."]]},
+                ["Mom COOKS dinner.","'Mom' and 'dinner' are nouns. 'Cooks' is the verb."]]},
     kind:"reading",
     questions:[
       {prompt:"Which one is a VERB (a doing word)?",choices:["table","swim","happy","cat"],answer:1},
       {prompt:"In “The bird flies”, which word is the NOUN?",choices:["The","bird","flies"],answer:1},
       {prompt:"Is “jump” a noun or a verb?",choices:["noun","verb"],answer:1},
-      {prompt:"In “Mum cooks dinner”, which word is a noun?",choices:["cooks","dinner","and"],answer:1},
+      {prompt:"In “Mom cooks dinner”, which word is a noun?",choices:["cooks","dinner","and"],answer:1},
       {prompt:"Which one is a NOUN (a thing)?",choices:["run","school","eat","fast"],answer:1}
     ]
   }
@@ -291,7 +291,7 @@ function mountQuiz(c){
     document.getElementById("stars").textContent="⭐".repeat(st.correct)+"☆".repeat(GOAL-st.correct);
     if(st.correct>=GOAL){
       box.innerHTML=`<div class="mastered">🎉 Mastered — ${GOAL} in a row!</div>
-        <button class="next" id="again">Practise more</button>`;
+        <button class="next" id="again">Practice more</button>`;
       document.getElementById("again").addEventListener("click",()=>{st.correct=0;mountQuiz(c);});
     }
   }
