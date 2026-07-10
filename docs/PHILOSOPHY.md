@@ -11,10 +11,18 @@ open questions are listed at the end. Grounded in
 ## 0. What we're building
 
 A parent-guided, paper-first homeschool system for a young child (roughly ages
-4–11). It has two faces: a **parent side** that guides, assigns, and tracks, and
-a **student side** that teaches and tests. Underneath is the knowledge graph (the
-taxonomy) plus a content layer and, eventually, a scheduler. American English
-throughout.
+4–11). It has two faces:
+
+- **Parent surface — an iPad/phone app.** The parent uses it to choose material,
+  print worksheets/units, and assess the child's growth (record results, see
+  progress, get the daily plan). This is also where the scheduler's "inhuman
+  bookkeeping" lives, so the parent never has to compute a review schedule by
+  hand.
+- **Student surface — mostly paper, plus a calm screen for testing** (per §1),
+  with the screen share growing with age.
+
+Underneath is the knowledge graph (the taxonomy) plus a content layer and,
+eventually, a scheduler. American English throughout.
 
 The taxonomy is the **skeleton** (what to teach, in what order, how mastery is
 judged). Everything we add is the **flesh** (lessons, practice, assessment,
@@ -99,6 +107,15 @@ kills motivation. So:
 - **Interest biases, never overrides.** Among topics the child is *ready* for,
   prefer the interest-adjacent ones — but never teach multiplication before
   addition just because the child likes the theme.
+- **The exploration lane counts.** It is tracked, not throwaway: whatever the
+  child explores is logged against the taxonomy so it contributes to coverage and
+  the record of what they've met.
+- **Knowledge callbacks.** Because the taxonomy is a graph, exploration often
+  pre-touches topics a later unit will formally teach. When that later topic comes
+  up, the app surfaces the prior encounter — "remember when you learned rain comes
+  from clouds?" This is a free win: it doubles as a spaced-retrieval cue *and*
+  builds the sense that knowledge is connected. The graph is what makes it
+  possible (a flat list can't know two topics are related).
 
 ## 5. Coverage is guaranteed, even when interest drives
 
@@ -150,13 +167,21 @@ about.
 - Built on the **openly-licensed** taxonomy; our content layer stays CC-BY-SA in
   spirit; we cite sources and don't ingest license-incompatible material.
 
-## Open questions (not yet decided)
+## Deferred build-scope decisions
 
-- **Parent tracking medium:** pure-paper tracking vs. a parent-only light app for
-  the scheduler bookkeeping.
-- **Exploration lane:** lightly tracked (still "counts") vs. pure untracked
-  curiosity time.
-- **Granularity:** whether to sub-decompose micro-topics into finer "knowledge
-  points" (Math Academy-style) for Lane 1.
-- **Encompassing layer & diagnostic placement:** whether/when to build the
-  distinct encompassing annotations and a frontier-finding diagnostic.
+These are *sequencing* decisions, not philosophy — "simple version now, sophisticated
+version later, or invest upfront?" Default stance: **start simple, add
+Math-Academy-grade sophistication later, driven by real need.** To be settled in
+the roadmap.
+
+- **Granularity (knowledge points):** keep teaching at the micro-topic grain, or
+  sub-decompose Lane 1 topics into finer worked-example-sized "knowledge points."
+  Default: start at micro-topic grain; sub-decompose lazily where a child actually
+  struggles.
+- **Encompassing / implicit repetition:** plain per-topic spaced repetition, vs.
+  approximating trickle-down credit via hard-prerequisite edges, vs. annotating a
+  true encompassing layer for full FIRe. Default: plain spaced repetition in v1;
+  encompassing is an optimization to add later.
+- **Placement:** age-based seeding + a light parent checklist, vs. an adaptive
+  knowledge-frontier diagnostic. Default: age + checklist in v1; build the
+  diagnostic later.
