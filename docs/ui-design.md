@@ -64,10 +64,20 @@ hub, student surface is mostly paper + a calm screen for testing).
 ## Fidelity plan
 
 1. **Lo-fi screen map** (this doc) — the inventory + flows. ✅
-2. **Hi-fi interactive mockups** — build the core screens as clickable prototypes
-   (web/Artifact first — fastest to iterate and preview — then port to React
-   Native). Start **parent-first** with the daily loop (Home/Today → Print →
-   Record), since it's the hub and the highest-risk UX.
+2. **Hi-fi interactive mockups** — clickable prototypes in the **Garden**
+   visual direction, built web-first (fastest to iterate; then port to React
+   Native). ✅ Both apps are built and rendered:
+   - [`demo/parent-app.html`](../demo/parent-app.html) — the hub: **Today**
+     (Coach Brief + packet), **Plan** (mastery bars, interest, ready-next),
+     **Print & Binder** (packet thumbnails, uncapped "more practice", binder
+     history), **Progress & Records** (stat tiles, weekly sparkline, standards
+     coverage, portfolio export), and the **Record** flow.
+   - [`demo/kid-app.html`](../demo/kid-app.html) — the calm student tool:
+     **profile picker → today's finite tasks → quiz** (instant, gentle
+     feedback) **→ letter-tracing** (finger/Apple Pencil on canvas) **→ done
+     wall**. No feed, no autoplay, no reward-chasing; a clear stop.
+   - Both are static-first (the landing screen renders without JS), theme-aware
+     (light/dark via CSS tokens), and use CSP-safe system rounded type.
 3. **Component/design system** — tokens (color, type, spacing), the calm student
    palette, both themes — extracted once the core screens settle.
 

@@ -44,7 +44,9 @@ one-page pitch; this file is the map of everything.
 | `scripts/*.mjs` | Planner, math generators, printable worksheets, American-English normalizer | ✅ runnable |
 | `pipeline/*.mjs` | Content generation (text + image source router + bake-off), behind mock/real seams | ✅ runnable (mock) |
 | `db/` | Supabase schema + idempotent seed generator | ✅ schema + seed |
-| `demo/index.html` | Self-contained interactive app-screen demo | ✅ runnable |
+| `demo/parent-app.html` | **Parent app** hi-fi mockup — Today/Plan/Print/Progress + Record (Garden theme) | ✅ runnable |
+| `demo/kid-app.html` | **Student app** hi-fi mockup — profile → today → quiz → letter-tracing → done wall | ✅ runnable |
+| `demo/index.html` | Earlier self-contained app-screen demo | ✅ runnable |
 
 ## Try it (no setup, offline)
 
