@@ -75,6 +75,18 @@ The lanes run **in parallel, not merged.** The theme changes Lane 2 and
 re-costumes Lane 1; underneath, Lane 1's spaced reviews keep coming on schedule
 regardless of the current theme.
 
+**Theme concurrency: one primary unit + the exploration lane as release valve.**
+Lane 2 runs *one* primary thematic unit at a time — for the depth and coherence
+that make thematic learning worthwhile (this is a knowledge-*building* benefit;
+don't confuse it with Lane 1 interleaving, which points the other way). Units are
+**short and elastic**, scaled to the child's age and sustained interest — think a
+cats *week or two*, not a rigid month; extend if interest holds, wrap up if it
+fades. Secondary, fleeting interests are absorbed by the **exploration lane** (a
+one-off dip on volcanoes mid-cats-unit), so the child gets the feel of concurrent
+interests without paying the coherence cost of two full parallel units. Running
+two concurrent units is available as an **optional parent setting** for kids who
+genuinely thrive on variety, but the default is one-primary-plus-exploration.
+
 ## 4. Structured autonomy (agency within constraints)
 
 Full child-led choice breaks mastery, spacing, and coverage. Full engine control
@@ -140,8 +152,6 @@ about.
 
 ## Open questions (not yet decided)
 
-- **Theme concurrency:** one deep theme at a time vs. a couple running
-  concurrently. *(under discussion)*
 - **Parent tracking medium:** pure-paper tracking vs. a parent-only light app for
   the scheduler bookkeeping.
 - **Exploration lane:** lightly tracked (still "counts") vs. pure untracked
