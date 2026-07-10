@@ -99,6 +99,38 @@ create index on public.content_items(lane);
 
 
 -- ============================================================================
+-- 3b. Taxonomy reference tables (GLOBAL, read-only) — the graph itself.
+--     Mirrors data/topics.json + data/dependencies.json so the app/server can
+--     query and join the graph in SQL. Seeded by db/seed.mjs.
+-- ============================================================================
+
+create table public.topics (
+  id               text primary key,               -- mt_...
+  subject          text not null,
+  domain           text,
+  name             text not null,
+  description      text,
+  type             text,
+  age_range_start  int,
+  age_range_end    int,
+  centrality       real,
+  evidence         jsonb not null default '[]',
+  standards        text[] not null default '{}'
+);
+create index on public.topics(subject);
+create index on public.topics(age_range_start, age_range_end);
+
+create table public.dependencies (
+  topic_id        text not null references public.topics(id) on delete cascade,
+  prerequisite_id text not null references public.topics(id) on delete cascade,
+  strength        text not null check (strength in ('hard', 'soft')),
+  reason          text,
+  primary key (topic_id, prerequisite_id)
+);
+create index on public.dependencies(prerequisite_id);
+
+
+-- ============================================================================
 -- 4. Per-child scheduler state (the "brain")
 -- ============================================================================
 
@@ -202,6 +234,8 @@ alter table public.households        enable row level security;
 alter table public.household_members enable row level security;
 alter table public.children          enable row level security;
 alter table public.content_items     enable row level security;
+alter table public.topics            enable row level security;
+alter table public.dependencies      enable row level security;
 alter table public.mastery           enable row level security;
 alter table public.attempts          enable row level security;
 alter table public.packets           enable row level security;
@@ -219,6 +253,10 @@ create policy members_read      on public.household_members for select using (pu
 -- Content library: any authenticated user may read ONLY reviewed content.
 -- No insert/update policy → families cannot write content (service_role manages it).
 create policy content_read on public.content_items for select using (reviewed = true);
+
+-- Taxonomy graph: any authenticated user may read; no write policy (service_role seeds it).
+create policy topics_read on public.topics for select using (auth.role() = 'authenticated');
+create policy dependencies_read on public.dependencies for select using (auth.role() = 'authenticated');
 
 -- Children: full access to household members.
 create policy children_all on public.children for all
