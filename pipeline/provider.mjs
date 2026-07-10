@@ -1,0 +1,101 @@
+// LLM provider abstraction for the content pipeline.
+//
+// The generator never talks to a model directly — it goes through a provider,
+// so the pipeline runs offline with a deterministic MOCK and swaps in the real
+// Claude call for production. Keeping the model behind this seam is what lets us
+// unit-test the pipeline and keep generation reviewable.
+//
+// Rule (docs/content-sourcing.md): the model ADAPTS grounded material into the
+// content schema — it does not invent facts. Grounding text is passed in; the
+// provider returns structured content that must cite it.
+
+// ---- MOCK provider: deterministic, offline, no API key -------------------
+// Stands in for the model so the whole pipeline is runnable and testable.
+export function mockProvider() {
+  return {
+    name: 'mock',
+    async generateLesson({ topic, grounding }) {
+      const n = topic.name;
+      const cite = (topic.standards || []).map((s) => ({ source: s, span: 'standard' }));
+      return {
+        student: {
+          intro: `Let's learn about ${n.toLowerCase()}! ${topic.description || ''}`.trim(),
+          examples: [{ show: n, say: `Here is a simple example of ${n.toLowerCase()}.` }],
+        },
+        parent: {
+          whyItMatters: `${n} is a building block: mastering it makes later topics easier.`,
+          howToTeach: `Introduce ${n.toLowerCase()} with a concrete example, then let the child try.`,
+          watchFor: [`A common slip is rushing ${n.toLowerCase()} without checking the idea.`],
+          tryAtHome: [`Point out ${n.toLowerCase()} during everyday activities.`],
+        },
+        practice: (topic.evidence || []).slice(0, 3).map((e, i) => ({
+          kind: 'mcq', prompt: `Which shows "${e}"?`, choices: ['A', 'B'], answerIndex: 0, _evidence: i,
+        })),
+        assessment: (topic.evidence || []).slice(0, 2).map((e, i) => ({
+          id: `q${i + 1}`, kind: 'constructed', prompt: `Show that you can: ${e}`,
+          rubric: [`Response demonstrates: ${e}`], evidenceRef: i,
+        })),
+        // Every factual claim must trace to grounding; mock cites the standards.
+        citations: cite.length ? cite : [{ source: 'taxonomy', span: 'description' }],
+        _groundingUsed: grounding?.length || 0,
+      };
+    },
+  };
+}
+
+// ---- CLAUDE provider: the real generation call (production) ---------------
+// Lazily imports @anthropic-ai/sdk so this file runs even when the SDK isn't
+// installed. Uses structured outputs so the model returns schema-valid JSON,
+// and adaptive thinking. Model: claude-opus-4-8.
+const LESSON_SCHEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['student', 'parent', 'practice', 'assessment', 'citations'],
+  properties: {
+    student: { type: 'object', additionalProperties: false, required: ['intro', 'examples'],
+      properties: { intro: { type: 'string' },
+        examples: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['show', 'say'], properties: { show: { type: 'string' }, say: { type: 'string' } } } } } },
+    parent: { type: 'object', additionalProperties: false, required: ['whyItMatters', 'howToTeach', 'watchFor', 'tryAtHome'],
+      properties: { whyItMatters: { type: 'string' }, howToTeach: { type: 'string' },
+        watchFor: { type: 'array', items: { type: 'string' } }, tryAtHome: { type: 'array', items: { type: 'string' } } } },
+    practice: { type: 'array', items: { type: 'object' } },
+    assessment: { type: 'array', items: { type: 'object' } },
+    citations: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['source', 'span'], properties: { source: { type: 'string' }, span: { type: 'string' } } } },
+  },
+};
+
+export async function claudeProvider() {
+  let Anthropic;
+  try { ({ default: Anthropic } = await import('@anthropic-ai/sdk')); }
+  catch { throw new Error('claude provider needs @anthropic-ai/sdk installed (npm i @anthropic-ai/sdk)'); }
+  const client = new Anthropic(); // resolves ANTHROPIC_API_KEY / ant profile
+  return {
+    name: 'claude',
+    async generateLesson({ topic, grounding }) {
+      const system =
+        'You write early-education content for ages 4-11. You ADAPT the provided '
+        + 'grounding into the requested JSON. Do NOT introduce any fact that is not '
+        + 'supported by the grounding; every factual claim must map to a citation. '
+        + 'Keep language warm, concrete, and age-appropriate. American English.';
+      const user =
+        `TOPIC: ${topic.name}\nDESCRIPTION: ${topic.description || ''}\n`
+        + `AGE: ${topic.ageRangeStart}-${topic.ageRangeEnd}\nSUBJECT: ${topic.subject}\n`
+        + `EVIDENCE (mastery criteria):\n${(topic.evidence || []).map((e) => '- ' + e).join('\n')}\n\n`
+        + `GROUNDING (write only from this):\n${(grounding || []).map((g) => `[${g.source}] ${g.text}`).join('\n\n')}`;
+      const res = await client.messages.create({
+        model: 'claude-opus-4-8',
+        max_tokens: 16000,
+        thinking: { type: 'adaptive' },
+        system,
+        messages: [{ role: 'user', content: user }],
+        output_config: { format: { type: 'json_schema', schema: LESSON_SCHEMA } },
+      });
+      const text = res.content.find((b) => b.type === 'text')?.text || '{}';
+      return JSON.parse(text);
+    },
+  };
+}
+
+export async function getProvider(name) {
+  if (name === 'claude') return claudeProvider();
+  return mockProvider();
+}
