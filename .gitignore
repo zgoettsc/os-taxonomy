@@ -3,3 +3,6 @@ node_modules/
 *.log
 .env
 .env.*
+
+# Copyrighted reference book — kept locally, never redistributed via git
+docs/the-math-academy-way.pdf
