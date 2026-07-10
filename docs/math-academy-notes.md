@@ -27,9 +27,19 @@ be tracked per-topic in isolation.
 Consequences we can implement directly on our edges:
 - **Encompassing / encompassing weights.** An advanced topic *encompasses* its
   prerequisites to some fractional degree. A successful advanced review pays
-  *fractional* repetition credit down each prerequisite edge. Our `strength`
-  field (`hard`/`soft`) is a natural first proxy for that weight (hard edge →
-  larger implicit credit; soft → smaller).
+  *fractional* repetition credit down each encompassing edge. Our `strength`
+  field (`hard`/`soft`) is a first proxy for that weight (hard edge → larger
+  implicit credit; soft → smaller).
+  **Important correction (from Ch. 4):** encompassing is a *separate relation
+  from prerequisite* — "encompassed topics are usually prerequisites, but
+  prerequisites are often not fully encompassed." Multiplying a two-digit by a
+  one-digit number *encompasses* one-digit multiplication and two-digit addition
+  (you literally perform them), whereas many prerequisites are conceptually
+  required but not re-executed by the advanced task. So our prerequisite graph is
+  an *approximation* of the encompassing graph, not the same object. Doing FIRe
+  faithfully means annotating a distinct encompassing layer (which of a topic's
+  prerequisites it actually re-executes, and how fully). That's a concrete data
+  task on top of the existing edges.
 - **Review minimization ("dominoes").** Because advanced reviews knock out
   prerequisite reviews, the scheduler should prefer reviews that discharge the
   most due prerequisites at once — fewer total problems for the same coverage.
@@ -95,3 +105,33 @@ cannot do. Two roads for us:
 Neither requires the child on a screen. Both are honest about the tradeoff: we
 trade Math Academy's per-problem loop for a per-day loop in exchange for the
 things you actually want — paper, low screen time, and a parent in the loop.
+
+## Source-grounded refinements (after reading Ch. 4)
+
+Reading the actual chapter surfaced three details that change the data model:
+
+1. **Topics decompose into ordered "knowledge points."** A Math Academy topic
+   isn't atomic — it's a short lesson broken into knowledge points, each a
+   *worked example* plus questions like it, scaffolded from the most basic case
+   to harder cases. Mastery is measured *per knowledge point* (enough correct in
+   each), and only then does the topic unlock its successors. Our Marble
+   micro-topics sit at roughly the "topic" grain; our `examples` + `evidence` are
+   proto-knowledge-points but coarser. A faithful build would sub-decompose each
+   topic into a handful of ordered knowledge points with their own items.
+
+2. **Key-prerequisite links drive targeted remediation.** Each knowledge point is
+   tagged with the *one* prerequisite it most directly uses. Fail the same
+   knowledge point twice → auto-serve a remedial review on that key prerequisite,
+   even if it's several steps back in the graph. Our edges carry a `reason`
+   string that often names exactly this relationship — a usable seed for marking
+   key prerequisites.
+
+3. **Placement is an adaptive diagnostic that finds the "knowledge frontier"** —
+   the boundary between known and unknown — and the frontier *is* the Zone of
+   Proximal Development the student then works at. This replaces age-based
+   seeding; age becomes only a starting prior for the diagnostic.
+
+Net: our taxonomy is the right *shape* but coarser than Math Academy's, and it
+lacks a distinct encompassing layer and per-knowledge-point key prerequisites.
+Those are additive data tasks, not redesigns — the graph we have is a legitimate
+foundation.
