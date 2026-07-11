@@ -58,6 +58,37 @@ The technical shape of the product, decided from the requirements in
 Multi-tenancy: every child-scoped row is isolated by RLS keyed to the owning
 parent account. The content library is shared/global (read-only to families).
 
+## Session lifecycle & how the two apps stay in sync
+
+The parent app and student app are **two thin clients over one shared database
+and engine** — there is no peer-to-peer sync and no "which is source of truth"
+question. Both read/write the same rows; Supabase realtime pushes changes, so
+the parent's phone and the child's iPad converge within seconds.
+
+A `session` is the unit of work (see [PHILOSOPHY §7](PHILOSOPHY.md) — sessions,
+not days). Its lifecycle:
+
+1. **Start** *(the trigger)* — a `session` row is created and the engine
+   assembles the packet: paper materials (parent prints) **and** the on-screen
+   tasks (queued for the child). Who may start is a **per-child setting**:
+   young children are parent-started; older, self-directed children can start
+   their own (mirrors screen-time-graduates-with-age).
+2. **Do** — the child works the on-screen tasks in the student app; the parent
+   (optionally) works the paper packet.
+3. **Report — from two sources.** On-screen tasks are **auto-captured** by the
+   student app (quiz correctness, fluency, trace attempts) → written straight to
+   `attempts`/`mastery`, zero parent effort. Paper work is **parent-reported**
+   via the Record screen. Both feed the same scheduler.
+4. **Complete — separate from reporting.** Marking a session *complete* (one tap)
+   just logs that school happened and files it in the binder; it does **not**
+   require grading. Detailed *reporting* is optional and can be added or edited
+   later (including back-dated sessions). A session may be complete with only
+   the auto-captured screen results and no manual grades.
+
+So: **Start** surfaces the child's tasks; **Complete** closes the session;
+reporting is continuous and comes from whichever source (screen or paper)
+produced the result.
+
 ## Apple Pencil: animate-then-trace
 
 - **Demonstrate:** animate the reference stroke path (order + direction).
