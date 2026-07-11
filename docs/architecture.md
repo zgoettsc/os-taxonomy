@@ -66,28 +66,31 @@ question. Both read/write the same rows; Supabase realtime pushes changes, so
 the parent's phone and the child's iPad converge within seconds.
 
 A `session` is the unit of work (see [PHILOSOPHY §7](PHILOSOPHY.md) — sessions,
-not days). Its lifecycle:
+not days). It has three phases — **learn → test → assess** — and the parent
+holds the gate between learning and testing (paper-to-learn-first,
+screen-to-test):
 
-1. **Start** *(the trigger)* — a `session` row is created and the engine
-   assembles the packet: paper materials (parent prints) **and** the on-screen
-   tasks (queued for the child). Who may start is a **per-child setting**:
-   young children are parent-started; older, self-directed children can start
-   their own (mirrors screen-time-graduates-with-age).
-2. **Do** — the child works the on-screen tasks in the student app; the parent
-   (optionally) works the paper packet.
-3. **Report — from two sources.** On-screen tasks are **auto-captured** by the
-   student app (quiz correctness, fluency, trace attempts) → written straight to
-   `attempts`/`mastery`, zero parent effort. Paper work is **parent-reported**
-   via the Record screen. Both feed the same scheduler.
-4. **Complete — separate from reporting.** Marking a session *complete* (one tap)
-   just logs that school happened and files it in the binder; it does **not**
-   require grading. Detailed *reporting* is optional and can be added or edited
-   later (including back-dated sessions). A session may be complete with only
-   the auto-captured screen results and no manual grades.
+1. **Start → learn (on paper).** A `session` row is created and the engine
+   assembles the packet; the parent **prints the learning materials** (book
+   page + worksheet). The child learns it closed-book, away from the screen.
+   Starting does **not** unlock the exam.
+2. **Mark complete → send the exam (the trigger).** When the child has learned
+   it, the parent marks the session complete, which **pushes the on-screen exam
+   to the child's iPad**. *This* is what surfaces the student-app tasks — not
+   Start. Who may drive this is a **per-child setting**: young children are
+   parent-gated (parent starts and sends the exam); older, self-directed
+   children can start the material and self-test on their own
+   (screen-time-graduates-with-age).
+3. **Test (on screen).** The child takes the exam in the student app —
+   retrieval/fluency quizzes and Pencil tracing.
+4. **Assess (parent).** Results come from **two sources**: the on-screen exam is
+   **auto-scored** (written straight to `attempts`/`mastery`, zero parent
+   effort), and the parent **grades the paper worksheet** on the Assess screen.
+   Both feed the same scheduler; back-dating and editing are allowed.
 
-So: **Start** surfaces the child's tasks; **Complete** closes the session;
-reporting is continuous and comes from whichever source (screen or paper)
-produced the result.
+So: **Start** prints the learning materials; **Mark complete** sends the exam
+(the trigger); **Assess** reviews the auto-scored exam plus the parent-graded
+paper. The two apps stay consistent because both read/write these same rows.
 
 ## Apple Pencil: animate-then-trace
 

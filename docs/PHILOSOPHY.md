@@ -175,6 +175,16 @@ of work is a **learning session the parent explicitly starts**, not a calendar
 day the app expects to be filled. Nothing is "missed" because a day passed with
 no session.
 
+- **A session runs learn → test → assess, and the parent holds the gate.**
+  Starting a session prints the **learning** materials (book page + worksheet);
+  the child learns them on paper, closed-book. When the parent judges the child
+  has learned it, they **mark the session complete — which sends the exam to the
+  child's iPad**. Only then does the child test on screen. The parent then
+  **assesses**: the on-screen exam auto-scores, and the parent grades the paper.
+  This makes "paper to learn, screen to test" concrete, with the parent as the
+  deliberate gate between the two. Older, self-directed children can drive the
+  whole loop themselves (learn, do worksheets, self-test) — the gate relaxes
+  with age.
 - This is safe pedagogically because **spaced review is scheduled by real time**:
   a review due in three days is due in three days whether or not school happened.
   Skip a week and those reviews are simply waiting (and prioritized) at the next
