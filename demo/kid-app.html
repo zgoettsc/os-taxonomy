@@ -83,20 +83,22 @@
   .qtop .pill{background:var(--card2);color:var(--soft);font-size:.75rem;font-weight:700;padding:6px 11px;border-radius:20px}
   .qtop .count{margin-left:auto;color:var(--faint);font-size:.78rem;font-weight:600;font-variant-numeric:tabular-nums}
 
-  /* multi-question quiz: questions reveal one at a time as each is answered right */
-  .quiz{display:flex;flex-direction:column;gap:14px}
-  .qi{display:none;flex-direction:column;gap:13px;background:var(--card2);border:1.5px solid var(--line);border-radius:22px;padding:18px 15px}
-  .qi:first-of-type{display:flex}
-  .qi:has(.oi.right:checked)+.qi{display:flex}
-  .qi:has(.oi.right:checked){border-color:var(--moss-soft)}
-  .qnum{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint)}
+  /* multi-question quiz: one question at a time, in the SAME place (no scroll).
+     Each question overlays the quiz area; a per-step radio picks which shows. */
+  .quiz{position:relative;flex:1;min-height:360px}
+  .qi{position:absolute;inset:0;display:none;flex-direction:column;gap:12px;background:var(--card2);border:1.5px solid var(--line);border-radius:22px;padding:18px 15px;overflow-y:auto}
+  /* which question shows is driven by the step radios (per subject, below) */
+  #ms0:checked~.quiz .qi.s0,#ms1:checked~.quiz .qi.s1,#ms2:checked~.quiz .qi.s2,#ms3:checked~.quiz .qi.s3,#ms4:checked~.quiz .qi.s4,
+  #rs0:checked~.quiz .qi.s0,#rs1:checked~.quiz .qi.s1,#rs2:checked~.quiz .qi.s2,#rs3:checked~.quiz .qi.s3,#rs4:checked~.quiz .qi.s4{display:flex;animation:rise .28s ease}
+  .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px}
+  .qnum{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:center;flex:none}
   .qprompt{text-align:center;font-size:1rem;color:var(--soft)}
-  .qprompt b{display:block;font-family:var(--disp);font-weight:800;color:var(--ink);font-size:2.2rem;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
-  .qprompt b.sm{font-size:1.7rem}
-  .opts{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-  .opt{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:18px;padding:16px 8px;font-family:var(--disp);font-weight:800;font-size:1.5rem;cursor:pointer;text-align:center;font-variant-numeric:tabular-nums;display:block}
+  .qprompt b{display:block;font-family:var(--disp);font-weight:800;color:var(--ink);font-size:2.6rem;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
+  .qprompt b.sm{font-size:2rem}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .opt{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:18px;padding:18px 8px;font-family:var(--disp);font-weight:800;font-size:1.6rem;cursor:pointer;text-align:center;font-variant-numeric:tabular-nums;display:block}
   .opt:active{transform:scale(.97)}
-  .opt.sm{font-size:1.15rem}
+  .opt.sm{font-size:1.2rem}
   .oi{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
   .oi.right:checked + .opt{border-color:var(--good);background:var(--moss-soft);color:var(--moss-ink);animation:pop .32s ease}
   .oi.wrong:checked + .opt{border-color:var(--nudge);background:var(--clay-soft);color:var(--clay)}
@@ -105,8 +107,8 @@
   .qi:has(.oi.right:checked) .feedback::after{content:"Yes! 🌱"}
   .qi:has(.oi.wrong:checked):not(:has(.oi.right:checked)) .feedback{color:var(--nudge)}
   .qi:has(.oi.wrong:checked):not(:has(.oi.right:checked)) .feedback::after{content:"Not quite — try again"}
-  .q-next{display:none;margin-top:2px}
-  .qi:last-of-type:has(.oi.right:checked) ~ .q-next{display:flex;animation:rise .3s ease}
+  .qi .q-next{display:none;margin-top:2px}
+  .qi:has(.oi.right:checked) .q-next{display:flex;animation:rise .3s ease}
 
   .trace-lab{text-align:center;color:var(--soft);font-size:.92rem;margin:2px 0 12px}
   .trace-lab b{color:var(--ink);font-family:var(--disp)}
@@ -195,69 +197,77 @@
       </div>
     </section>
 
-    <!-- QUIZ 1: MATH — 5 questions -->
+    <!-- QUIZ 1: MATH — 5 questions, one at a time in place -->
     <section class="screen" id="v-q1">
+      <input class="nav" type="radio" name="mstep" id="ms0" checked>
+      <input class="nav" type="radio" name="mstep" id="ms1">
+      <input class="nav" type="radio" name="mstep" id="ms2">
+      <input class="nav" type="radio" name="mstep" id="ms3">
+      <input class="nav" type="radio" name="mstep" id="ms4">
       <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">Adding within 5</span><span class="count">5 questions</span></div>
       <div class="quiz">
-        <div class="qi"><span class="qnum">Question 1 of 5</span><div class="qprompt">What is<b>3 + 2</b></div><div class="opts">
+        <div class="qi s0"><span class="qnum">Question 1 of 5</span><div class="qbody"><div class="qprompt">What is<b>3 + 2</b></div><div class="opts">
           <input class="oi right" type="radio" name="m1" id="m1a"><label class="opt" for="m1a">5</label>
           <input class="oi wrong" type="radio" name="m1" id="m1b"><label class="opt" for="m1b">4</label>
           <input class="oi wrong" type="radio" name="m1" id="m1c"><label class="opt" for="m1c">6</label>
-          <input class="oi wrong" type="radio" name="m1" id="m1d"><label class="opt" for="m1d">8</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 2 of 5</span><div class="qprompt">What is<b>1 + 4</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="m1" id="m1d"><label class="opt" for="m1d">8</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms1">Next →</label></div>
+        <div class="qi s1"><span class="qnum">Question 2 of 5</span><div class="qbody"><div class="qprompt">What is<b>1 + 4</b></div><div class="opts">
           <input class="oi wrong" type="radio" name="m2" id="m2a"><label class="opt" for="m2a">3</label>
           <input class="oi right" type="radio" name="m2" id="m2b"><label class="opt" for="m2b">5</label>
           <input class="oi wrong" type="radio" name="m2" id="m2c"><label class="opt" for="m2c">6</label>
-          <input class="oi wrong" type="radio" name="m2" id="m2d"><label class="opt" for="m2d">2</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 3 of 5</span><div class="qprompt">What is<b>2 + 2</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="m2" id="m2d"><label class="opt" for="m2d">2</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms2">Next →</label></div>
+        <div class="qi s2"><span class="qnum">Question 3 of 5</span><div class="qbody"><div class="qprompt">What is<b>2 + 2</b></div><div class="opts">
           <input class="oi wrong" type="radio" name="m3" id="m3a"><label class="opt" for="m3a">5</label>
           <input class="oi wrong" type="radio" name="m3" id="m3b"><label class="opt" for="m3b">3</label>
           <input class="oi right" type="radio" name="m3" id="m3c"><label class="opt" for="m3c">4</label>
-          <input class="oi wrong" type="radio" name="m3" id="m3d"><label class="opt" for="m3d">6</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 4 of 5</span><div class="qprompt">What is<b>5 − 2</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="m3" id="m3d"><label class="opt" for="m3d">6</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms3">Next →</label></div>
+        <div class="qi s3"><span class="qnum">Question 4 of 5</span><div class="qbody"><div class="qprompt">What is<b>5 − 2</b></div><div class="opts">
           <input class="oi right" type="radio" name="m4" id="m4a"><label class="opt" for="m4a">3</label>
           <input class="oi wrong" type="radio" name="m4" id="m4b"><label class="opt" for="m4b">2</label>
           <input class="oi wrong" type="radio" name="m4" id="m4c"><label class="opt" for="m4c">4</label>
-          <input class="oi wrong" type="radio" name="m4" id="m4d"><label class="opt" for="m4d">7</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 5 of 5</span><div class="qprompt">What is<b>4 + 1</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="m4" id="m4d"><label class="opt" for="m4d">7</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms4">Next →</label></div>
+        <div class="qi s4"><span class="qnum">Question 5 of 5</span><div class="qbody"><div class="qprompt">What is<b>4 + 1</b></div><div class="opts">
           <input class="oi wrong" type="radio" name="m5" id="m5a"><label class="opt" for="m5a">4</label>
           <input class="oi wrong" type="radio" name="m5" id="m5b"><label class="opt" for="m5b">6</label>
           <input class="oi right" type="radio" name="m5" id="m5c"><label class="opt" for="m5c">5</label>
-          <input class="oi wrong" type="radio" name="m5" id="m5d"><label class="opt" for="m5d">3</label></div><div class="feedback"></div></div>
-        <label class="btn primary q-next" for="s-q2">Next: Rhyming words →</label>
+          <input class="oi wrong" type="radio" name="m5" id="m5d"><label class="opt" for="m5d">3</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="s-q2">Next: Rhyming words →</label></div>
       </div>
     </section>
 
-    <!-- QUIZ 2: RHYMING — 5 questions -->
+    <!-- QUIZ 2: RHYMING — 5 questions, one at a time in place -->
     <section class="screen" id="v-q2">
+      <input class="nav" type="radio" name="rstep" id="rs0" checked>
+      <input class="nav" type="radio" name="rstep" id="rs1">
+      <input class="nav" type="radio" name="rstep" id="rs2">
+      <input class="nav" type="radio" name="rstep" id="rs3">
+      <input class="nav" type="radio" name="rstep" id="rs4">
       <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">Rhyming words</span><span class="count">5 questions</span></div>
       <div class="quiz">
-        <div class="qi"><span class="qnum">Question 1 of 5</span><div class="qprompt">Which word rhymes with<b class="sm">cat</b></div><div class="opts">
+        <div class="qi s0"><span class="qnum">Question 1 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">cat</b></div><div class="opts">
           <input class="oi right" type="radio" name="r1" id="r1a"><label class="opt sm" for="r1a">hat</label>
           <input class="oi wrong" type="radio" name="r1" id="r1b"><label class="opt sm" for="r1b">dog</label>
           <input class="oi wrong" type="radio" name="r1" id="r1c"><label class="opt sm" for="r1c">sun</label>
-          <input class="oi wrong" type="radio" name="r1" id="r1d"><label class="opt sm" for="r1d">cup</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 2 of 5</span><div class="qprompt">Which word rhymes with<b class="sm">sun</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="r1" id="r1d"><label class="opt sm" for="r1d">cup</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs1">Next →</label></div>
+        <div class="qi s1"><span class="qnum">Question 2 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">sun</b></div><div class="opts">
           <input class="oi wrong" type="radio" name="r2" id="r2a"><label class="opt sm" for="r2a">tree</label>
           <input class="oi right" type="radio" name="r2" id="r2b"><label class="opt sm" for="r2b">run</label>
           <input class="oi wrong" type="radio" name="r2" id="r2c"><label class="opt sm" for="r2c">ball</label>
-          <input class="oi wrong" type="radio" name="r2" id="r2d"><label class="opt sm" for="r2d">fish</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 3 of 5</span><div class="qprompt">Which word rhymes with<b class="sm">bee</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="r2" id="r2d"><label class="opt sm" for="r2d">fish</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs2">Next →</label></div>
+        <div class="qi s2"><span class="qnum">Question 3 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">bee</b></div><div class="opts">
           <input class="oi right" type="radio" name="r3" id="r3a"><label class="opt sm" for="r3a">tree</label>
           <input class="oi wrong" type="radio" name="r3" id="r3b"><label class="opt sm" for="r3b">car</label>
           <input class="oi wrong" type="radio" name="r3" id="r3c"><label class="opt sm" for="r3c">book</label>
-          <input class="oi wrong" type="radio" name="r3" id="r3d"><label class="opt sm" for="r3d">hand</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 4 of 5</span><div class="qprompt">Which word rhymes with<b class="sm">star</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="r3" id="r3d"><label class="opt sm" for="r3d">hand</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs3">Next →</label></div>
+        <div class="qi s3"><span class="qnum">Question 4 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">star</b></div><div class="opts">
           <input class="oi wrong" type="radio" name="r4" id="r4a"><label class="opt sm" for="r4a">leaf</label>
           <input class="oi wrong" type="radio" name="r4" id="r4b"><label class="opt sm" for="r4b">moon</label>
           <input class="oi right" type="radio" name="r4" id="r4c"><label class="opt sm" for="r4c">car</label>
-          <input class="oi wrong" type="radio" name="r4" id="r4d"><label class="opt sm" for="r4d">hand</label></div><div class="feedback"></div></div>
-        <div class="qi"><span class="qnum">Question 5 of 5</span><div class="qprompt">Which word rhymes with<b class="sm">dog</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="r4" id="r4d"><label class="opt sm" for="r4d">hand</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs4">Next →</label></div>
+        <div class="qi s4"><span class="qnum">Question 5 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">dog</b></div><div class="opts">
           <input class="oi wrong" type="radio" name="r5" id="r5a"><label class="opt sm" for="r5a">cat</label>
           <input class="oi right" type="radio" name="r5" id="r5b"><label class="opt sm" for="r5b">log</label>
           <input class="oi wrong" type="radio" name="r5" id="r5c"><label class="opt sm" for="r5c">sun</label>
-          <input class="oi wrong" type="radio" name="r5" id="r5d"><label class="opt sm" for="r5d">cup</label></div><div class="feedback"></div></div>
-        <label class="btn primary q-next" for="s-trace">Next: Trace letters →</label>
+          <input class="oi wrong" type="radio" name="r5" id="r5d"><label class="opt sm" for="r5d">cup</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="s-trace">Next: Trace letters →</label></div>
       </div>
     </section>
 
