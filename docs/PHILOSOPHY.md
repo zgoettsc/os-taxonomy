@@ -183,10 +183,13 @@ no session.
   streak quietly punishes a family for a normal day off — the exact guilt-driven,
   engagement-bait pattern we position against. We count sessions and skills
   mastered; we don't manufacture a streak to protect.
+- **No cap on sessions.** One session, three sessions in a day, or none —
+  all fine. When a child is on a roll we *encourage* another session rather
+  than making them wait for "tomorrow"; when life is busy, nothing is owed.
 - **Recording is decoupled from "today."** A parent can grade this session,
   back-date a forgotten one, or record a batch after a trip. A gentle nudge
-  surfaces any unrecorded session; the binder is the day-by-day history you can
-  tap to record.
+  surfaces any unrecorded session; the binder is the full session-by-session
+  history you can tap to **reprint** (for extra practice on anything) or record.
 - **Print-ahead for off-grid stretches.** Whole packets for the next N sessions
   can be printed in advance (road trips, no printer). They're planned as normally
   scheduled — new topics included — and, because pre-printed material can't adapt

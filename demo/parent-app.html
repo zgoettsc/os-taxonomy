@@ -132,15 +132,12 @@
   .more .r1{display:flex;align-items:center;gap:10px}
   .more .qty{margin-left:auto;display:inline-flex;align-items:center;gap:12px;background:var(--card2);border-radius:20px;padding:5px 8px}
   .more .qty b{font-variant-numeric:tabular-nums;font-weight:700}
-  .binder{padding:4px 6px 6px}
-  .binder .brow{display:flex;align-items:flex-start;gap:11px;padding:12px 10px;cursor:pointer;border-radius:12px}
-  .binder .brow+.brow{border-top:1px solid var(--line2)}
-  .binder .brow:hover{background:var(--card2)}
-  .binder .day{font-weight:700;font-size:.85rem;min-width:56px;flex:none}
-  .binder .what{font-size:.8rem;color:var(--soft);flex:1;line-height:1.35}
-  .binder .bstat{flex:none;font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
+  .binder .day{font-weight:700;font-size:.85rem;min-width:44px;flex:none;padding-top:1px}
+  .binder .bstat{flex:none;font-size:.64rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;margin-top:1px}
   .binder .bstat.todo{background:var(--amber-soft);color:var(--amber)}
   .binder .bstat.done{background:var(--moss-soft);color:var(--moss-ink)}
+  .brow-actions{display:flex;gap:9px;flex-wrap:wrap}
+  .btn.sm{flex:1;min-width:130px;padding:11px 12px;font-size:.85rem;border-radius:12px}
 
   .stats{display:flex;gap:10px}
   .stat{flex:1;background:var(--card2);border-radius:14px;padding:12px}
@@ -227,7 +224,7 @@
           <span class="pillstat">~20 min</span>
         </div>
         <a class="btn primary" href="#print-today" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>Start a session &amp; print the packet</a>
-        <p style="font-size:.75rem;color:var(--faint);margin:0;text-align:center">No pressure to go daily — start whenever you're doing school.</p>
+        <p style="font-size:.75rem;color:var(--faint);margin:0;text-align:center">No pressure to go daily — start whenever you're doing school. Going well? Do more than one session in a day; there's no cap.</p>
       </div>
       <div class="brief">
         <svg class="sprout" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22V11"/><path d="M12 14c0-3 2.4-5 5.5-5C17.5 12 15 14 12 14z"/><path d="M12 11C12 8 9.6 6 6.5 6 6.5 9 9 11 12 11z"/></svg>
@@ -357,12 +354,52 @@
           <p class="printnote" id="gen-note">✓ Generated a fresh sheet — new problems every time.</p></div>
       </div>
       <div class="card">
-        <div class="card-h"><h3>The binder</h3><span class="meta">session by session · tap to record</span></div>
-        <div class="binder">
-          <label class="brow" for="t-record"><span class="day">Today</span><span class="what">Math book page + worksheet · Nouns &amp; Verbs · Cats unit page</span><span class="bstat todo">Record →</span></label>
-          <label class="brow" for="t-record"><span class="day">Thu</span><span class="what">Number bonds worksheet · Rhyming practice · Cats: reading</span><span class="bstat todo">Record →</span></label>
-          <label class="brow" for="t-record"><span class="day">Tue</span><span class="what">Counting-on lesson + worksheet · Handwriting</span><span class="bstat done">Recorded ✓</span></label>
-          <label class="brow" for="t-record"><span class="day">Sat</span><span class="what">Shapes worksheet · Cats: facts page</span><span class="bstat done">Recorded ✓</span></label>
+        <div class="card-h"><h3>The binder</h3><span class="meta">every past session · tap to reprint or record</span></div>
+        <div class="rows binder">
+          <details class="exp">
+            <summary><span class="day">Today</span><span class="it-main"><span class="it-name">Math book page + worksheet · Nouns &amp; Verbs · Cats unit page</span></span><span class="bstat todo">Not recorded</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>Adding within 5 · Number bonds to 5 · Basic Nouns &amp; Verbs · Rhyming words · Animal Camouflage</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp1" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint materials</a>
+                <label class="btn ghost sm" for="t-record">Record this session</label>
+              </div>
+              <p class="printnote" id="rp1">✓ Reprinted — same packet, ready to practice again.</p>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="day">Thu</span><span class="it-main"><span class="it-name">Number bonds worksheet · Rhyming practice · Cats: reading</span></span><span class="bstat todo">Not recorded</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>Number bonds to 5 · Rhyming words · Cats: reading page</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp2" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint materials</a>
+                <label class="btn ghost sm" for="t-record">Record this session</label>
+              </div>
+              <p class="printnote" id="rp2">✓ Reprinted — same packet, ready to practice again.</p>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="day">Tue</span><span class="it-main"><span class="it-name">Counting-on lesson + worksheet · Handwriting</span></span><span class="bstat done">Recorded ✓</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>Counting on from the bigger number · Handwriting: c o a</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp3" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint for extra practice</a>
+                <label class="btn ghost sm" for="t-record">Edit results</label>
+              </div>
+              <p class="printnote" id="rp3">✓ Reprinted — a fresh copy of that session to keep practicing.</p>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="day">Sat</span><span class="it-main"><span class="it-name">Shapes worksheet · Cats: facts page</span></span><span class="bstat done">Recorded ✓</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>2D shapes · Cats: facts &amp; vocabulary</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp4" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint for extra practice</a>
+                <label class="btn ghost sm" for="t-record">Edit results</label>
+              </div>
+              <p class="printnote" id="rp4">✓ Reprinted — a fresh copy of that session to keep practicing.</p>
+            </div>
+          </details>
         </div>
       </div>
     </section>
