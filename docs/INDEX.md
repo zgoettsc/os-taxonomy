@@ -4,6 +4,12 @@ A homeschool learning system built on the Marble taxonomy. **Tagline:
 *Empowering parents, not screens.*** Start with [`BRIEF.md`](BRIEF.md) for the
 one-page pitch; this file is the map of everything.
 
+## Setting it up
+
+**[`SETUP.md`](SETUP.md)** — your step-by-step to take it live: install tools,
+stand up the Supabase database (schema + seed the taxonomy), turn on real
+content generation, and build the apps. Start here when you're ready to build.
+
 ## Read in this order
 
 1. **[`BRIEF.md`](BRIEF.md)** — one-page overview (what it is, why it's different).
