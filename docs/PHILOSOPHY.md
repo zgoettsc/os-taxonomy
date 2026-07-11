@@ -165,9 +165,33 @@ These are commitments, not preferences:
 
 The single biggest real-world failure mode is the absence of a responsible adult.
 In homeschool that adult is present by construction. We lean in: give the parent
-a daily target, a visible streak, a "what to do when the child is stuck" script,
-and an incentive-structure template centered on what the child actually cares
-about.
+a clear next action, a "what to do when the child is stuck" script, and an
+incentive-structure template centered on what the child actually cares about.
+
+**Sessions, not days — the app never assumes a day is a school day.** Families
+homeschool on wildly different rhythms: three days a week, four-day weeks,
+co-op days, travel, seasonal breaks, the occasional random Tuesday. So the unit
+of work is a **learning session the parent explicitly starts**, not a calendar
+day the app expects to be filled. Nothing is "missed" because a day passed with
+no session.
+
+- This is safe pedagogically because **spaced review is scheduled by real time**:
+  a review due in three days is due in three days whether or not school happened.
+  Skip a week and those reviews are simply waiting (and prioritized) at the next
+  session — no penalty, the interval just lands a little later.
+- **Accountability is measured in sessions, not streaks.** A consecutive-day
+  streak quietly punishes a family for a normal day off — the exact guilt-driven,
+  engagement-bait pattern we position against. We count sessions and skills
+  mastered; we don't manufacture a streak to protect.
+- **Recording is decoupled from "today."** A parent can grade this session,
+  back-date a forgotten one, or record a batch after a trip. A gentle nudge
+  surfaces any unrecorded session; the binder is the day-by-day history you can
+  tap to record.
+- **Print-ahead for off-grid stretches.** Whole packets for the next N sessions
+  can be printed in advance (road trips, no printer). They're planned as normally
+  scheduled — new topics included — and, because pre-printed material can't adapt
+  until results are entered, the plan re-syncs and **re-teaches the tricky ones**
+  the moment the parent records how it went.
 
 ## 8. Content integrity
 

@@ -132,10 +132,15 @@
   .more .r1{display:flex;align-items:center;gap:10px}
   .more .qty{margin-left:auto;display:inline-flex;align-items:center;gap:12px;background:var(--card2);border-radius:20px;padding:5px 8px}
   .more .qty b{font-variant-numeric:tabular-nums;font-weight:700}
-  .binder li{display:flex;gap:11px;padding:11px 10px}
-  .binder li+li{border-top:1px solid var(--line2)}
-  .binder .day{font-weight:650;font-size:.85rem;min-width:74px}
-  .binder .what{font-size:.8rem;color:var(--soft)}
+  .binder{padding:4px 6px 6px}
+  .binder .brow{display:flex;align-items:flex-start;gap:11px;padding:12px 10px;cursor:pointer;border-radius:12px}
+  .binder .brow+.brow{border-top:1px solid var(--line2)}
+  .binder .brow:hover{background:var(--card2)}
+  .binder .day{font-weight:700;font-size:.85rem;min-width:56px;flex:none}
+  .binder .what{font-size:.8rem;color:var(--soft);flex:1;line-height:1.35}
+  .binder .bstat{flex:none;font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
+  .binder .bstat.todo{background:var(--amber-soft);color:var(--amber)}
+  .binder .bstat.done{background:var(--moss-soft);color:var(--moss-ink)}
 
   .stats{display:flex;gap:10px}
   .stat{flex:1;background:var(--card2);border-radius:14px;padding:12px}
@@ -165,38 +170,70 @@
   .tabs label svg{width:22px;height:22px}
   #t-today:checked~.tabs label[for="t-today"],
   #t-plan:checked~.tabs label[for="t-plan"],
-  #t-record:checked~.tabs label[for="t-today"],
+  #t-record:checked~.tabs label[for="t-record"],
   #t-print:checked~.tabs label[for="t-print"],
   #t-prog:checked~.tabs label[for="t-prog"]{color:var(--moss)}
+  .tabs label svg{width:21px;height:21px}
+
+  /* session-model bits */
+  .sessions{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:var(--moss-soft);color:var(--moss-ink);font-weight:700;font-size:.78rem;padding:6px 10px;border-radius:20px;font-variant-numeric:tabular-nums}
+  .nudge{display:flex;align-items:center;gap:10px;background:var(--amber-soft);border:1px solid var(--amber);border-radius:14px;padding:11px 13px;text-decoration:none;color:var(--ink)}
+  .nudge .nt{font-size:.84rem;font-weight:600;line-height:1.3}
+  .nudge .ns{font-size:.72rem;color:var(--soft)}
+  .nudge .go{margin-left:auto;color:var(--amber);flex:none}
+  .startcard{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .startcard .h{display:flex;align-items:baseline;gap:8px}
+  .startcard .h b{font-family:var(--disp);font-size:1.1rem}
+  .startcard .queued{display:flex;gap:8px;flex-wrap:wrap}
+  .pillstat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 11px;font-size:.76rem;font-weight:600;color:var(--soft)}
+  .pillstat b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .picker{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border-radius:14px;padding:10px 12px}
+  .picker .pl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+  .picker select{font:inherit;font-weight:650;font-size:.9rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-  @media print{body{padding:0;background:#fff}.lede,.tabs,.top .streak{display:none}.app{border:0;box-shadow:none;min-height:0;max-width:none}.exp-body{display:flex!important}}
+  @media print{body{padding:0;background:#fff}.lede,.tabs,.top .sessions,.nudge,.startcard,.picker{display:none}.app{border:0;box-shadow:none;min-height:0;max-width:none}.exp-body{display:flex!important}}
 </style>
 
-<p class="lede"><b>Marble — parent app.</b> The hub: read the coaching, print the packet, record how it went, watch progress. <b>Tap the bottom tabs</b> to move between screens.</p>
+<p class="lede"><b>Marble — parent app.</b> The hub: start a session when you're ready, print the packet, record how it went, watch progress. <b>Tap the bottom tabs</b> to move between screens. School on any schedule — the app never assumes a day is a school day.</p>
 
 <div class="app">
   <input class="nav" type="radio" name="tab" id="t-today" checked>
   <input class="nav" type="radio" name="tab" id="t-plan">
+  <input class="nav" type="radio" name="tab" id="t-record">
   <input class="nav" type="radio" name="tab" id="t-print">
   <input class="nav" type="radio" name="tab" id="t-prog">
-  <input class="nav" type="radio" name="tab" id="t-record">
 
   <div class="top">
     <span class="who">
       <span class="ava">A</span>
       <span><span class="nm">Ada</span> <span class="age">· age 6</span></span>
     </span>
-    <span class="streak"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-.5-3 2 2 3.5 4.5 3.5 7a7 7 0 1 1-14 0c0-3 2-5 3-7 .8 1.6 1 3 1 4a2 2 0 0 0 2-2c0-2-1-3-3-3 0 0 3-1 3-4z"/></svg>12 days</span>
+    <span class="sessions" title="Total learning sessions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22V11"/><path d="M12 14c0-3 2.4-5 5.5-5C17.5 12 15 14 12 14z"/><path d="M12 11C12 8 9.6 6 6.5 6 6.5 9 9 11 12 11z"/></svg>96 sessions</span>
   </div>
 
   <div class="scroll">
-    <!-- TODAY -->
+    <!-- HOME -->
     <section class="view" id="v-today">
+      <label class="nudge" for="t-record" style="cursor:pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span><span class="nt">Last session isn't recorded yet</span><br><span class="ns">Thu · 5 items — record it to update the plan</span></span>
+        <span class="go"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+      </label>
+      <div class="startcard">
+        <div class="h"><b>Ready when you are</b></div>
+        <div class="queued">
+          <span class="pillstat"><b>4</b> reviews due</span>
+          <span class="pillstat"><b>2</b> new ready</span>
+          <span class="pillstat">~20 min</span>
+        </div>
+        <a class="btn primary" href="#print-today" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>Start a session &amp; print the packet</a>
+        <p style="font-size:.75rem;color:var(--faint);margin:0;text-align:center">No pressure to go daily — start whenever you're doing school.</p>
+      </div>
       <div class="brief">
         <svg class="sprout" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22V11"/><path d="M12 14c0-3 2.4-5 5.5-5C17.5 12 15 14 12 14z"/><path d="M12 11C12 8 9.6 6 6.5 6 6.5 9 9 11 12 11z"/></svg>
-        <p class="eyebrow">Today's coaching</p>
+        <p class="eyebrow">This session's coaching</p>
         <h2>Fluent adding &amp; subtracting within 5</h2>
-        <p class="focus">Math · Today's focus, ~5 minutes</p>
+        <p class="focus">Math · main focus, ~5 minutes</p>
         <dl>
           <div class="row"><span class="k">Watch for</span><span class="v">She recounts from 1 every time instead of counting on from the bigger number.</span></div>
           <div class="row"><span class="k">The fix</span><span class="v">Cover the first group, say its number out loud, then count on the rest.</span></div>
@@ -204,7 +241,7 @@
         </dl>
       </div>
       <div class="card">
-        <div class="card-h"><h3>Today's packet</h3><span class="meta">5 items · ~20 min</span></div>
+        <div class="card-h"><h3>This session's packet</h3><span class="meta">5 items · ~20 min</span></div>
         <p style="font-size:.74rem;color:var(--faint);margin:0;padding:0 16px 8px">Tap any row to see what it is, what mastery looks like, and examples.</p>
         <div class="rows">
           <details class="exp">
@@ -250,8 +287,8 @@
         </div>
       </div>
       <div class="actions">
-        <a class="btn primary" href="#print-today" data-print><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>Print today's packet</a>
-        <p class="printnote" id="print-today">✓ Sent to your printer — and filed in today's binder.</p>
+        <a class="btn primary" href="#print-today" data-print><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>Print this session's packet</a>
+        <p class="printnote" id="print-today">✓ Sent to your printer — and filed in the binder.</p>
         <label class="btn ghost" for="t-record">Record how it went →</label>
       </div>
     </section>
@@ -298,7 +335,7 @@
     <section class="view" id="v-print">
       <p class="eyebrow">Print &amp; binder</p>
       <div class="card">
-        <div class="card-h"><h3>Today's packet</h3><span class="meta">learn + practice</span></div>
+        <div class="card-h"><h3>This session's packet</h3><span class="meta">learn + practice</span></div>
         <div class="prev-row">
           <div class="thumb"><div class="lines"><i style="width:70%"></i><i style="width:90%"></i><i style="width:60%"></i><i style="width:80%"></i></div><span class="lbl">Book page (learn)</span></div>
           <div class="thumb"><div class="lines"><i style="width:40%"></i><i style="width:40%"></i><i style="width:40%"></i><i style="width:40%"></i></div><span class="lbl">Worksheet</span></div>
@@ -307,19 +344,26 @@
           <p class="printnote" id="print-packet">✓ Sent to your printer — book page, worksheet, and answer key.</p></div>
       </div>
       <div class="card">
+        <div class="card-h"><h3>Print ahead</h3><span class="meta">off-grid / road trip</span></div>
+        <div class="more"><div class="r1"><div><div style="font-weight:650;font-size:.9rem">Next few sessions, ready to go</div><div class="it-sub">whole packets you can do away from a printer</div></div><span class="qty">−&nbsp;<b>5</b>&nbsp;+</span></div></div>
+        <div style="padding:2px 14px 12px"><a class="btn ghost" href="#ahead-note" data-print><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Print 5 sessions</a>
+          <p class="printnote" id="ahead-note">✓ 5 sessions printed &amp; numbered. Record them when you're back — the app re-teaches anything tricky.</p></div>
+        <p style="font-size:.74rem;color:var(--faint);margin:0;padding:0 16px 14px">Planned as normally scheduled, new topics included. Since they're printed ahead, they can't adapt until you enter results — so grade them when you're back and the plan catches up.</p>
+      </div>
+      <div class="card">
         <div class="card-h"><h3>More practice</h3><span class="meta">never capped</span></div>
         <div class="more"><div class="r1"><div><div style="font-weight:650;font-size:.9rem">Adding within 5</div><div class="it-sub">fresh, non-repeating sheets — make as many as you need</div></div><span class="qty">−&nbsp;<b>2</b>&nbsp;+</span></div></div>
         <div style="padding:0 14px 14px"><a class="btn ghost" href="#gen-note" data-print>Generate &amp; print</a>
           <p class="printnote" id="gen-note">✓ Generated a fresh sheet — new problems every time.</p></div>
       </div>
       <div class="card">
-        <div class="card-h"><h3>The binder</h3><span class="meta">day by day</span></div>
-        <ul class="binder items">
-          <li><span class="day">Today</span><span class="what">Math book page + worksheet · Nouns &amp; Verbs · Cats unit page</span></li>
-          <li><span class="day">Yesterday</span><span class="what">Number bonds worksheet · Rhyming practice · Cats: reading</span></li>
-          <li><span class="day">Wed</span><span class="what">Counting-on lesson + worksheet · Handwriting</span></li>
-          <li><span class="day">Tue</span><span class="what">Shapes worksheet · Cats: facts page</span></li>
-        </ul>
+        <div class="card-h"><h3>The binder</h3><span class="meta">session by session · tap to record</span></div>
+        <div class="binder">
+          <label class="brow" for="t-record"><span class="day">Today</span><span class="what">Math book page + worksheet · Nouns &amp; Verbs · Cats unit page</span><span class="bstat todo">Record →</span></label>
+          <label class="brow" for="t-record"><span class="day">Thu</span><span class="what">Number bonds worksheet · Rhyming practice · Cats: reading</span><span class="bstat todo">Record →</span></label>
+          <label class="brow" for="t-record"><span class="day">Tue</span><span class="what">Counting-on lesson + worksheet · Handwriting</span><span class="bstat done">Recorded ✓</span></label>
+          <label class="brow" for="t-record"><span class="day">Sat</span><span class="what">Shapes worksheet · Cats: facts page</span><span class="bstat done">Recorded ✓</span></label>
+        </div>
       </div>
     </section>
 
@@ -328,13 +372,14 @@
       <p class="eyebrow">Progress &amp; records</p>
       <div class="stats">
         <div class="stat"><div class="n">29</div><div class="l">Mastered</div></div>
-        <div class="stat"><div class="n">12</div><div class="l">Day streak</div></div>
-        <div class="stat"><div class="n">18h</div><div class="l">This month</div></div>
+        <div class="stat"><div class="n">96</div><div class="l">Sessions</div></div>
+        <div class="stat"><div class="n">11</div><div class="l">This month</div></div>
       </div>
-      <div class="card"><div class="card-h"><h3>This week</h3><span class="meta">items completed</span></div>
+      <div class="card"><div class="card-h"><h3>Recent sessions</h3><span class="meta">items completed each</span></div>
         <div class="spark">
-          <div class="b"><i style="height:60%"></i></div><div class="b"><i style="height:80%"></i></div><div class="b"><i style="height:8%"></i></div><div class="b"><i style="height:100%"></i></div><div class="b"><i style="height:80%"></i></div><div class="b"><i style="height:40%"></i></div><div class="b today"><i style="height:80%"></i></div>
-        </div></div>
+          <div class="b"><i style="height:60%"></i></div><div class="b"><i style="height:80%"></i></div><div class="b"><i style="height:100%"></i></div><div class="b"><i style="height:80%"></i></div><div class="b"><i style="height:70%"></i></div><div class="b"><i style="height:90%"></i></div><div class="b today"><i style="height:80%"></i></div>
+        </div>
+        <p style="font-size:.72rem;color:var(--faint);margin:0;padding:0 16px 12px">One bar per session — not per calendar day. Gaps between school days are normal.</p></div>
       <div class="card"><div class="card-h"><h3>Standards coverage</h3><span class="meta">auto-tracked</span></div>
         <div class="cov"><div class="r1"><b>Common Core Math (K)</b><span>64%</span></div><div class="bar"><i class="c" style="width:64%"></i></div></div>
         <div class="cov"><div class="r1"><b>Common Core ELA (K)</b><span>58%</span></div><div class="bar"><i class="c" style="width:58%"></i></div></div>
@@ -346,14 +391,24 @@
 
     <!-- RECORD -->
     <section class="view" id="v-record">
-      <label class="backlink" for="t-today">← Back to today</label>
-      <p class="eyebrow">Grade today's sheet · tap a row to see the mastery bar</p>
+      <p class="eyebrow">Record a session · tap a row to see the mastery bar</p>
+      <div class="picker">
+        <span class="pl">Recording</span>
+        <select aria-label="Which session to record">
+          <option>This session (today)</option>
+          <option>Thu · not recorded</option>
+          <option>Wed · not recorded</option>
+          <option>Mon · edit</option>
+          <option>Pick a date…</option>
+        </select>
+        <span style="font-size:.72rem;color:var(--faint)">Forgot a day? Grade it whenever.</span>
+      </div>
       <div class="card"><div class="rows">
         <details class="exp">
           <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Fluent adding &amp; subtracting within 5</span><span class="it-sub">Math</span></span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
           <div class="exp-body">
             <p class="exp-desc">Fluently add and subtract within 5 — quick recall, no finger-counting.</p>
-            <div class="exp-field"><b>Mark "Got it" when</b>8 of 10 correct in ~3s each. Two "Got it" days in a row = mastered.</div>
+            <div class="exp-field"><b>Mark "Got it" when</b>8 of 10 correct in ~3s each. Two "Got it" sessions on different days = mastered.</div>
             <div class="exp-field exp-ex"><b>Examples on the sheet</b><span class="ex">3 + 2 · 5 − 1 · 4 + 1 · 2 + 2</span></div>
             <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r0" id="r0p" checked><label for="r0p">Got it</label><input class="again" type="radio" name="r0" id="r0a"><label for="r0a">Practice</label></span></div>
           </div>
@@ -396,13 +451,14 @@
         </details>
       </div></div>
       <label class="btn primary" for="t-today" style="cursor:pointer">Save &amp; update the plan</label>
-      <p style="font-size:.78rem;color:var(--faint);text-align:center;margin:0">Passed twice on different days = mastered. Misses come back sooner.</p>
+      <p style="font-size:.78rem;color:var(--faint);text-align:center;margin:0">Two "Got it" sessions on different days = mastered. Misses come back sooner — the app re-teaches the tricky ones.</p>
     </section>
   </div>
 
   <nav class="tabs">
-    <label for="t-today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Today</label>
+    <label for="t-today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</label>
     <label for="t-plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V5M4 19h16"/><path d="M8 16v-4M13 16V8M18 16v-6"/></svg>Plan</label>
+    <label for="t-record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Record</label>
     <label for="t-print"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Print</label>
     <label for="t-prog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/></svg>Progress</label>
   </nav>
