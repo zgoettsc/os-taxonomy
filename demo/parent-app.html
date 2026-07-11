@@ -70,17 +70,37 @@
   ul.items{list-style:none;margin:0;padding:0 6px 6px}
   ul.items li{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:12px}
   ul.items li+li{border-top:1px solid var(--line2)}
-  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:6px}
   .it-main{flex:1;min-width:0}
-  .it-name{display:block;font-size:.9rem;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .it-sub{display:block;font-size:.72rem;color:var(--faint)}
-  .chip{flex:none;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:20px}
+  .it-name{display:block;font-size:.9rem;font-weight:600;line-height:1.3}
+  .it-sub{display:block;font-size:.72rem;color:var(--faint);margin-top:1px}
+  .chip{flex:none;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:20px;margin-top:3px}
   .chip.new{background:var(--moss-soft);color:var(--moss-ink)}
   .chip.review{background:var(--amber-soft);color:var(--amber)}
   .chip.unit{background:var(--berry-soft);color:var(--berry)}
   .chip.ready{background:var(--moss-soft);color:var(--moss-ink)}
 
+  /* expandable rows — native <details>, no JS, text wraps freely */
+  .rows{padding:4px 6px 6px}
+  .exp{border-top:1px solid var(--line2)}
+  .exp:first-child{border-top:0}
+  .exp>summary{display:flex;align-items:flex-start;gap:11px;padding:12px 10px;cursor:pointer;list-style:none;border-radius:12px}
+  .exp>summary::-webkit-details-marker{display:none}
+  .exp>summary:hover{background:var(--card2)}
+  .caret{flex:none;margin-top:4px;color:var(--faint);transition:transform .2s}
+  .exp[open]>summary .caret{transform:rotate(180deg)}
+  .exp-body{padding:2px 12px 14px 30px;display:flex;flex-direction:column;gap:10px;animation:rise .2s ease}
+  .exp-desc{font-size:.86rem;color:var(--soft);margin:0;line-height:1.45}
+  .exp-field b{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700;margin-bottom:3px}
+  .exp-field{font-size:.86rem;line-height:1.4}
+  .exp-ex{background:var(--card2);border-radius:10px;padding:9px 11px}
+  .exp-ex .ex{font-variant-numeric:tabular-nums}
+  .exp-mark{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px}
+  .exp-mark .ml{font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700;width:100%}
+
   .actions{display:flex;flex-direction:column;gap:9px}
+  .printnote{display:none;font-size:.8rem;color:var(--moss);text-align:center;margin:0;padding:2px 4px;font-weight:600}
+  .printnote:target{display:block;animation:rise .25s ease}
   .btn{display:flex;align-items:center;justify-content:center;gap:9px;border:0;font:inherit;font-weight:650;padding:14px;border-radius:14px;cursor:pointer;font-size:.98rem;text-decoration:none}
   .btn.primary{background:var(--moss);color:#fff;box-shadow:var(--shadow-sm)}
   .btn.primary:active{transform:translateY(1px)}
@@ -149,6 +169,7 @@
   #t-print:checked~.tabs label[for="t-print"],
   #t-prog:checked~.tabs label[for="t-prog"]{color:var(--moss)}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media print{body{padding:0;background:#fff}.lede,.tabs,.top .streak{display:none}.app{border:0;box-shadow:none;min-height:0;max-width:none}.exp-body{display:flex!important}}
 </style>
 
 <p class="lede"><b>Marble — parent app.</b> The hub: read the coaching, print the packet, record how it went, watch progress. <b>Tap the bottom tabs</b> to move between screens.</p>
@@ -184,16 +205,53 @@
       </div>
       <div class="card">
         <div class="card-h"><h3>Today's packet</h3><span class="meta">5 items · ~20 min</span></div>
-        <ul class="items">
-          <li><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Fluent adding &amp; subtracting within 5</span><span class="it-sub">Math</span></span><span class="chip new">New</span></li>
-          <li><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Number bonds to 5</span><span class="it-sub">Math</span></span><span class="chip review">Review</span></li>
-          <li><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Basic Nouns &amp; Verbs</span><span class="it-sub">English</span></span><span class="chip new">New</span></li>
-          <li><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Rhyming words</span><span class="it-sub">English</span></span><span class="chip review">Review</span></li>
-          <li><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Animal Camouflage</span><span class="it-sub">Science</span></span><span class="chip unit">Unit</span></li>
-        </ul>
+        <p style="font-size:.74rem;color:var(--faint);margin:0;padding:0 16px 8px">Tap any row to see what it is, what mastery looks like, and examples.</p>
+        <div class="rows">
+          <details class="exp">
+            <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Fluent adding &amp; subtracting within 5</span><span class="it-sub">Math · New</span></span><span class="chip new">New</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Fluently add and subtract within 5 — recall the answer quickly, without counting up on fingers each time.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Answers 8 of 10 facts correctly in about 3 seconds each, on two different days.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">3 + 2 = 5 · 5 − 1 = 4 · 4 + 1 = 5 · 2 + 2 = 4</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Number bonds to 5</span><span class="it-sub">Math · Review</span></span><span class="chip review">Review</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Know the pairs of numbers that make 5, and the matching subtraction facts, from memory.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Given one part, names the other part of 5 without counting.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">1 + 4 · 2 + 3 · 0 + 5 · 5 − 2 = 3</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Basic Nouns &amp; Verbs</span><span class="it-sub">English · New</span></span><span class="chip new">New</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Use frequently-occurring nouns (people, places, things) and verbs (action words) correctly in speech and writing.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Sorts words into nouns vs verbs and uses each correctly in a spoken sentence.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">Nouns: dog, park, cup · Verbs: run, jump, eat</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Rhyming words</span><span class="it-sub">English · Review</span></span><span class="chip review">Review</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Recognise and produce rhyming words; join in with predictable rhymes in stories and poems.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Gives a word that rhymes with a spoken word 4 of 5 times.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">cat → hat · sun → run · tree → bee</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Animal Camouflage</span><span class="it-sub">Science · Cats unit</span></span><span class="chip unit">Unit</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Know that many animals use camouflage — colours and patterns that help them blend into their surroundings — to hide from predators or sneak up on prey.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Explains, in their own words, how camouflage helps one animal survive.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">Stick insect looks like a twig · Polar bear is white in snow · A tabby cat hides in dry grass</span></div>
+            </div>
+          </details>
+        </div>
       </div>
       <div class="actions">
-        <a class="btn primary" href="#"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>Print today's packet</a>
+        <a class="btn primary" href="#print-today" data-print><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>Print today's packet</a>
+        <p class="printnote" id="print-today">✓ Sent to your printer — and filed in today's binder.</p>
         <label class="btn ghost" for="t-record">Record how it went →</label>
       </div>
     </section>
@@ -210,11 +268,29 @@
       <div class="legend"><span><i class="sw" style="background:var(--moss)"></i>Mastered</span><span><i class="sw" style="background:var(--clay)"></i>In progress</span><span><i class="sw" style="background:var(--line)"></i>Ready / ahead</span></div>
       <div class="card">
         <div class="card-h"><h3>Ready to learn next</h3><span class="meta">unlocked</span></div>
-        <ul class="items">
-          <li><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Adding &amp; subtracting within 10</span><span class="it-sub">Math</span></span><span class="chip ready">Ready</span></li>
-          <li><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Capital letters for names</span><span class="it-sub">English</span></span><span class="chip ready">Ready</span></li>
-          <li><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Living &amp; non-living things</span><span class="it-sub">Science</span></span><span class="chip ready">Ready</span></li>
-        </ul>
+        <div class="rows">
+          <details class="exp">
+            <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Adding &amp; subtracting within 10</span><span class="it-sub">Math · prerequisites met</span></span><span class="chip ready">Ready</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Add and subtract numbers to 10 using objects, drawings, or mental images — the next step up from within 5.</p>
+              <div class="exp-field"><b>Unlocks</b>Addition &amp; subtraction word problems · Adding within 20.</div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Capital letters for names</span><span class="it-sub">English · prerequisites met</span></span><span class="chip ready">Ready</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Use a capital letter for people's names, places, days of the week, and the word "I".</p>
+              <div class="exp-field"><b>Unlocks</b>Capital letters to start a sentence · Basic punctuation.</div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Living &amp; non-living things</span><span class="it-sub">Science · prerequisites met</span></span><span class="chip ready">Ready</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Sort things into living and non-living, and say what living things need to survive.</p>
+              <div class="exp-field"><b>Unlocks</b>Basic needs of animals · Habitats.</div>
+            </div>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -227,12 +303,14 @@
           <div class="thumb"><div class="lines"><i style="width:70%"></i><i style="width:90%"></i><i style="width:60%"></i><i style="width:80%"></i></div><span class="lbl">Book page (learn)</span></div>
           <div class="thumb"><div class="lines"><i style="width:40%"></i><i style="width:40%"></i><i style="width:40%"></i><i style="width:40%"></i></div><span class="lbl">Worksheet</span></div>
         </div>
-        <div style="padding:0 14px 14px"><a class="btn primary" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Print packet + answer key</a></div>
+        <div style="padding:0 14px 14px"><a class="btn primary" href="#print-packet" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Print packet + answer key</a>
+          <p class="printnote" id="print-packet">✓ Sent to your printer — book page, worksheet, and answer key.</p></div>
       </div>
       <div class="card">
         <div class="card-h"><h3>More practice</h3><span class="meta">never capped</span></div>
         <div class="more"><div class="r1"><div><div style="font-weight:650;font-size:.9rem">Adding within 5</div><div class="it-sub">fresh, non-repeating sheets — make as many as you need</div></div><span class="qty">−&nbsp;<b>2</b>&nbsp;+</span></div></div>
-        <div style="padding:0 14px 14px"><a class="btn ghost" href="#">Generate &amp; print</a></div>
+        <div style="padding:0 14px 14px"><a class="btn ghost" href="#gen-note" data-print>Generate &amp; print</a>
+          <p class="printnote" id="gen-note">✓ Generated a fresh sheet — new problems every time.</p></div>
       </div>
       <div class="card">
         <div class="card-h"><h3>The binder</h3><span class="meta">day by day</span></div>
@@ -262,20 +340,61 @@
         <div class="cov"><div class="r1"><b>Common Core ELA (K)</b><span>58%</span></div><div class="bar"><i class="c" style="width:58%"></i></div></div>
         <div class="cov"><div class="r1"><b>NGSS Kindergarten</b><span>41%</span></div><div class="bar"><i class="c" style="width:41%"></i></div></div>
       </div>
-      <div class="actions"><a class="btn ghost" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Export portfolio (PDF)</a></div>
+      <div class="actions"><a class="btn ghost" href="#export-note" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Export portfolio (PDF)</a>
+        <p class="printnote" id="export-note">✓ Portfolio ready — work samples + standards coverage for your records.</p></div>
     </section>
 
     <!-- RECORD -->
     <section class="view" id="v-record">
       <label class="backlink" for="t-today">← Back to today</label>
-      <p class="eyebrow">Grade today's sheet · mark each one</p>
-      <div class="card"><ul class="items rec">
-        <li><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Fluent adding &amp; subtracting within 5</span><span class="it-sub">Math</span></span><span class="toggle"><input class="pass" type="radio" name="r0" id="r0p" checked><label for="r0p">Got it</label><input class="again" type="radio" name="r0" id="r0a"><label for="r0a">Practice</label></span></li>
-        <li><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Number bonds to 5</span><span class="it-sub">Math</span></span><span class="toggle"><input class="pass" type="radio" name="r1" id="r1p" checked><label for="r1p">Got it</label><input class="again" type="radio" name="r1" id="r1a"><label for="r1a">Practice</label></span></li>
-        <li><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Basic Nouns &amp; Verbs</span><span class="it-sub">English</span></span><span class="toggle"><input class="pass" type="radio" name="r2" id="r2p" checked><label for="r2p">Got it</label><input class="again" type="radio" name="r2" id="r2a"><label for="r2a">Practice</label></span></li>
-        <li><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Rhyming words</span><span class="it-sub">English</span></span><span class="toggle"><input class="pass" type="radio" name="r3" id="r3p" checked><label for="r3p">Got it</label><input class="again" type="radio" name="r3" id="r3a"><label for="r3a">Practice</label></span></li>
-        <li><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Animal Camouflage</span><span class="it-sub">Science</span></span><span class="toggle"><input class="pass" type="radio" name="r4" id="r4p" checked><label for="r4p">Got it</label><input class="again" type="radio" name="r4" id="r4a"><label for="r4a">Practice</label></span></li>
-      </ul></div>
+      <p class="eyebrow">Grade today's sheet · tap a row to see the mastery bar</p>
+      <div class="card"><div class="rows">
+        <details class="exp">
+          <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Fluent adding &amp; subtracting within 5</span><span class="it-sub">Math</span></span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Fluently add and subtract within 5 — quick recall, no finger-counting.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>8 of 10 correct in ~3s each. Two "Got it" days in a row = mastered.</div>
+            <div class="exp-field exp-ex"><b>Examples on the sheet</b><span class="ex">3 + 2 · 5 − 1 · 4 + 1 · 2 + 2</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r0" id="r0p" checked><label for="r0p">Got it</label><input class="again" type="radio" name="r0" id="r0a"><label for="r0a">Practice</label></span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Number bonds to 5</span><span class="it-sub">Math</span></span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Know the pairs that make 5 and the matching subtraction facts, from memory.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>Given one part, names the other part of 5 without counting.</div>
+            <div class="exp-field exp-ex"><b>Examples on the sheet</b><span class="ex">1 + 4 · 2 + 3 · 5 − 2</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r1" id="r1p" checked><label for="r1p">Got it</label><input class="again" type="radio" name="r1" id="r1a"><label for="r1a">Practice</label></span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Basic Nouns &amp; Verbs</span><span class="it-sub">English</span></span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Use common nouns and verbs correctly in speech and writing.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>Sorts words into nouns vs verbs and uses each in a sentence.</div>
+            <div class="exp-field exp-ex"><b>Examples on the sheet</b><span class="ex">dog · park · run · jump</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r2" id="r2p" checked><label for="r2p">Got it</label><input class="again" type="radio" name="r2" id="r2a"><label for="r2a">Practice</label></span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Rhyming words</span><span class="it-sub">English</span></span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Recognise and produce rhyming words.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>Gives a rhyme for a spoken word 4 of 5 times.</div>
+            <div class="exp-field exp-ex"><b>Examples on the sheet</b><span class="ex">cat → hat · sun → run · tree → bee</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r3" id="r3p" checked><label for="r3p">Got it</label><input class="again" type="radio" name="r3" id="r3a"><label for="r3a">Practice</label></span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Animal Camouflage</span><span class="it-sub">Science · Cats unit</span></span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Know how animals use camouflage to hide from predators or sneak up on prey.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>Explains, in their own words, how camouflage helps one animal survive.</div>
+            <div class="exp-field exp-ex"><b>On the sheet</b><span class="ex">Match each animal to where it hides best.</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r4" id="r4p" checked><label for="r4p">Got it</label><input class="again" type="radio" name="r4" id="r4a"><label for="r4a">Practice</label></span></div>
+          </div>
+        </details>
+      </div></div>
       <label class="btn primary" for="t-today" style="cursor:pointer">Save &amp; update the plan</label>
       <p style="font-size:.78rem;color:var(--faint);text-align:center;margin:0">Passed twice on different days = mastered. Misses come back sooner.</p>
     </section>
@@ -288,3 +407,15 @@
     <label for="t-prog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/></svg>Progress</label>
   </nav>
 </div>
+
+<script>
+// Progressive enhancement: real print buttons open the browser print dialog.
+// Without JS, the href reveals an inline confirmation note (CSS :target).
+document.querySelectorAll('a[data-print]').forEach(function(a){
+  a.addEventListener('click', function(){
+    if (a.getAttribute('href') === '#print-today' || a.getAttribute('href') === '#print-packet') {
+      setTimeout(function(){ try { window.print(); } catch(e){} }, 60);
+    }
+  });
+});
+</script>
