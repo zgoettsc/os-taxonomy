@@ -86,6 +86,16 @@
   .brief .focus{font-size:.8rem;color:var(--moss-ink);font-weight:600}
   .counts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   .pill{font-size:.68rem;font-weight:700;padding:4px 9px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--soft)}
+  .actions{display:flex;gap:8px;margin-top:13px;align-items:center;flex-wrap:wrap}
+  .actions .btn{padding:10px 14px;font-size:.85rem;flex:1;min-width:130px}
+  .sess{font-size:.72rem;color:var(--moss-ink);font-weight:700;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 11px;font-variant-numeric:tabular-nums}
+  .toast{background:var(--moss-soft);border:1px solid transparent;color:var(--moss-ink);border-radius:12px;padding:10px 12px;font-size:.82rem;font-weight:600}
+  .cardprint{margin-top:2px}
+  .cardprint button{background:none;border:0;color:var(--sci);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;padding:4px 0;display:inline-flex;gap:5px;align-items:center}
+  .setgroup{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .setgroup .gh{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--line2);background:var(--card2)}
+  .setgroup .gh .ava{width:32px;height:32px;border-radius:9px;font-size:.9rem}
+  .setgroup .gh .nm{font-family:var(--disp);font-weight:700}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
   .card>summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
@@ -129,6 +139,7 @@
     <div class="brand"><span class="dot">🌱</span> Marble</div>
     <div class="right">
       <span class="faint" id="whoami" style="font-size:.74rem"></span>
+      <button class="link hidden" id="settingsBtn">⚙ Settings</button>
       <button class="link hidden" id="signOut">Sign out</button>
     </div>
   </div>
@@ -164,9 +175,17 @@
       <h2 id="homeName">—</h2>
       <div class="focus" id="homeFocus"></div>
       <div class="counts" id="homeCounts"></div>
+      <div class="actions" id="homeActions"></div>
     </div>
     <div id="cards" style="display:flex;flex-direction:column;gap:11px"></div>
-    <div id="gates" style="display:flex;flex-direction:column;gap:9px"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="body hidden" id="screen-settings">
+    <p class="eyebrow">Settings</p>
+    <h2 style="font-size:1.3rem;margin:-6px 0 2px">Parent controls</h2>
+    <p class="muted" style="font-size:.83rem;margin:0 0 6px">Sensitive topics are <b>off by default</b>. Turn one on for a child to include it in that child's sessions.</p>
+    <div id="settingsKids" style="display:flex;flex-direction:column;gap:16px"></div>
   </section>
 
   <div class="foot" id="foot">Connected to your live curriculum · 1,590 topics</div>
@@ -266,10 +285,11 @@ const initials = s => (s||"?").trim()[0].toUpperCase();
 const esc = s => (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 
 // ---- screen router ----
-const screens = ["auth","kids","home"];
+const screens = ["auth","kids","home","settings"];
 function show(name){
   screens.forEach(s=>document.getElementById("screen-"+s).classList.toggle("hidden", s!==name));
-  document.getElementById("backBtn").classList.toggle("hidden", name!=="home");
+  document.getElementById("backBtn").classList.toggle("hidden", name==="auth"||name==="kids");
+  document.getElementById("settingsBtn").classList.toggle("hidden", !(name==="kids"||name==="home"));
   document.getElementById("signOut").classList.toggle("hidden", name==="auth");
   document.getElementById("whoami").textContent = (name!=="auth" && session) ? session.user.email : "";
 }
@@ -303,14 +323,23 @@ document.getElementById("authBtn").onclick=async()=>{
   finally{ btn.disabled=false; setMode(mode); }
 };
 document.getElementById("signOut").onclick=()=>{ session=null; localStorage.removeItem("session"); show("auth"); };
-document.getElementById("backBtn").onclick=()=>show("kids");
+document.getElementById("settingsBtn").onclick=()=>{ settingsReturn = document.getElementById("screen-home").classList.contains("hidden")?"kids":"home"; renderSettings(); show("settings"); };
+document.getElementById("backBtn").onclick=()=>{
+  const onSettings=!document.getElementById("screen-settings").classList.contains("hidden");
+  if(onSettings && settingsReturn==="home" && CURRENT.kid) openHome(CURRENT.kid, CURRENT.age);
+  else show("kids");
+};
 
 // ---- KIDS ----
+let KIDS=[];                       // cached household children
+let CURRENT={kid:null,age:null,cards:[]};   // the child whose Home is open
+let settingsReturn="kids";
 async function loadKids(){
   show("kids");
   const list=document.getElementById("kidsList"); list.innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
   try{
     const kids=await sb("/rest/v1/children?select=id,first_name,birth_year,avatar&order=first_name");
+    KIDS=kids;
     list.innerHTML="";
     document.getElementById("kidsEmpty").classList.toggle("hidden", kids.length>0);
     const yr=new Date().getFullYear();
@@ -342,7 +371,7 @@ async function openHome(kid, age){
   document.getElementById("homeFocus").textContent = "Loading today's plan…";
   document.getElementById("homeCounts").innerHTML="";
   document.getElementById("cards").innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
-  document.getElementById("gates").innerHTML="";
+  document.getElementById("homeActions").innerHTML="";
   try{
     const {topics, hard}=await loadTaxonomy(age);
     const seed=Math.floor(Date.now()/864e5) % 7;        // rotates day to day
@@ -353,6 +382,7 @@ async function openHome(kid, age){
 }
 function renderHome(kid, age, topics, hard, seed){
   const cards=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
+  CURRENT={kid, age, cards};
   const subjects=[...new Set(cards.map(c=>c.topic.subject))];
   document.getElementById("homeFocus").textContent = `${cards.length} things to learn across ${subjects.length} subjects`;
   document.getElementById("homeCounts").innerHTML = subjects.map(s=>`<span class="pill">${SUBJ[s]?.e||""} ${esc(s)}</span>`).join("");
@@ -381,23 +411,108 @@ function renderHome(kid, age, topics, hard, seed){
         <div><div class="h">What ${esc(kid.first_name)} will learn</div><p>${esc(t.description||"")}</p></div>
         ${crit?`<div><div class="h">You'll know they've got it when…</div><ul class="crit">${crit}</ul></div>`:""}
         ${laneBody}
+        <div class="cardprint"><button type="button">🖨 Print this card's material</button></div>
       </div>`;
+    const card={topic:t,lane};
+    d.querySelector(".cardprint button").onclick=(e)=>{ e.preventDefault(); openPrint(`${kid.first_name} — ${t.name}`, buildPacket(kid,[card])); };
     wrap.appendChild(d);
   }
-  renderGates(kid);
+  renderActions(kid);
 }
-function renderGates(kid){
-  const g=document.getElementById("gates"); g.innerHTML="";
-  const head=document.createElement("p"); head.className="eyebrow"; head.style.marginTop="6px"; head.textContent="Parent-gated topics"; g.appendChild(head);
-  for(const [id,info] of Object.entries(GATED)){
-    const on=allow(kid.id,id);
-    const el=document.createElement("div"); el.className="gate";
-    el.innerHTML=`<div class="lbl"><b>${esc(info.name)}</b><br><span class="faint" style="font-size:.76rem">${esc(info.why)}</span></div>
-      <button class="switch ${on?"on":""}" aria-label="toggle"></button>`;
-    el.querySelector(".switch").onclick=(ev)=>{ const nv=!allow(kid.id,id); allow(kid.id,id,nv);
-      ev.target.classList.toggle("on",nv); openHome(kid, new Date().getFullYear()-kid.birth_year); };
-    g.appendChild(el);
+
+// ---- session actions: the teach/practice verb ----
+const sessCount=(kid)=>Number(localStorage.getItem("sessions:"+kid.id)||0);
+function renderActions(kid){
+  const a=document.getElementById("homeActions"); a.innerHTML="";
+  const print=document.createElement("button"); print.className="btn primary";
+  print.innerHTML="🖨 Start &amp; print materials";
+  print.onclick=()=>openPrint(kid.first_name+"'s learning materials", buildPacket(kid, CURRENT.cards));
+  const done=document.createElement("button"); done.className="btn ghost";
+  done.textContent="✓ Mark session complete";
+  done.onclick=()=>{ localStorage.setItem("sessions:"+kid.id, sessCount(kid)+1); renderActions(kid);
+    const t=document.createElement("div"); t.className="toast";
+    t.textContent="Session logged. In the full build this is the trigger that sends the exam to "+kid.first_name+"'s app.";
+    a.appendChild(t); setTimeout(()=>t.remove(), 4200); };
+  const pill=document.createElement("span"); pill.className="sess"; pill.textContent="🌱 "+sessCount(kid)+" sessions";
+  a.append(print, done, pill);
+}
+
+// ---- SETTINGS: the gates live here now ----
+function renderSettings(){
+  const wrap=document.getElementById("settingsKids"); wrap.innerHTML="";
+  if(!KIDS.length){ wrap.innerHTML='<div class="note">No children on this account yet.</div>'; return; }
+  for(const kid of KIDS){
+    const g=document.createElement("div"); g.className="setgroup";
+    g.innerHTML=`<div class="gh"><div class="ava">${esc(kid.avatar||initials(kid.first_name))}</div><div class="nm">${esc(kid.first_name)}</div></div>`;
+    for(const [id,info] of Object.entries(GATED)){
+      const on=allow(kid.id,id);
+      const el=document.createElement("div"); el.className="gate"; el.style.border="0"; el.style.borderRadius="0";
+      el.innerHTML=`<div class="lbl"><b>${esc(info.name)}</b><br><span class="faint" style="font-size:.76rem">${esc(info.why)}</span></div>
+        <button class="switch ${on?"on":""}" type="button" aria-label="toggle"></button>`;
+      el.querySelector(".switch").onclick=(ev)=>{ const nv=!allow(kid.id,id); allow(kid.id,id,nv); ev.target.classList.toggle("on",nv); };
+      g.appendChild(el);
+    }
+    wrap.appendChild(g);
   }
+}
+
+// ---- printable materials (opens a clean print window) ----
+function genProblems(t, n){
+  const hay=((t.domain||"")+" "+(t.name||"")).toLowerCase();
+  const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+  const gen = hay.includes("multipl") ? ()=>{const a=R(2,9),b=R(2,9);return{q:`${a} × ${b} =`,a:`${a*b}`};}
+    : hay.includes("divis") ? ()=>{const b=R(2,9),q=R(2,9);return{q:`${b*q} ÷ ${b} =`,a:`${q}`};}
+    : (hay.includes("subtract")||hay.includes("change")||hay.includes("difference")) ? ()=>{const a=R(20,99),b=R(1,a-1);return{q:`${a} − ${b} =`,a:`${a-b}`};}
+    : (hay.includes("add")||hay.includes("sum")||hay.includes("plus")) ? ()=>{const a=R(10,60),b=R(5,40);return{q:`${a} + ${b} =`,a:`${a+b}`};}
+    : null;
+  if(!gen) return null;
+  return Array.from({length:n}, gen);
+}
+function buildPacket(kid, cards){
+  const date=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  let body=`<header><div class=brand>🌱 Marble</div><h1>${esc(kid.first_name)}'s learning materials</h1><div class=sub>${date}</div></header>`;
+  const keys=[];
+  for(const {topic:t, lane} of cards){
+    const probs = lane==="practice" ? genProblems(t, 12) : null;
+    body+=`<section class=block><div class=sj>${esc(t.subject)} · ${esc(t.domain||"")}</div><h2>${esc(t.name)}</h2><p class=desc>${esc(t.description||"")}</p>`;
+    if(probs){
+      body+=`<div class=grid>`+probs.map((p,i)=>`<div class=prob><b>${i+1}.</b>&nbsp; ${p.q} <u></u></div>`).join("")+`</div>`;
+      keys.push({name:t.name, probs});
+    }else{
+      const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
+      body+=`<div class=teach><div class=lab>Teach it, talk it through — then check ${esc(kid.first_name)} can:</div><ul>${ev}</ul>
+        <div class=hint>Full grounded lesson text will appear here once content generation is switched on.</div></div>`;
+    }
+    body+=`</section>`;
+  }
+  if(keys.length){
+    body+=`<section class=keys><h2>Answer key <span>(parent copy — keep this page)</span></h2>`+
+      keys.map(k=>`<div class=kb><b>${esc(k.name)}</b><div class=kg>`+
+        k.probs.map((p,i)=>`<span>${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b></span>`).join("")+`</div></div>`).join("")+`</section>`;
+  }
+  return body;
+}
+function openPrint(title, inner){
+  const w=window.open("","_blank");
+  if(!w){ alert("Allow pop-ups for this page to print materials."); return; }
+  w.document.write(`<!doctype html><html><head><meta charset=utf-8><title>${esc(title)}</title><style>
+    *{box-sizing:border-box} body{font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1c1f17;margin:0;padding:28px 26px;max-width:760px}
+    header{border-bottom:2px solid #4c7a34;padding-bottom:10px;margin-bottom:18px}
+    .brand{color:#4c7a34;font-weight:800;font-size:.9rem} h1{font-size:1.5rem;margin:4px 0 2px} .sub{color:#777;font-size:.85rem}
+    .block{border:1px solid #e1e3da;border-radius:12px;padding:14px 16px;margin:0 0 16px;break-inside:avoid}
+    .sj{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#4c7a34}
+    h2{font-size:1.15rem;margin:3px 0 6px} .desc{margin:0 0 10px;color:#333}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px} .prob{font-size:1.05rem;font-variant-numeric:tabular-nums}
+    .prob u{display:inline-block;min-width:64px;border-bottom:1.5px solid #bbb;text-decoration:none}
+    .teach .lab{font-weight:700;margin-bottom:5px} .teach ul{margin:0 0 8px 18px;padding:0} .teach li{margin:3px 0}
+    .hint{font-size:.8rem;color:#999;font-style:italic}
+    .keys{break-before:page;border-top:2px dashed #ccc;padding-top:14px} .keys h2 span{font-weight:400;font-size:.85rem;color:#888}
+    .kb{margin:10px 0} .kg{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px} .kg span{font-variant-numeric:tabular-nums;color:#333}
+    @media print{body{padding:0} .no-print{display:none}}
+    .bar{position:fixed;top:10px;right:12px} .bar button{font:inherit;font-weight:700;background:#4c7a34;color:#fff;border:0;border-radius:9px;padding:9px 14px;cursor:pointer}
+  </style></head><body><div class="bar no-print"><button onclick="print()">🖨 Print</button></div>${inner}
+  <script>window.onload=function(){setTimeout(function(){window.print()},350)}<\/script></body></html>`);
+  w.document.close();
 }
 
 // ---- boot: resume a saved session ----
