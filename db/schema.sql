@@ -47,18 +47,10 @@ returns boolean language sql security definer set search_path = public as $$
   );
 $$;
 
--- Same idea, but resolving membership through a child's household.
-create or replace function public.can_access_child(cid uuid)
-returns boolean language sql security definer set search_path = public as $$
-  select exists (
-    select 1 from public.children c
-    where c.id = cid and public.is_household_member(c.household_id)
-  );
-$$;
-
-
 -- ============================================================================
 -- 2. Children (profiles under a household; minimal PII by design)
+--    Defined before can_access_child() below so that helper can reference it
+--    (Postgres validates function bodies at creation time).
 -- ============================================================================
 
 create table public.children (
@@ -71,6 +63,15 @@ create table public.children (
   created_at   timestamptz not null default now()
 );
 create index on public.children(household_id);
+
+-- Same idea as is_household_member, but resolving membership through a child's household.
+create or replace function public.can_access_child(cid uuid)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (
+    select 1 from public.children c
+    where c.id = cid and public.is_household_member(c.household_id)
+  );
+$$;
 
 
 -- ============================================================================
