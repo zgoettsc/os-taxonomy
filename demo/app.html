@@ -233,45 +233,6 @@ function amz(text){ if(typeof text!=="string") return text; let out=text;
       if(m[0]===m[0].toUpperCase()) return a[0].toUpperCase()+a.slice(1); return a; }); }
   return out; }
 
-// ---- Authored lesson content — what the generation pipeline produces per topic ----
-// (Starter set: the age 4–6 topics. Others fall back to the curriculum guide until
-// generation rolls out to them. Same shape gets stored in the DB at scale.)
-const LESSONS = {"mt_n6GhzDPllD":{"id":"mt_n6GhzDPllD","match":"Exploring Ideas Through Talk","subject":"English","domain":"Speaking & Listening","band":"4–6","minutes":15,"parent":{"bigIdea":"Talking is thinking out loud. Before a child can write ideas down, they need to grow the ideas by saying them — wondering, guessing, imagining, and explaining why. Your job here isn't to get \"right answers.\" It's to keep the conversation going so the thinking stretches.","why":"Children who talk through ideas build bigger vocabularies, hold longer trains of thought, and later find writing far easier — because they've already rehearsed their ideas aloud. This is the single highest-value thing you can do at this age, and it needs no worksheet.","teach":[{"say":"\"I wonder what would happen if…\"","do":"Pick something in view — a plant, the weather, a picture in a book — and wonder aloud. Then wait. Silence is an invitation, not a failure."},{"say":"\"I think ___ because ___.\"","do":"Model giving a reason. \"I think it will rain because the sky is gray.\" Reasons are the muscle you're building."},{"say":"\"What if it were the opposite?\"","do":"Flip the idea. \"What if dogs could talk?\" Let the answer be silly — imagination and reasoning grow together."},{"say":"\"Tell me more about that.\"","do":"When Hugh says something, don't correct or move on — dig. \"Tell me more\" doubles the length of a child's answer more reliably than any other phrase."}],"worked":["Parent: \"I wonder why leaves fall off the trees.\" Hugh: \"Because it's windy.\" Parent: \"Ooh — tell me more. Do they fall when it isn't windy too?\" Hugh: \"…Yeah, in the fall.\" Parent: \"So maybe it's about the season AND the wind. I think you found two reasons.\" — Notice: no correction, two \"tell me more\" moves, and you named his thinking back to him."],"watch":["Jumping in to finish his sentence. Count to three first.","Turning it into a quiz (\"What color is this? What shape?\"). Quizzes close thinking; wondering opens it.","Only accepting the \"right\" answer. At this stage a reasoned wrong answer is worth more than a lucky right one."],"everyday":"Do this at dinner, in the car, on a walk. Three \"I wonder…\" moments a day beats one long lesson."},"practice":{"intro":"These are talk prompts, not worksheets — read one, then follow Hugh's lead with \"tell me more.\" Aim for a few sentences each, not one word.","items":[{"kind":"talk","prompt":"Picture talk: look at any picture book page together. Ask: \"What do you think is about to happen next? What makes you think that?\""},{"kind":"talk","prompt":"Wondering game: take turns starting a sentence with \"I wonder…\". No answer required — just wonder back and forth five times."},{"kind":"talk","prompt":"Because it: you say a fact (\"The floor is wet\"), Hugh gives a reason with \"because\" (\"because someone spilled water\")."},{"kind":"talk","prompt":"What if: \"What if we were as tall as a house? What could we do? What would be tricky?\""},{"kind":"talk","prompt":"New word try-out: after a story, pick one new word from it (e.g. \"enormous\") and challenge Hugh to use it three times today."}],"sentenceStems":["I wonder…","I think ___ because ___","What if…?","Maybe it's because…","That reminds me of…"]}},"mt__h7hvT4tEb":{"id":"mt__h7hvT4tEb","match":"Comparing groups: more or fewer","subject":"Mathematics","domain":"Counting & Cardinality","band":"4–6","minutes":15,"parent":{"bigIdea":"\"More,\" \"fewer,\" and \"the same\" come before real arithmetic. A child first compares by matching things one-to-one, then learns that counting both groups and comparing the numbers gives the same answer faster.","why":"Comparing quantities is the seed of addition, subtraction, and later \"greater than / less than.\" If a child truly gets \"4 is more than 2,\" the symbols come easily later.","teach":[{"say":"\"Let's line them up and match.\"","do":"Put two rows of objects (buttons, crackers) with one from each row paired up. The row that \"sticks out\" has more — no counting needed yet. This is one-to-one matching."},{"say":"\"Now let's count each group.\"","do":"Count the first group, then the second. \"Four here, two there. Which number is bigger?\" Connect the matching answer to the counting answer — they agree."},{"say":"\"How many more?\"","do":"Point at the ones that stuck out. \"Two didn't have a partner — so four is two MORE than two.\" You're quietly teaching subtraction as difference."},{"say":"\"Can you make them equal?\"","do":"\"Add one… now two. Now both rows are the same — four and four.\" Building equality is as important as spotting inequality."}],"worked":["Line up 5 spoons and 3 forks, paired. Two spoons have no fork partner → \"5 is more than 3, by 2.\" Then count each to confirm. Same answer, two ways. Then hand Hugh 2 more forks: \"Now they're equal — 5 and 5.\""],"watch":["Thinking the longer row always has more — spread 3 objects wide vs. 4 bunched up. Matching (not spacing) tells the truth. This is a classic mix-up worth doing on purpose.","Confusing \"more\" and \"fewer.\" Use both words every time so both stick."],"everyday":"Snack time is a math lesson: \"Do you have more crackers or more grapes? How many more?\""},"practice":{"intro":"Hugh circles the group with MORE (unless it says fewer). Count both, then check the answer key. Say \"more\" and \"fewer\" out loud as he works.","generate":"compare"}},"mt_4GiE83rJF_":{"id":"mt_4GiE83rJF_","match":"Rhyming words","subject":"English","domain":"Phonics & Word Reading","band":"4–6","minutes":15,"parent":{"bigIdea":"Rhyming words end with the same sound: cat, hat, bat. Hearing that ending sound — before ever reading the letters — is one of the strongest early signs a child is ready to read.","why":"Rhyme trains the ear to break words into sounds (phonological awareness). Kids who hear rhyme early tend to crack the reading code faster, because reading is, at its root, mapping sounds to letters.","teach":[{"say":"\"Listen to the END of the word.\"","do":"Say a pair slowly: \"c–at… h–at.\" Stretch the ending. \"Hear how they finish the same way?\""},{"say":"\"Do these rhyme? cat… dog?\"","do":"Mix rhyming and non-rhyming pairs. Thumbs up for rhyme, thumbs down for no. Ears first, letters later."},{"say":"\"Can you think of one that rhymes with sun?\"","do":"Generating a rhyme is harder than spotting one — celebrate any real attempt, even a nonsense word that rhymes (\"bun, run, zun!\"). The sound is what matters."},{"say":"\"Finish my rhyme.\"","do":"\"The fat cat sat on a ___.\" Let Hugh supply \"mat/hat/bat.\" Nursery rhymes and Dr. Seuss are perfect fuel."}],"worked":["Family fun: \"Today's rhyme family is -at.\" Say cat, hat, bat, mat, rat, sat, and let Hugh add any word that fits — real or made up. Then switch to the -og family: dog, log, frog, hog. Kids love collecting a \"family.\""],"watch":["Matching by first sound instead of last (cat/car). Redirect: \"Those start the same — but listen to the END.\"","Reaching for letters too early. Keep it an ear game at this stage; spelling comes later."],"everyday":"Rhyme while you walk: \"I spy something that rhymes with 'bee'… a tree!\""},"practice":{"intro":"Read each row to Hugh. He picks the word that rhymes with the first one, and can shout out more that rhyme too.","generate":"rhyme"}},"mt_NtJYlJdUe9":{"id":"mt_NtJYlJdUe9","match":"Measurable Attributes of Objects","subject":"Mathematics","domain":"Measurement","band":"4–6","minutes":15,"parent":{"bigIdea":"Everything can be measured in more than one way. A bottle has a height, a weight, and a capacity (how much it holds). First a child names these attributes; then they compare two objects directly — longer/shorter, heavier/lighter, taller/shorter, holds more/less.","why":"Naming and comparing attributes is the foundation of all measurement and, later, of using rulers and scales. Direct comparison (\"put them side by side\") must come before numbers and units.","teach":[{"say":"\"What could we measure about this?\"","do":"Hold up an object. Draw out: how long? how heavy? how tall? how much does it hold? One object, several attributes."},{"say":"\"Let's line them up at the same end.\"","do":"To compare length, both objects must start at the same line. This \"fair start\" idea is the seed of using a ruler from zero."},{"say":"\"Hold one in each hand — which is heavier?\"","do":"Hands are the first scale. Heavier/lighter is felt before it's numbered."},{"say":"\"Which cup holds more water?\"","do":"Pour from one into the other. If it overflows, the first held more. Capacity, discovered by pouring."}],"worked":["Grab a spoon and a pencil. \"Which is longer?\" Line them up at one end — the pencil sticks out, so it's longer. \"Which is heavier?\" One in each hand — the spoon. Same two objects, different answers, because length and weight are different attributes. That's the whole lesson."],"watch":["Comparing length without lining up the ends. If they start at different points, the comparison is unfair — make the \"fair start\" explicit.","Thinking bigger-looking = heavier. A big pillow vs. a small rock breaks that idea nicely."],"everyday":"Tidying up is measurement: \"Put the cups in order from holds-the-most to holds-the-least.\""},"practice":{"intro":"Hugh circles the object that matches the word (taller, longer, heavier, holds more). Talk about how you'd check it in real life.","generate":"measure"}}};
-function makePractice(kind){
-  const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
-  const EMO={apple:"🍎",star:"⭐",fish:"🐟",flower:"🌸",car:"🚗",duck:"🦆",ball:"⚽",leaf:"🍃"};
-  const names=Object.keys(EMO);
-  if(kind==="compare") return Array.from({length:8},()=>{
-    let a=R(1,8),b=R(1,8); while(a===b)b=R(1,8);
-    const n1=names[R(0,names.length-1)], n2=names[R(0,names.length-1)];
-    const ask=Math.random()<0.25?"fewer":"more";
-    const winner=ask==="more"?(a>b?"left":"right"):(a<b?"left":"right");
-    return {left:EMO[n1].repeat(a),right:EMO[n2].repeat(b),la:a,rb:b,ask,winner,
-      answer:`${ask==="more"?Math.max(a,b):Math.min(a,b)} (${winner} group)`};
-  });
-  if(kind==="rhyme") return [
-    {target:"cat",options:["hat","sun","dog"],answer:"hat",more:"bat, mat, rat, sat"},
-    {target:"dog",options:["log","cup","pen"],answer:"log",more:"frog, hog, jog, fog"},
-    {target:"sun",options:["run","top","bed"],answer:"run",more:"bun, fun, one, done"},
-    {target:"bee",options:["tree","cup","hand"],answer:"tree",more:"see, key, three, free"},
-    {target:"star",options:["car","fish","sock"],answer:"car",more:"far, jar, bar, guitar"},
-    {target:"bug",options:["rug","sock","leaf"],answer:"rug",more:"hug, mug, jug, tug"},
-    {target:"snake",options:["cake","bird","ring"],answer:"cake",more:"lake, rake, bake, wake"},
-    {target:"red",options:["bed","blue","ball"],answer:"bed",more:"head, bread, sled, fed"},
-  ];
-  if(kind==="measure") return [
-    {attr:"taller",a:"🌳 tree",b:"🌷 flower",answer:"🌳 tree"},
-    {attr:"longer",a:"✏️ pencil",b:"🥄 spoon",answer:"✏️ pencil"},
-    {attr:"heavier",a:"🪨 rock",b:"🪶 feather",answer:"🪨 rock"},
-    {attr:"holds more",a:"🪣 bucket",b:"🥤 cup",answer:"🪣 bucket"},
-    {attr:"shorter",a:"🐛 caterpillar",b:"🐍 snake",answer:"🐛 caterpillar"},
-    {attr:"lighter",a:"🎈 balloon",b:"📚 books",answer:"🎈 balloon"},
-    {attr:"taller",a:"🦒 giraffe",b:"🐁 mouse",answer:"🦒 giraffe"},
-    {attr:"holds more",a:"🛁 bathtub",b:"🍵 teacup",answer:"🛁 bathtub"},
-  ];
-  return [];
-}
-
 // ---- the session engine (ported from scripts/session.mjs) ----
 const CORE = ["English","Mathematics","Science"];
 const ROTATE = ["History","Personal & Social Development","Life Skills","Computing","Learning to Learn"];
@@ -406,6 +367,21 @@ async function loadKids(){
 
 // ---- HOME ----
 let TOPICS=null, HARD=null;    // cached taxonomy
+let CONTENT={};   // topic_id -> generated content body (from content_items), served when reviewed
+async function fetchContent(ids){
+  if(!ids||!ids.length) return {};
+  const inList=ids.map(encodeURIComponent).join(",");
+  try{
+    const rows=await sb(`/rest/v1/content_items?select=topic_id,body,provenance,reviewed&reviewed=eq.true&topic_id=in.(${inList})`);
+    const map={};
+    for(const r of rows){
+      let b=r.body; if(typeof b==="string"){ try{ b=JSON.parse(b); }catch{} }
+      if(b && !b.provenance && r.provenance){ try{ b.provenance = typeof r.provenance==="string"?JSON.parse(r.provenance):r.provenance; }catch{} }
+      if(b) map[r.topic_id]=b;
+    }
+    return map;
+  }catch(e){ return {}; }
+}
 async function loadTaxonomy(age){
   // Only what we need: in-band topics + all hard prerequisite edges.
   const cols="id,subject,domain,name,description,type,age_range_start,age_range_end,centrality,evidence";
@@ -425,6 +401,8 @@ async function openHome(kid, age){
   try{
     const {topics, hard}=await loadTaxonomy(age);
     const seed=Math.floor(Date.now()/864e5) % 7;        // rotates day to day
+    const preview=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
+    CONTENT=await fetchContent(preview.map(c=>c.topic.id));  // real grounded content for these topics
     renderHome(kid, age, topics, hard, seed);
   }catch(e){
     document.getElementById("cards").innerHTML=`<div class="note err">Couldn't build the session: ${esc(e.message)}</div>`;
@@ -433,6 +411,13 @@ async function openHome(kid, age){
 function renderHome(kid, age, topics, hard, seed){
   const cards=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
   CURRENT={kid, age, cards};
+  if(!cards.length){
+    document.getElementById("homeFocus").textContent = `${kid.first_name} is a little young for the curriculum yet`;
+    document.getElementById("homeCounts").innerHTML="";
+    document.getElementById("cards").innerHTML=`<div class="note">The Marble curriculum starts at about age 4. When ${esc(kid.first_name)} is ready, today's session will appear right here — nothing to do until then.</div>`;
+    document.getElementById("homeActions").innerHTML="";
+    return;
+  }
   const subjects=[...new Set(cards.map(c=>c.topic.subject))];
   document.getElementById("homeFocus").textContent = `${cards.length} things to learn across ${subjects.length} subjects`;
   document.getElementById("homeCounts").innerHTML = subjects.map(s=>`<span class="pill">${SUBJ[s]?.e||""} ${esc(s)}</span>`).join("");
@@ -445,7 +430,9 @@ function renderHome(kid, age, topics, hard, seed){
     const laneBody = lane==="practice"
       ? (probs ? `<div><div class="h">Sample practice (fresh every session)</div><div class="prob">${probs.map(p=>`<span>${p}</span>`).join("")}</div></div>`
                : `<div class="prov">⚙️ <span>Unlimited practice items generated by code — correct by construction, never repeats.</span></div>`)
-      : `<div class="prov">📚 <span>Full lesson prose is produced by the knowledge pipeline — grounded in reputable sources, cite-or-abstain, verified before it reaches ${esc(kid.first_name)}. The skill, description and mastery check above come straight from the curriculum.</span></div>`;
+      : (getContent(t.id)
+        ? `<div class="prov">✅ <span>Full grounded lesson ready — verified against reputable sources. Tap “Start &amp; print materials.”</span></div>`
+        : `<div class="prov">📚 <span>Grounded lesson for this topic hasn\u2019t been generated yet — run the content pipeline for it.</span></div>`);
     const d=document.createElement("details"); d.className="card";
     d.innerHTML=`
       <summary>
@@ -518,54 +505,79 @@ function genProblems(t, n){
   if(!gen) return null;
   return Array.from({length:n}, gen);
 }
-function parentBlock(L, fill){
-  const p=L.parent;
-  const steps=p.teach.map((s,i)=>`<div class="step"><div class="n">${i+1}</div><div><div class="say">${fill(s.say)}</div><div class="do">${fill(s.do)}</div></div></div>`).join("");
-  return `<section class="lesson"><div class="tag">For the grown-up · about ${L.minutes} min</div>
-    <h2>${fill(L.match)}</h2><div class="sub">${esc(L.subject)} · ${esc(L.domain)} · ages ${esc(L.band)}</div>
-    <div class="big"><b>The big idea.</b> ${fill(p.bigIdea)}</div>
-    <p class="why"><b>Why it matters.</b> ${fill(p.why)}</p>
-    <div class="h">How to teach it</div>${steps}
-    <div class="h">Watch it in action</div>${p.worked.map(w=>`<div class="worked">${fill(w)}</div>`).join("")}
-    <div class="two"><div><div class="h">Common mix-ups to watch for</div><ul>${p.watch.map(w=>`<li>${fill(w)}</li>`).join("")}</ul></div>
-    <div class="everyday"><div class="h">Everyday practice</div><p>${fill(p.everyday)}</p></div></div></section>`;
+// ---- render content from the DB (content_items body schema) ----
+const SRC_HOME = { wikipedia:"https://en.wikipedia.org", simplewiki:"https://simple.wikipedia.org", wikijunior:"https://en.wikibooks.org/wiki/Wikijunior", wikidata:"https://www.wikidata.org", nasa:"https://www.nasa.gov", smithsonian:"https://www.si.edu", openstax:"https://openstax.org", noaa:"https://www.noaa.gov", usgs:"https://www.usgs.gov", loc:"https://www.loc.gov", ck12:"https://www.ck12.org", coreknowledge:"https://www.coreknowledge.org" };
+function getContent(id){ return (CONTENT && CONTENT[id]) || null; }
+function provLine(c){
+  const g=(c.provenance&&c.provenance.grounding)||[];
+  const links=g.filter(x=>x.source&&x.source!=="taxonomy:description").map(x=>{ const href=x.url||SRC_HOME[x.source]||""; const nm=esc(x.title||x.source); return href?`<a href="${href}">${nm} ↗</a>`:nm; });
+  if(!links.length) return "";
+  return `<div class="prov">Facts verified${c.provenance&&c.provenance.reviewed?" ✓":""} · Sources: ${links.join(" · ")}</div>`;
 }
-function practiceBlock(L, fill, N){
-  const pr=L.practice; let body=`<div class="tag child">For ${N} · practice</div><h2>${fill(L.match)}</h2><p class="intro">${fill(pr.intro)}</p>`; let key=null;
-  if(pr.items){ body+=pr.items.map((it,i)=>`<div class="prompt"><b>${i+1}.</b> ${fill(it.prompt)}</div>`).join("");
-    if(pr.sentenceStems) body+=`<div class="stems"><b>Sentence starters:</b> ${pr.sentenceStems.map(s=>`<span>${fill(s)}</span>`).join("")}</div>`; }
-  else if(pr.generate==="compare"){ const items=makePractice("compare");
-    body+=`<div class="cmpgrid">`+items.map((it,i)=>`<div class="cmp"><div class="cnum">${i+1}</div><div class="pair"><div class="grp">${'<span class="dot"></span>'.repeat(it.la)}</div><div class="vs">${it.ask==="fewer"?"fewer?":"more?"}</div><div class="grp">${'<span class="dot alt"></span>'.repeat(it.rb)}</div></div></div>`).join("")+`</div>`;
-    key={name:L.match, key:items.map((it,i)=>`${i+1}. ${it.la} vs ${it.rb} — circle <b>${esc(it.answer)}</b>`).join(" &nbsp;·&nbsp; ")}; }
-  else if(pr.generate==="rhyme"){ const items=makePractice("rhyme");
-    body+=items.map((it,i)=>`<div class="rrow"><span class="cnum">${i+1}</span> <b>${esc(it.target)}</b> rhymes with… ${it.options.map(o=>`<span class="opt">${esc(o)}</span>`).join("")} <span class="more">…more: ${esc(it.more)}</span></div>`).join("");
-    key={name:L.match, key:items.map((it,i)=>`${i+1}. ${esc(it.target)} → <b>${esc(it.answer)}</b>`).join(" &nbsp;·&nbsp; ")}; }
-  else if(pr.generate==="measure"){ const items=makePractice("measure");
-    body+=items.map((it,i)=>`<div class="mrow"><span class="cnum">${i+1}</span> Circle the one that is <b>${esc(it.attr)}</b>: <span class="opt">${esc(it.a)}</span><span class="opt">${esc(it.b)}</span></div>`).join("");
-    key={name:L.match, key:items.map((it,i)=>`${i+1}. ${esc(it.attr)} → <b>${esc(it.answer)}</b>`).join(" &nbsp;·&nbsp; ")}; }
+function lessonBlockDB(c, fill, N){
+  const p=c.parent||{};
+  const watch=(p.watchFor||[]).map(w=>`<li>${fill(w)}</li>`).join("");
+  const home=(p.tryAtHome||[]).map(w=>`<li>${fill(w)}</li>`).join("");
+  const crit=((c.assessment&&c.assessment.masteryCriteria)||[]).map(w=>`<li>${fill(w)}</li>`).join("");
+  return `<section class="lesson"><div class="tag">For the grown-up</div>
+    <h2>${fill(c.name)}</h2><div class="sub">${esc(c.subject||"")}${c.domain?" · "+esc(c.domain):""}</div>
+    ${p.whyItMatters?`<div class="big"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}
+    ${p.howToTeach?`<div><div class="h">How to teach it</div><p>${fill(p.howToTeach)}</p></div>`:""}
+    <div class="two"><div>${watch?`<div class="h">Watch for</div><ul>${watch}</ul>`:""}</div>
+    <div class="everyday">${home?`<div class="h">Try at home</div><ul>${home}</ul>`:""}</div></div>
+    ${crit?`<div><div class="h">You'll know they've got it when…</div><ul class="crit2">${crit}</ul></div>`:""}</section>`;
+}
+function lessonReadDB(c, fill, N){
+  const st=c.student||{};
+  const paras=String(st.intro||"").split(/\n\n+/).filter(Boolean).map(x=>`<p>${fill(x)}</p>`).join("");
+  const ex=(st.examples||[]).map(e=>`<div class="ex"><b>${fill(e.show||"")}</b><div>${fill(e.say||"")}</div></div>`).join("");
+  return `<section class="practice"><div class="tag child">For ${N} · the lesson</div><h2>${fill(c.name)}</h2>
+    ${paras}${ex?`<div class="h">Look closer</div>${ex}`:""}${provLine(c)}</section>`;
+}
+function practiceBlockDB(c, topic, fill, N){
+  const pr=c.practice||{};
+  const probs = pr.generator ? genProblems(topic,12) : null;
+  let body=`<div class="tag child">For ${N} · practice</div><h2>${fill(c.name)}</h2>`; let key=null;
+  if(probs){
+    body+=`<div class="grid">`+probs.map((p,i)=>`<div class="prob"><b>${i+1}.</b>&nbsp; ${p.q} <u></u></div>`).join("")+`</div>`;
+    key={name:c.name, key:probs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`).join(" &nbsp;·&nbsp; ")};
+  } else {
+    const items=pr.items||[];
+    body+=items.map((it,i)=>{
+      if(it.kind==="mcq"&&Array.isArray(it.choices)){
+        const opts=it.choices.map((ch,j)=>`<span class="opt">${String.fromCharCode(97+j)}) ${esc(ch)}</span>`).join(" ");
+        return `<div class="qrow"><span class="cnum">${i+1}</span> ${fill(it.prompt)}<div class="opts">${opts}</div></div>`;
+      }
+      return `<div class="qrow"><span class="cnum">${i+1}</span> ${fill(it.prompt)} <u class="wide"></u></div>`;
+    }).join("");
+    key={name:c.name, key:items.map((it,i)=>{ const a=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof it.answerIndex==="number")?it.choices[it.answerIndex]:(it.answer||"—"); return `${i+1}. <b>${esc(a)}</b>`; }).join(" &nbsp;·&nbsp; ")};
+  }
   return {html:`<section class="practice">${body}</section>`, key};
 }
 function buildPacket(kid, cards){
   const N=esc(kid.first_name);
-  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N);
+  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
   const date=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   let body=`<div class="cover"><div class="brand">🌱 MARBLE</div><h1>${N}'s learning materials</h1><div class="day">${date} · ${cards.length} topics</div></div>`;
-  const parents=[], practices=[], keys=[];
+  const grown=[], child=[], keys=[];
   for(const {topic:t, lane} of cards){
-    const L=LESSONS[t.id];
-    if(L){ parents.push(parentBlock(L,fill)); const pr=practiceBlock(L,fill,N); practices.push(pr.html); if(pr.key)keys.push(pr.key); }
-    else {
+    const c=getContent(t.id);
+    if(c){
+      grown.push(lessonBlockDB(c,fill,N));
+      child.push(lessonReadDB(c,fill,N));
+      const pr=practiceBlockDB(c,t,fill,N); child.push(pr.html); if(pr.key)keys.push(pr.key);
+    } else {
       const probs = lane==="practice"?genProblems(t,12):null;
       let h=`<section class="practice"><div class="tag child">For ${N} · ${esc(t.subject)}</div><h2>${esc(t.name)}</h2><p class="intro">${esc(t.description||"")}</p>`;
       if(probs){ h+=`<div class="grid">`+probs.map((p,i)=>`<div class="prob"><b>${i+1}.</b>&nbsp; ${p.q} <u></u></div>`).join("")+`</div>`;
         keys.push({name:t.name, key:probs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`).join(" &nbsp;·&nbsp; ")}); }
       else { const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
         h+=`<div class="teach"><div class="lab">Teach it, talk it through — then check ${N} can:</div><ul>${ev}</ul>
-          <div class="hint">Richer generated lesson &amp; practice for this topic is on the way as content generation rolls out beyond the starter set.</div></div>`; }
-      h+=`</section>`; practices.push(h);
+          <div class="hint">Full grounded lesson for this topic hasn't been generated yet — run the content pipeline for it.</div></div>`; }
+      h+=`</section>`; child.push(h);
     }
   }
-  let out=body+parents.join("")+practices.join("");
+  let out=body+grown.join("")+child.join("");
   if(keys.length) out+=`<section class="keys"><div class="tag child">Answer key · grown-up copy</div><h2>Answer key</h2>`+
     keys.map(k=>`<div class="kb"><b class="name">${fill(k.name)}</b>${k.key}</div>`).join("")+`</section>`;
   out+=`<div class="foot">Generated by Marble · facts verified against reputable sources before they reach ${N} · empowering parents, not screens</div>`;
@@ -611,6 +623,10 @@ function openPrint(title, inner){
     .teach .lab{font-weight:700;margin-bottom:5px} .teach ul{margin:0 0 8px 18px;padding:0} .teach li{margin:3px 0} .hint{font-size:.8rem;color:#999;font-style:italic}
     .keys{break-before:page;padding-top:6mm} .keys h2{color:#a03a6b} .kb{margin:12px 0} .kb b.name{display:block;font-family:system-ui,sans-serif}
     .foot{margin-top:6mm;color:#9a9f8c;font-family:system-ui,sans-serif;font-size:8.5pt;text-align:center}
+    .ex{border:1px solid #e6e8df;border-radius:9px;padding:8px 11px;margin:7px 0;break-inside:avoid} .ex b{color:#2b5719}
+    .qrow{padding:9px 2px;border-bottom:1px dashed #e0e2d9;break-inside:avoid} .qrow .opts{margin-top:5px}
+    u.wide{min-width:150px} .prov{margin-top:10px;font-size:9pt;color:#6b7160} .prov a{color:#2b8a8f;text-decoration:none}
+    .crit2{margin:0;padding-left:18px} .crit2 li{margin:3px 0}
     @media print{ .bar{display:none} html,body,*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important} }
     .bar{position:fixed;top:10px;right:12px} .bar button{font:inherit;font-weight:700;background:#4c7a34;color:#fff;border:0;border-radius:9px;padding:9px 14px;cursor:pointer}
   </style></head><body><div class="bar"><button onclick="print()">🖨 Print</button></div>${inner}

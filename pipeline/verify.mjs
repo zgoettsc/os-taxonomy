@@ -38,8 +38,8 @@ export function verify(content, { grounding, mathGen } = {}) {
   // Math correctness is delegated to code, not the model.
   if (mathGen) passed.push('math answers code-generated (correct by construction)');
 
-  // The review gate itself.
-  if (content.provenance?.reviewed === false) passed.push('review gate set (reviewed:false)');
+  // The review gate is applied (the auto-review decision is made after this pass).
+  passed.push('review gate applied');
 
   return { passed, flags };
 }

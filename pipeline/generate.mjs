@@ -80,6 +80,19 @@ if (mathGen) {
 }
 const illustration = mascotSVG(seedFromId(topic.id), topic.subject);
 
+// Assessment is rubric-graded constructed-response: coerce any stray MCQ to a
+// short-answer question and guarantee a non-empty rubric (no choiceless MCQs).
+const assessmentItems = (gen.assessment || []).map((it) => ({
+  ...it,
+  kind: it.kind === 'mcq' ? 'short' : it.kind,
+  rubric: (it.rubric && it.rubric.length) ? it.rubric : ["Answer accurately reflects the lesson's key idea"],
+}));
+
+// The audit reflects sources that ACTUALLY contributed passages (live), not the
+// full candidate list — so the commercial/NC audit is truthful.
+const contributed = [...new Set(sourced.grounding.map((g) => g.source))];
+const contributedNonCommercial = sourced.grounding.some((g) => g.commercial === false);
+
 // --- assemble the content record (matches content/schema/content.schema.json)
 let content = {
   topicId: topic.id, name: topic.name, subject: topic.subject, domain: topic.domain,
@@ -90,13 +103,13 @@ let content = {
   practice,
   assessment: {
     masteryCriteria: topic.evidence || [],
-    items: gen.assessment || [],
+    items: assessmentItems,
   },
   provenance: {
     generatedBy: `content pipeline · provider=${provider.name}`,
     grounding: grounding.map((g) => ({ title: g.sourceName || g.source, source: g.source, license: g.license || 'source', commercial: g.commercial !== false, verified: g.verified })),
-    sourcesUsed: sourced.sourcesUsed,
-    usedNonCommercial: sourced.usedNonCommercial,       // ← audit flag: did any NC source feed this?
+    sourcesUsed: contributed,                            // sources that actually returned passages
+    usedNonCommercial: contributedNonCommercial,         // ← audit flag: did any NC source actually feed this?
     mode: sourced.mode,                                  // 'personal' | 'commercial'
     citations: gen.citations || [],
     verification: [],
