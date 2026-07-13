@@ -55,6 +55,8 @@ export const SOURCES = [
   // --- Tier 1/2: openly-licensed, commercial-OK with attribution ---
   { id: 'openstax',      name: 'OpenStax',                   url: 'https://openstax.org',                 license: 'CC-BY',         subjects: ['Science','Mathematics'], tier: 1,
     note: 'Open textbooks (skews older grades) — CC-BY, commercial OK with attribution.' },
+  { id: 'wikipedia',     name: 'English Wikipedia',           url: 'https://en.wikipedia.org',             license: 'CC-BY-SA',      subjects: '*',                    tier: 2,
+    note: 'Deep general reference on almost anything — CC-BY-SA. The richest free source; adapted DOWN to the child reading level.' },
   { id: 'simplewiki',    name: 'Simple English Wikipedia',   url: 'https://simple.wikipedia.org',         license: 'CC-BY-SA',      subjects: '*',                    tier: 2,
     note: 'Kid-level explainers on almost anything — CC-BY-SA (attribution + share-alike).' },
   { id: 'wikijunior',    name: 'Wikijunior (Wikibooks)',     url: 'https://en.wikibooks.org/wiki/Wikijunior', license: 'CC-BY-SA',  subjects: '*',                    tier: 2,

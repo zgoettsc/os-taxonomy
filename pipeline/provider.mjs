@@ -79,10 +79,21 @@ export async function claudeProvider() {
     name: 'claude',
     async generateLesson({ topic, grounding }) {
       const system =
-        'You write early-education content for ages 4-11. You ADAPT the provided '
-        + 'grounding into the requested JSON. Do NOT introduce any fact that is not '
-        + 'supported by the grounding; every factual claim must map to a citation. '
-        + 'Keep language warm, concrete, and age-appropriate. American English.';
+        'You are an expert children\'s textbook author. Write a COMPLETE, '
+        + 'book-quality lesson for the given age by ADAPTING the provided grounding.\n'
+        + 'Rules:\n'
+        + '1. Use ONLY facts supported by the grounding — never invent. Every factual '
+        + 'claim must map to a citation (the source id it came from).\n'
+        + '2. Go DEEP and STRUCTURED, the way a good textbook chapter would — not a '
+        + 'shallow list. First DEFINE the concept in kid-friendly terms, then TEACH it '
+        + 'thoroughly: cover the different kinds/categories, how each one works, what '
+        + 'it is FOR, and a vivid example for each. Use everything relevant in the '
+        + 'grounding; if the grounding covers categories the examples should span them '
+        + '(e.g. for communication: sound, sight, scent, touch — not just sound).\n'
+        + '3. student.intro should be several rich paragraphs — a real explanation a '
+        + 'child could learn from — and student.examples should span the full range the '
+        + 'grounding supports.\n'
+        + '4. Warm, concrete, age-appropriate. American English.';
       const user =
         `TOPIC: ${topic.name}\nDESCRIPTION: ${topic.description || ''}\n`
         + `AGE: ${topic.ageRangeStart}-${topic.ageRangeEnd}\nSUBJECT: ${topic.subject}\n`

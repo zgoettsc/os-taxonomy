@@ -1,0 +1,46 @@
+name: Dump grounding (see raw source data)
+
+# Fetch-only: runs every source adapter live for one topic and shows exactly what
+# comes back — no model call, no keys, no DB write. Use it to judge the raw
+# material before spending on generation. Needs open network (GitHub has it; the
+# dev sandbox does not).
+#
+# Actions tab -> "Dump grounding" -> Run workflow -> paste a topic id (mt_...).
+# The full raw grounding is printed in the log AND uploaded as an artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Taxonomy topic id (mt_...)'
+        required: true
+        type: string
+      commercial:
+        description: 'Exclude NonCommercial sources?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch grounding from every source
+        run: |
+          node pipeline/ground-dump.mjs \
+            --topic "${{ inputs.topic }}" \
+            ${{ inputs.commercial && '--commercial' || '' }}
+      - name: Print the full raw grounding
+        if: always()
+        run: cat pipeline/out/grounding-*.json || true
+      - name: Upload the full raw grounding
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grounding-${{ inputs.topic }}
+          path: pipeline/out/grounding-*.json
+          if-no-files-found: ignore
