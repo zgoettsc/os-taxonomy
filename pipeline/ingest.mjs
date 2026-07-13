@@ -30,8 +30,9 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, 'data', 'corpus', `$
 const docs = manifest.documents || [];
 if (!docs.length) { console.error(`No documents in data/corpus/${source}.json — add PDF urls first.`); process.exit(1); }
 
-// --- pdf text extraction (dynamic import so the module loads without the dep) ---
+// --- pdf + zip extraction (dynamic import so the module loads without the deps) ---
 const pdfParse = (await import('pdf-parse')).default;
+const AdmZip = (await import('adm-zip')).default;
 
 function chunk(text, { size = 1000 } = {}) {
   const clean = text.replace(/\r/g, '').replace(/[ \t]{2,}/g, ' ').trim();
@@ -45,7 +46,7 @@ function chunk(text, { size = 1000 } = {}) {
   return out.filter((c) => c.length > 60);
 }
 
-async function getPdf(doc) {
+async function getFile(doc) {
   if (doc.url) {
     const r = await fetch(doc.url, { headers: { 'User-Agent': 'MarbleEdu/1.0' } });
     if (!r.ok) throw new Error(`download ${r.status} ${doc.url}`);
@@ -63,11 +64,25 @@ async function getPdf(doc) {
 const passages = [];
 for (const doc of docs) {
   try {
-    const buf = await getPdf(doc);
-    const { text } = await pdfParse(buf);
-    const chunks = chunk(text);
-    for (const c of chunks) passages.push({ source, title: doc.title || null, url: doc.url || doc.pageUrl || null, grade: doc.grade || null, subjects: doc.subjects || [], text: c });
-    console.log(`  ${doc.title || doc.url}: ${chunks.length} passage(s)`);
+    const buf = await getFile(doc);
+    // A zip (magic bytes 'PK' or .zip url) → extract every PDF inside; else it's a PDF.
+    const pdfs = [];
+    if ((buf[0] === 0x50 && buf[1] === 0x4B) || /\.zip($|\?)/i.test(doc.url || '')) {
+      for (const e of new AdmZip(buf).getEntries()) {
+        if (!e.isDirectory && /\.pdf$/i.test(e.entryName)) pdfs.push(e.getData());
+      }
+    } else { pdfs.push(buf); }
+
+    let n = 0;
+    for (const pbuf of pdfs) {
+      try {
+        const { text } = await pdfParse(pbuf);
+        const chunks = chunk(text);
+        for (const c of chunks) passages.push({ source, title: doc.title || null, url: doc.cite || doc.url || null, grade: doc.grade || null, subjects: doc.subjects || [], text: c });
+        n += chunks.length;
+      } catch (e) { console.error(`    (skipped a PDF in ${doc.title}: ${e.message})`); }
+    }
+    console.log(`  ${doc.title || doc.url}: ${pdfs.length} pdf(s), ${n} passage(s)`);
   } catch (e) { console.error(`  SKIP ${doc.title || doc.url}: ${e.message}`); }
 }
 console.log(`Total passages: ${passages.length}`);

@@ -1,9 +1,28 @@
 {
   "source": "coreknowledge",
   "license": "CC-BY-NC-SA (Core Knowledge Foundation) — fine for family/personal use; attribution tracked",
-  "note": "Add one entry per Core Knowledge unit PDF. Two ways to point at a file: (a) \"url\": a direct PDF link, or (b) \"storagePath\": a path in a Supabase Storage bucket you uploaded the PDF to via the dashboard, e.g. \"corpus/coreknowledge/cksci-g1-animals.pdf\". Fill title/grade/subjects so citations and filtering work. Free downloads: coreknowledge.org/curriculum.",
+  "note": "One entry per unit. `url` = direct download (a .zip of the unit's PDFs, or a single .pdf). `cite` = the human resource page (used as the citation link). `storagePath` (\"<bucket>/<path>\") is an alternative to url for files you upload to Supabase Storage. Free downloads: coreknowledge.org/curriculum.",
   "documents": [
-    { "url": "", "storagePath": "", "title": "CKSci Grade 1 — Animals and Their Needs", "grade": "1", "subjects": ["Science"] },
-    { "url": "", "storagePath": "", "title": "CKHG Grade 1 — Early World Civilizations", "grade": "1", "subjects": ["History"] }
+    {
+      "url": "https://www.coreknowledge.org/wp-content/uploads/2020/07/CKSci_G1U1_Sun-Moon-and-Stars.zip",
+      "cite": "https://www.coreknowledge.org/free-resource/cksci-unit-1-sun-moon-and-stars/",
+      "title": "CKSci Grade 1 Unit 1 — Sun, Moon, and Stars",
+      "grade": "1",
+      "subjects": ["Science"]
+    },
+    {
+      "url": "https://www.coreknowledge.org/wp-content/uploads/2019/06/CKHG_G1_U1_ContinentsCountriesMaps_W1.zip",
+      "cite": "https://www.coreknowledge.org/free-resource/ckhg-unit-1-continents-countries-and-maps/",
+      "title": "CKHG Grade 1 Unit 1 — Continents, Countries, and Maps",
+      "grade": "1",
+      "subjects": ["History"]
+    },
+    {
+      "url": "https://www.coreknowledge.org/wp-content/uploads/2025/08/CKSci_G1_ScienceInAction_Grade_Materials_W1.zip",
+      "cite": "https://www.coreknowledge.org/free-resource/cksci-grade-1-science-in-action-daniela-and-thais/",
+      "title": "CKSci Grade 1 — Science in Action: Daniela and Thais",
+      "grade": "1",
+      "subjects": ["Science"]
+    }
   ]
 }
