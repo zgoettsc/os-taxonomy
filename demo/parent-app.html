@@ -1,0 +1,584 @@
+<meta charset="utf-8">
+<title>Marble — Parent app</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#f1f2ee; --card:#fbfbf8; --card2:#f4f5ef;
+    --ink:#23271f; --soft:#5d6353; --faint:#8a9079;
+    --line:#e1e3da; --line2:#eceee6;
+    --moss:#4c7a34; --moss-soft:#e7eedd; --moss-ink:#33571f;
+    --clay:#c07542; --clay-soft:#f4e6da;
+    --amber:#b07d1e; --amber-soft:#f4ead0;
+    --berry:#b23a6b; --berry-soft:#f6e0e9;
+    --sci:#2b8a8f; --sci-soft:#d9edee;
+    --shadow:0 10px 34px -16px rgba(35,39,31,.42);
+    --shadow-sm:0 2px 8px -3px rgba(35,39,31,.28);
+    --disp:ui-rounded,"SF Pro Rounded","Segoe UI Rounded",system-ui,sans-serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --r:16px;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#14170f; --card:#1e241a; --card2:#232a1e; --ink:#eceee4; --soft:#9aa38c; --faint:#727a63;
+    --line:#2c3326; --line2:#262d20; --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
+    --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a; --amber-soft:#312a17;
+    --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#1b2b2c;
+    --shadow:0 14px 40px -18px rgba(0,0,0,.7); --shadow-sm:0 2px 10px -4px rgba(0,0,0,.6);
+  }}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);line-height:1.5;-webkit-font-smoothing:antialiased;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 14px 40px}
+  .lede{max-width:430px;text-align:center;color:var(--soft);font-size:.86rem;margin:0 auto 16px}
+  .lede b{color:var(--ink)}
+  .app{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:30px;
+    box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-height:772px;position:relative}
+
+  /* hidden radios drive navigation — no JS needed */
+  .nav{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+
+  .top{display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line2)}
+  .who{display:flex;align-items:center;gap:9px}
+  .ava{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#fff;font-size:.95rem;background:#4c7a34}
+  .who .nm{font-family:var(--disp);font-weight:700;letter-spacing:-.01em}
+  .who .age{color:var(--faint);font-size:.72rem}
+  .gear{flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:var(--faint);cursor:pointer}
+  .gear:hover{background:var(--card2);color:var(--ink)}
+  .setrow{display:flex;align-items:center;gap:11px;padding:13px 16px}
+  .setrow+.setrow{border-top:1px solid var(--line2)}
+  .setrow .sava{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#fff;font-size:.85rem;flex:none}
+  .setrow .snm{font-weight:650;font-size:.92rem}
+  .setrow .sage{color:var(--faint);font-size:.72rem}
+  .setrow .seg{margin-left:auto;display:inline-flex;background:var(--card2);border-radius:20px;padding:3px}
+  .setrow .seg input{position:absolute;opacity:0;width:0;height:0}
+  .setrow .seg label{font-size:.74rem;font-weight:650;color:var(--soft);padding:6px 11px;border-radius:16px;cursor:pointer}
+  .setrow .seg input:checked+label{background:var(--moss);color:#fff}
+  .streak{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:var(--berry-soft);color:var(--berry);font-weight:700;font-size:.8rem;padding:6px 10px;border-radius:20px;font-variant-numeric:tabular-nums}
+
+  .scroll{flex:1;overflow-y:auto;padding:16px 16px 14px}
+  .view{display:none;flex-direction:column;gap:14px}
+  /* CSS-driven view switching */
+  #t-today:checked~.scroll #v-today,
+  #t-plan:checked~.scroll #v-plan,
+  #t-print:checked~.scroll #v-print,
+  #t-prog:checked~.scroll #v-progress,
+  #t-settings:checked~.scroll #v-settings,
+  #t-record:checked~.scroll #v-record{display:flex;animation:rise .28s ease}
+  @keyframes rise{from{transform:translateY(6px)}to{transform:none}}
+  .eyebrow{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0;padding:2px}
+
+  .brief{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 18px;position:relative;overflow:hidden}
+  .brief .sprout{position:absolute;right:-8px;top:-6px;color:var(--moss);opacity:.22}
+  .brief h2{font-family:var(--disp);font-size:1.22rem;letter-spacing:-.015em;margin:6px 0 2px;text-wrap:balance}
+  .brief .focus{font-size:.82rem;color:var(--moss-ink);font-weight:600;margin-bottom:12px}
+  .brief dl{display:flex;flex-direction:column;gap:11px;margin:0}
+  .brief .row{display:flex;gap:10px}
+  .brief .k{flex:none;width:74px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);padding-top:2px}
+  .brief .v{font-size:.92rem}
+  .brief .say{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:9px 11px;font-style:italic;color:var(--soft)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .card-h{display:flex;align-items:baseline;justify-content:space-between;padding:14px 16px 8px}
+  .card-h h3{font-family:var(--disp);font-size:1.05rem;margin:0;letter-spacing:-.01em}
+  .card-h .meta{font-size:.76rem;color:var(--faint);font-variant-numeric:tabular-nums}
+  ul.items{list-style:none;margin:0;padding:0 6px 6px}
+  ul.items li{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:12px}
+  ul.items li+li{border-top:1px solid var(--line2)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:6px}
+  .it-main{flex:1;min-width:0}
+  .it-name{display:block;font-size:.9rem;font-weight:600;line-height:1.3}
+  .it-sub{display:block;font-size:.72rem;color:var(--faint);margin-top:1px}
+  .chip{flex:none;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:20px;margin-top:3px}
+  .chip.new{background:var(--moss-soft);color:var(--moss-ink)}
+  .chip.review{background:var(--amber-soft);color:var(--amber)}
+  .chip.unit{background:var(--berry-soft);color:var(--berry)}
+  .chip.ready{background:var(--moss-soft);color:var(--moss-ink)}
+
+  /* expandable rows — native <details>, no JS, text wraps freely */
+  .rows{padding:4px 6px 6px}
+  .exp{border-top:1px solid var(--line2)}
+  .exp:first-child{border-top:0}
+  .exp>summary{display:flex;align-items:flex-start;gap:11px;padding:12px 10px;cursor:pointer;list-style:none;border-radius:12px}
+  .exp>summary::-webkit-details-marker{display:none}
+  .exp>summary:hover{background:var(--card2)}
+  .caret{flex:none;margin-top:4px;color:var(--faint);transition:transform .2s}
+  .exp[open]>summary .caret{transform:rotate(180deg)}
+  .exp-body{padding:2px 12px 14px 30px;display:flex;flex-direction:column;gap:10px;animation:rise .2s ease}
+  .exp-desc{font-size:.86rem;color:var(--soft);margin:0;line-height:1.45}
+  .exp-field b{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700;margin-bottom:3px}
+  .exp-field{font-size:.86rem;line-height:1.4}
+  .exp-ex{background:var(--card2);border-radius:10px;padding:9px 11px}
+  .exp-ex .ex{font-variant-numeric:tabular-nums}
+  .exp-mark{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px}
+  .exp-mark .ml{font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700;width:100%}
+
+  .actions{display:flex;flex-direction:column;gap:9px}
+  .printnote{display:none;font-size:.8rem;color:var(--moss);text-align:center;margin:0;padding:2px 4px;font-weight:600}
+  .printnote:target{display:block;animation:rise .25s ease}
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;border:0;font:inherit;font-weight:650;padding:14px;border-radius:14px;cursor:pointer;font-size:.98rem;text-decoration:none}
+  .btn.primary{background:var(--moss);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn.primary:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .btn.ghost:active{border-color:var(--moss);color:var(--moss)}
+
+  .subj{padding:13px 16px}
+  .subj+.subj{border-top:1px solid var(--line2)}
+  .subj .r1{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .subj .r1 .nm{font-weight:650;font-size:.95rem}
+  .subj .r1 .ct{margin-left:auto;font-size:.74rem;color:var(--faint);font-variant-numeric:tabular-nums}
+  .bar{height:8px;background:var(--line2);border-radius:20px;overflow:hidden;display:flex}
+  .bar>i{display:block;height:100%}
+  .bar .m{background:var(--moss)} .bar .l{background:var(--clay)} .bar .c{background:var(--moss)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:var(--soft);padding:2px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+  .interest{display:flex;align-items:center;gap:10px;background:var(--berry-soft);border-radius:var(--r);padding:12px 14px}
+  .interest .t{font-weight:650;color:var(--berry)}
+  .interest .s{font-size:.74rem;color:var(--soft)}
+
+  .prev-row{display:flex;gap:10px;padding:12px 14px}
+  .thumb{flex:1;border:1px solid var(--line);border-radius:12px;background:var(--card2);padding:10px;min-height:96px;position:relative}
+  .thumb .lbl{position:absolute;bottom:7px;left:10px;font-size:.66rem;color:var(--faint);font-weight:600}
+  .thumb .lines{display:flex;flex-direction:column;gap:5px}
+  .thumb .lines i{height:5px;background:var(--line);border-radius:3px;display:block}
+  .more{padding:12px 14px}
+  .more .r1{display:flex;align-items:center;gap:10px}
+  .more .qty{margin-left:auto;display:inline-flex;align-items:center;gap:12px;background:var(--card2);border-radius:20px;padding:5px 8px}
+  .more .qty b{font-variant-numeric:tabular-nums;font-weight:700}
+  .binder .day{font-weight:700;font-size:.85rem;min-width:44px;flex:none;padding-top:1px}
+  .binder .bstat{flex:none;font-size:.64rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;margin-top:1px}
+  .binder .bstat.todo{background:var(--amber-soft);color:var(--amber)}
+  .binder .bstat.done{background:var(--moss-soft);color:var(--moss-ink)}
+  .brow-actions{display:flex;gap:9px;flex-wrap:wrap}
+  .btn.sm{flex:1;min-width:130px;padding:11px 12px;font-size:.85rem;border-radius:12px}
+
+  .stats{display:flex;gap:10px}
+  .stat{flex:1;background:var(--card2);border-radius:14px;padding:12px}
+  .stat .n{font-family:var(--disp);font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat .l{font-size:.68rem;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .spark{display:flex;align-items:flex-end;gap:6px;height:56px;padding:12px 16px}
+  .spark .b{flex:1;height:100%;background:var(--moss-soft);border-radius:5px 5px 3px 3px;position:relative}
+  .spark .b>i{position:absolute;inset:auto 0 0 0;background:var(--moss);border-radius:5px 5px 3px 3px}
+  .spark .b.today>i{background:var(--berry)}
+  .cov{padding:12px 16px}
+  .cov+.cov{border-top:1px solid var(--line2)}
+  .cov .r1{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:7px}
+  .cov .r1 b{font-weight:650} .cov .r1 span{color:var(--faint);font-variant-numeric:tabular-nums}
+
+  .rec li{display:flex;align-items:center;gap:10px;padding:12px 10px}
+  .rec li+li{border-top:1px solid var(--line2)}
+  .toggle{margin-left:auto;display:inline-flex;background:var(--card2);border-radius:20px;padding:3px}
+  .toggle label{font-size:.74rem;font-weight:650;color:var(--soft);padding:6px 11px;border-radius:16px;cursor:pointer}
+  /* per-row pass/again pickers, pure CSS */
+  .toggle input{position:absolute;opacity:0;width:0;height:0}
+  .toggle input.pass:checked + label{background:var(--moss);color:#fff}
+  .toggle input.again:checked + label{background:var(--clay);color:#fff}
+  .backlink{display:inline-block;color:var(--moss);font-weight:600;cursor:pointer;padding:2px;text-decoration:none}
+  .complete-card{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:15px 16px;display:flex;flex-direction:column;gap:11px}
+  .complete-card .ct{font-family:var(--disp);font-weight:700;font-size:1.05rem}
+  .complete-card .cs{font-size:.8rem;color:var(--soft);line-height:1.4}
+  .srcbadge{flex:none;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 7px;border-radius:20px;margin-top:3px}
+  .srcbadge.screen{background:var(--sci-soft);color:var(--sci)}
+  .srcbadge.paper{background:var(--card2);color:var(--soft)}
+  .auto-res{display:flex;align-items:center;gap:8px;background:var(--moss-soft);color:var(--moss-ink);border-radius:12px;padding:10px 11px;font-size:.83rem;font-weight:600}
+  .auto-res svg{flex:none}
+
+  .tabs{display:flex;border-top:1px solid var(--line2);background:var(--card)}
+  .tabs label{flex:1;color:var(--faint);font-size:.66rem;font-weight:600;padding:10px 2px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .tabs label svg{width:22px;height:22px}
+  #t-today:checked~.tabs label[for="t-today"],
+  #t-plan:checked~.tabs label[for="t-plan"],
+  #t-record:checked~.tabs label[for="t-record"],
+  #t-print:checked~.tabs label[for="t-print"],
+  #t-prog:checked~.tabs label[for="t-prog"]{color:var(--moss)}
+  .tabs label svg{width:21px;height:21px}
+
+  /* session-model bits */
+  .sessions{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:var(--moss-soft);color:var(--moss-ink);font-weight:700;font-size:.78rem;padding:6px 10px;border-radius:20px;font-variant-numeric:tabular-nums}
+  .nudge{display:flex;align-items:center;gap:10px;background:var(--amber-soft);border:1px solid var(--amber);border-radius:14px;padding:11px 13px;text-decoration:none;color:var(--ink)}
+  .nudge .nt{font-size:.84rem;font-weight:600;line-height:1.3}
+  .nudge .ns{font-size:.72rem;color:var(--soft)}
+  .nudge .go{margin-left:auto;color:var(--amber);flex:none}
+  .startcard{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .startcard .h{display:flex;align-items:baseline;gap:8px}
+  .startcard .h b{font-family:var(--disp);font-size:1.1rem}
+  .startcard .queued{display:flex;gap:8px;flex-wrap:wrap}
+  .session-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:15px}
+  .session-card .sh{font-family:var(--disp);font-weight:700;font-size:1.1rem}
+  .session-card .queued{display:flex;gap:8px;flex-wrap:wrap}
+  .step{display:flex;gap:12px}
+  .stepn{flex:none;width:27px;height:27px;border-radius:50%;background:var(--moss-soft);color:var(--moss-ink);display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:.9rem;margin-top:1px}
+  .step.test .stepn{background:var(--sci-soft);color:var(--sci)}
+  .stepbody{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+  .stept{font-family:var(--disp);font-weight:700;font-size:1rem}
+  .steps{font-size:.8rem;color:var(--soft);line-height:1.42;margin-top:-4px}
+  .pillstat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 11px;font-size:.76rem;font-weight:600;color:var(--soft)}
+  .pillstat b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .picker{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border-radius:14px;padding:10px 12px}
+  .picker .pl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+  .picker select{font:inherit;font-weight:650;font-size:.9rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media print{body{padding:0;background:#fff}.lede,.tabs,.top .sessions,.nudge,.startcard,.picker{display:none}.app{border:0;box-shadow:none;min-height:0;max-width:none}.exp-body{display:flex!important}}
+</style>
+
+<p class="lede"><b>Marble — parent app.</b> The hub: start a session when you're ready, print the packet, record how it went, watch progress. <b>Tap the bottom tabs</b> to move between screens. School on any schedule — the app never assumes a day is a school day.</p>
+
+<div class="app">
+  <input class="nav" type="radio" name="tab" id="t-today" checked>
+  <input class="nav" type="radio" name="tab" id="t-plan">
+  <input class="nav" type="radio" name="tab" id="t-record">
+  <input class="nav" type="radio" name="tab" id="t-print">
+  <input class="nav" type="radio" name="tab" id="t-prog">
+  <input class="nav" type="radio" name="tab" id="t-settings">
+
+  <div class="top">
+    <span class="who">
+      <span class="ava">A</span>
+      <span><span class="nm">Ada</span> <span class="age">· age 6</span></span>
+    </span>
+    <span class="sessions" title="Total learning sessions"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22V11"/><path d="M12 14c0-3 2.4-5 5.5-5C17.5 12 15 14 12 14z"/><path d="M12 11C12 8 9.6 6 6.5 6 6.5 9 9 11 12 11z"/></svg>96 sessions</span>
+    <label class="gear" for="t-settings" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></label>
+  </div>
+
+  <div class="scroll">
+    <!-- HOME -->
+    <section class="view" id="v-today">
+      <label class="nudge" for="t-record" style="cursor:pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span><span class="nt">Ada finished Thursday's exam</span><br><span class="ns">Her score is in — assess it to update the plan</span></span>
+        <span class="go"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+      </label>
+      <div class="session-card">
+        <div class="sh">Ready when you are</div>
+        <div class="queued">
+          <span class="pillstat"><b>4</b> reviews due</span>
+          <span class="pillstat"><b>2</b> new ready</span>
+          <span class="pillstat">~20 min</span>
+        </div>
+        <div class="step learn">
+          <span class="stepn">1</span>
+          <div class="stepbody">
+            <div class="stept">Learn — on paper</div>
+            <div class="steps">Start the session and print the book page + worksheet. Ada learns it closed-book, away from the screen.</div>
+            <a class="btn primary" href="#print-today" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Start &amp; print materials</a>
+            <p class="printnote" id="print-today">✓ Materials printed &amp; filed in the binder.</p>
+          </div>
+        </div>
+        <div class="step test">
+          <span class="stepn">2</span>
+          <div class="stepbody">
+            <div class="stept">Test — on her iPad</div>
+            <div class="steps">Once she's learned it, mark the session complete to send the exam to her iPad. Her score comes back to your <b>Assess</b> tab automatically.</div>
+            <a class="btn ghost" href="#exam-note" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Mark complete &amp; send the exam →</a>
+            <p class="printnote" id="exam-note">✓ Exam sent to Ada's iPad. She takes it there; her result lands in Assess.</p>
+          </div>
+        </div>
+        <p style="font-size:.74rem;color:var(--faint);margin:0;text-align:center">Concepts on paper first, the exam on screen — you decide when she's ready. No daily cap; do more than one session when it's clicking.</p>
+      </div>
+      <div class="brief">
+        <svg class="sprout" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22V11"/><path d="M12 14c0-3 2.4-5 5.5-5C17.5 12 15 14 12 14z"/><path d="M12 11C12 8 9.6 6 6.5 6 6.5 9 9 11 12 11z"/></svg>
+        <p class="eyebrow">This session's coaching</p>
+        <h2>Fluent adding &amp; subtracting within 5</h2>
+        <p class="focus">Math · main focus, ~5 minutes</p>
+        <dl>
+          <div class="row"><span class="k">Watch for</span><span class="v">She recounts from 1 every time instead of counting on from the bigger number.</span></div>
+          <div class="row"><span class="k">The fix</span><span class="v">Cover the first group, say its number out loud, then count on the rest.</span></div>
+          <div class="row"><span class="k">If stuck</span><span class="v say">"You already know it's 3 — start there and count up: four, five."</span></div>
+        </dl>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>What Ada learns this session</h3><span class="meta">5 topics</span></div>
+        <p style="font-size:.74rem;color:var(--faint);margin:0;padding:0 16px 8px">On the printed pages. Tap any row to see what it is, what mastery looks like, and examples.</p>
+        <div class="rows">
+          <details class="exp">
+            <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Fluent adding &amp; subtracting within 5</span><span class="it-sub">Math · New</span></span><span class="chip new">New</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Fluently add and subtract within 5 — recall the answer quickly, without counting up on fingers each time.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Answers 8 of 10 facts correctly in about 3 seconds each, on two different days.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">3 + 2 = 5 · 5 − 1 = 4 · 4 + 1 = 5 · 2 + 2 = 4</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Number bonds to 5</span><span class="it-sub">Math · Review</span></span><span class="chip review">Review</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Know the pairs of numbers that make 5, and the matching subtraction facts, from memory.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Given one part, names the other part of 5 without counting.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">1 + 4 · 2 + 3 · 0 + 5 · 5 − 2 = 3</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Basic Nouns &amp; Verbs</span><span class="it-sub">English · New</span></span><span class="chip new">New</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Use frequently-occurring nouns (people, places, things) and verbs (action words) correctly in speech and writing.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Sorts words into nouns vs verbs and uses each correctly in a spoken sentence.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">Nouns: dog, park, cup · Verbs: run, jump, eat</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Rhyming words</span><span class="it-sub">English · Review</span></span><span class="chip review">Review</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Recognise and produce rhyming words; join in with predictable rhymes in stories and poems.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Gives a word that rhymes with a spoken word 4 of 5 times.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">cat → hat · sun → run · tree → bee</span></div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Animal Camouflage</span><span class="it-sub">Science · Cats unit</span></span><span class="chip unit">Unit</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Know that many animals use camouflage — colours and patterns that help them blend into their surroundings — to hide from predators or sneak up on prey.</p>
+              <div class="exp-field"><b>What mastery looks like</b>Explains, in their own words, how camouflage helps one animal survive.</div>
+              <div class="exp-field exp-ex"><b>Examples</b><span class="ex">Stick insect looks like a twig · Polar bear is white in snow · A tabby cat hides in dry grass</span></div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section class="view" id="v-plan">
+      <p class="eyebrow">Curriculum · where Ada stands</p>
+      <div class="interest"><span class="t">🐱 Cats</span><span class="s">current interest — shapes examples &amp; the unit</span></div>
+      <div class="card">
+        <div class="subj"><div class="r1"><span class="dot" style="background:#4c7a34"></span><span class="nm">Math</span><span class="ct">14 mastered · 2 learning</span></div><div class="bar"><i class="m" style="width:66.7%"></i><i class="l" style="width:9.5%"></i></div></div>
+        <div class="subj"><div class="r1"><span class="dot" style="background:#c07542"></span><span class="nm">English</span><span class="ct">9 mastered · 1 learning</span></div><div class="bar"><i class="m" style="width:64.3%"></i><i class="l" style="width:7.1%"></i></div></div>
+        <div class="subj"><div class="r1"><span class="dot" style="background:#2b8a8f"></span><span class="nm">Science</span><span class="ct">6 mastered · 2 learning</span></div><div class="bar"><i class="m" style="width:40%"></i><i class="l" style="width:13.3%"></i></div></div>
+      </div>
+      <div class="legend"><span><i class="sw" style="background:var(--moss)"></i>Mastered</span><span><i class="sw" style="background:var(--clay)"></i>In progress</span><span><i class="sw" style="background:var(--line)"></i>Ready / ahead</span></div>
+      <div class="card">
+        <div class="card-h"><h3>Ready to learn next</h3><span class="meta">unlocked</span></div>
+        <div class="rows">
+          <details class="exp">
+            <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Adding &amp; subtracting within 10</span><span class="it-sub">Math · prerequisites met</span></span><span class="chip ready">Ready</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Add and subtract numbers to 10 using objects, drawings, or mental images — the next step up from within 5.</p>
+              <div class="exp-field"><b>Unlocks</b>Addition &amp; subtraction word problems · Adding within 20.</div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Capital letters for names</span><span class="it-sub">English · prerequisites met</span></span><span class="chip ready">Ready</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Use a capital letter for people's names, places, days of the week, and the word "I".</p>
+              <div class="exp-field"><b>Unlocks</b>Capital letters to start a sentence · Basic punctuation.</div>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Living &amp; non-living things</span><span class="it-sub">Science · prerequisites met</span></span><span class="chip ready">Ready</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <p class="exp-desc">Sort things into living and non-living, and say what living things need to survive.</p>
+              <div class="exp-field"><b>Unlocks</b>Basic needs of animals · Habitats.</div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRINT -->
+    <section class="view" id="v-print">
+      <p class="eyebrow">Print &amp; binder</p>
+      <div class="card">
+        <div class="card-h"><h3>This session's packet</h3><span class="meta">learn + practice</span></div>
+        <div class="prev-row">
+          <div class="thumb"><div class="lines"><i style="width:70%"></i><i style="width:90%"></i><i style="width:60%"></i><i style="width:80%"></i></div><span class="lbl">Book page (learn)</span></div>
+          <div class="thumb"><div class="lines"><i style="width:40%"></i><i style="width:40%"></i><i style="width:40%"></i><i style="width:40%"></i></div><span class="lbl">Worksheet</span></div>
+        </div>
+        <div style="padding:0 14px 14px"><a class="btn primary" href="#print-packet" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Print packet + answer key</a>
+          <p class="printnote" id="print-packet">✓ Sent to your printer — book page, worksheet, and answer key.</p></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Print ahead</h3><span class="meta">off-grid / road trip</span></div>
+        <div class="more"><div class="r1"><div><div style="font-weight:650;font-size:.9rem">Next few sessions, ready to go</div><div class="it-sub">whole packets you can do away from a printer</div></div><span class="qty">−&nbsp;<b>5</b>&nbsp;+</span></div></div>
+        <div style="padding:2px 14px 12px"><a class="btn ghost" href="#ahead-note" data-print><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Print 5 sessions</a>
+          <p class="printnote" id="ahead-note">✓ 5 sessions printed &amp; numbered. Record them when you're back — the app re-teaches anything tricky.</p></div>
+        <p style="font-size:.74rem;color:var(--faint);margin:0;padding:0 16px 14px">Planned as normally scheduled, new topics included. Since they're printed ahead, they can't adapt until you enter results — so grade them when you're back and the plan catches up.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>More practice</h3><span class="meta">never capped</span></div>
+        <div class="more"><div class="r1"><div><div style="font-weight:650;font-size:.9rem">Adding within 5</div><div class="it-sub">fresh, non-repeating sheets — make as many as you need</div></div><span class="qty">−&nbsp;<b>2</b>&nbsp;+</span></div></div>
+        <div style="padding:0 14px 14px"><a class="btn ghost" href="#gen-note" data-print>Generate &amp; print</a>
+          <p class="printnote" id="gen-note">✓ Generated a fresh sheet — new problems every time.</p></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>The binder</h3><span class="meta">every past session · tap to reprint or record</span></div>
+        <div class="rows binder">
+          <details class="exp">
+            <summary><span class="day">Today</span><span class="it-main"><span class="it-name">Math book page + worksheet · Nouns &amp; Verbs · Cats unit page</span></span><span class="bstat todo">Not recorded</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>Adding within 5 · Number bonds to 5 · Basic Nouns &amp; Verbs · Rhyming words · Animal Camouflage</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp1" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint materials</a>
+                <label class="btn ghost sm" for="t-record">Record this session</label>
+              </div>
+              <p class="printnote" id="rp1">✓ Reprinted — same packet, ready to practice again.</p>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="day">Thu</span><span class="it-main"><span class="it-name">Number bonds worksheet · Rhyming practice · Cats: reading</span></span><span class="bstat todo">Not recorded</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>Number bonds to 5 · Rhyming words · Cats: reading page</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp2" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint materials</a>
+                <label class="btn ghost sm" for="t-record">Record this session</label>
+              </div>
+              <p class="printnote" id="rp2">✓ Reprinted — same packet, ready to practice again.</p>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="day">Tue</span><span class="it-main"><span class="it-name">Counting-on lesson + worksheet · Handwriting</span></span><span class="bstat done">Recorded ✓</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>Counting on from the bigger number · Handwriting: c o a</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp3" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint for extra practice</a>
+                <label class="btn ghost sm" for="t-record">Edit results</label>
+              </div>
+              <p class="printnote" id="rp3">✓ Reprinted — a fresh copy of that session to keep practicing.</p>
+            </div>
+          </details>
+          <details class="exp">
+            <summary><span class="day">Sat</span><span class="it-main"><span class="it-name">Shapes worksheet · Cats: facts page</span></span><span class="bstat done">Recorded ✓</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+            <div class="exp-body">
+              <div class="exp-field"><b>In this session</b>2D shapes · Cats: facts &amp; vocabulary</div>
+              <div class="brow-actions">
+                <a class="btn ghost sm" href="#rp4" data-print><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Reprint for extra practice</a>
+                <label class="btn ghost sm" for="t-record">Edit results</label>
+              </div>
+              <p class="printnote" id="rp4">✓ Reprinted — a fresh copy of that session to keep practicing.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section class="view" id="v-progress">
+      <p class="eyebrow">Progress &amp; records</p>
+      <div class="stats">
+        <div class="stat"><div class="n">29</div><div class="l">Mastered</div></div>
+        <div class="stat"><div class="n">96</div><div class="l">Sessions</div></div>
+        <div class="stat"><div class="n">11</div><div class="l">This month</div></div>
+      </div>
+      <div class="card"><div class="card-h"><h3>Recent sessions</h3><span class="meta">items completed each</span></div>
+        <div class="spark">
+          <div class="b"><i style="height:60%"></i></div><div class="b"><i style="height:80%"></i></div><div class="b"><i style="height:100%"></i></div><div class="b"><i style="height:80%"></i></div><div class="b"><i style="height:70%"></i></div><div class="b"><i style="height:90%"></i></div><div class="b today"><i style="height:80%"></i></div>
+        </div>
+        <p style="font-size:.72rem;color:var(--faint);margin:0;padding:0 16px 12px">One bar per session — not per calendar day. Gaps between school days are normal.</p></div>
+      <div class="card"><div class="card-h"><h3>Standards coverage</h3><span class="meta">auto-tracked</span></div>
+        <div class="cov"><div class="r1"><b>Common Core Math (K)</b><span>64%</span></div><div class="bar"><i class="c" style="width:64%"></i></div></div>
+        <div class="cov"><div class="r1"><b>Common Core ELA (K)</b><span>58%</span></div><div class="bar"><i class="c" style="width:58%"></i></div></div>
+        <div class="cov"><div class="r1"><b>NGSS Kindergarten</b><span>41%</span></div><div class="bar"><i class="c" style="width:41%"></i></div></div>
+      </div>
+      <div class="actions"><a class="btn ghost" href="#export-note" data-print><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Export portfolio (PDF)</a>
+        <p class="printnote" id="export-note">✓ Portfolio ready — work samples + standards coverage for your records.</p></div>
+    </section>
+
+    <!-- RECORD -->
+    <section class="view" id="v-record">
+      <p class="eyebrow">Assess · Ada</p>
+      <div class="picker">
+        <span class="pl">Session</span>
+        <select aria-label="Which session">
+          <option>This session (today)</option>
+          <option>Thu · exam done, not assessed</option>
+          <option>Wed · not assessed</option>
+          <option>Mon · edit</option>
+          <option>Pick a date…</option>
+        </select>
+        <span style="font-size:.72rem;color:var(--faint)">Back-date any session.</span>
+      </div>
+      <div class="complete-card">
+        <div><div class="ct">Ada's exam is in</div><div class="cs">The on-screen exam scored itself — review it below. Add your grades for the paper worksheet, then save to update the plan.</div></div>
+      </div>
+      <p class="eyebrow" style="margin-top:2px">Results · on screen auto-scored, on paper you grade</p>
+      <div class="card"><div class="rows">
+        <details class="exp">
+          <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Fluent adding &amp; subtracting within 5</span><span class="it-sub">Math</span></span><span class="srcbadge screen">On screen</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Fluently add and subtract within 5 — quick recall, no finger-counting.</p>
+            <div class="exp-field"><b>Mastery</b>8 of 10 correct in ~3s each. Two "Got it" sessions on different days = mastered.</div>
+            <div class="auto-res"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Ada did this on screen · <b>5 of 5 correct</b> — auto-recorded</span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#4c7a34"></span><span class="it-main"><span class="it-name">Number bonds to 5</span><span class="it-sub">Math</span></span><span class="srcbadge paper">On paper</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Know the pairs that make 5 and the matching subtraction facts, from memory.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>Given one part, names the other part of 5 without counting.</div>
+            <div class="exp-field exp-ex"><b>Examples on the sheet</b><span class="ex">1 + 4 · 2 + 3 · 5 − 2</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r1" id="r1p" checked><label for="r1p">Got it</label><input class="again" type="radio" name="r1" id="r1a"><label for="r1a">Practice</label></span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Basic Nouns &amp; Verbs</span><span class="it-sub">English</span></span><span class="srcbadge paper">On paper</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Use common nouns and verbs correctly in speech and writing.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>Sorts words into nouns vs verbs and uses each in a sentence.</div>
+            <div class="exp-field exp-ex"><b>Examples on the sheet</b><span class="ex">dog · park · run · jump</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r2" id="r2p" checked><label for="r2p">Got it</label><input class="again" type="radio" name="r2" id="r2a"><label for="r2a">Practice</label></span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#c07542"></span><span class="it-main"><span class="it-name">Rhyming words</span><span class="it-sub">English</span></span><span class="srcbadge screen">On screen</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Recognise and produce rhyming words.</p>
+            <div class="exp-field"><b>Mastery</b>Gives a rhyme for a spoken word 4 of 5 times.</div>
+            <div class="auto-res"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Ada did this on screen · <b>4 of 5 correct</b> — auto-recorded</span></div>
+          </div>
+        </details>
+        <details class="exp">
+          <summary><span class="dot" style="background:#2b8a8f"></span><span class="it-main"><span class="it-name">Animal Camouflage</span><span class="it-sub">Science · Cats unit</span></span><span class="srcbadge paper">On paper</span><span class="caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></summary>
+          <div class="exp-body">
+            <p class="exp-desc">Know how animals use camouflage to hide from predators or sneak up on prey.</p>
+            <div class="exp-field"><b>Mark "Got it" when</b>Explains, in their own words, how camouflage helps one animal survive.</div>
+            <div class="exp-field exp-ex"><b>On the sheet</b><span class="ex">Match each animal to where it hides best.</span></div>
+            <div class="exp-mark"><span class="ml">How did it go?</span><span class="toggle"><input class="pass" type="radio" name="r4" id="r4p" checked><label for="r4p">Got it</label><input class="again" type="radio" name="r4" id="r4a"><label for="r4a">Practice</label></span></div>
+          </div>
+        </details>
+      </div></div>
+      <label class="btn ghost" for="t-today" style="cursor:pointer">Save results</label>
+      <p style="font-size:.78rem;color:var(--faint);text-align:center;margin:0"><b>On screen</b> = the child's quiz, graded automatically. <b>On paper</b> = you grade the worksheet. Two "Got it" sessions on different days = mastered; misses come back sooner.</p>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="v-settings">
+      <label class="backlink" for="t-today">← Back to home</label>
+      <p class="eyebrow">Settings · household</p>
+      <div class="card">
+        <div class="card-h"><h3>Who starts a session</h3><span class="meta">per child</span></div>
+        <p style="font-size:.8rem;color:var(--soft);margin:0;padding:0 16px 6px">Starting a session is what makes the child's on-screen tasks appear. Younger children are parent-started; older, self-directed kids can start their own.</p>
+        <div class="setrow">
+          <span class="sava" style="background:#4c7a34">A</span>
+          <span><span class="snm">Ada</span> <span class="sage">· age 6</span></span>
+          <span class="seg"><input type="radio" name="startAda" id="ada-p" checked><label for="ada-p">Parent starts</label><input type="radio" name="startAda" id="ada-c"><label for="ada-c">Can self-start</label></span>
+        </div>
+        <div class="setrow">
+          <span class="sava" style="background:#c07542">L</span>
+          <span><span class="snm">Leo</span> <span class="sage">· age 9</span></span>
+          <span class="seg"><input type="radio" name="startLeo" id="leo-p"><label for="leo-p">Parent starts</label><input type="radio" name="startLeo" id="leo-c" checked><label for="leo-c">Can self-start</label></span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Screen time</h3><span class="meta">graduates with age</span></div>
+        <p style="font-size:.8rem;color:var(--soft);margin:0;padding:0 16px 14px">The younger the child, the less screen: a 5-year-old does almost everything on paper and only short on-screen quizzes; the share grows with age. Concepts stay on paper; the screen is for retrieval, fluency, and tracing.</p>
+      </div>
+      <p style="font-size:.75rem;color:var(--faint);text-align:center;margin:0">Also here later: members, content policy, subscription.</p>
+    </section>
+  </div>
+
+  <nav class="tabs">
+    <label for="t-today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</label>
+    <label for="t-plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V5M4 19h16"/><path d="M8 16v-4M13 16V8M18 16v-6"/></svg>Plan</label>
+    <label for="t-record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Assess</label>
+    <label for="t-print"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>Print</label>
+    <label for="t-prog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/></svg>Progress</label>
+  </nav>
+</div>
+
+<script>
+// Progressive enhancement: real print buttons open the browser print dialog.
+// Without JS, the href reveals an inline confirmation note (CSS :target).
+document.querySelectorAll('a[data-print]').forEach(function(a){
+  a.addEventListener('click', function(){
+    if (a.getAttribute('href') === '#print-today' || a.getAttribute('href') === '#print-packet') {
+      setTimeout(function(){ try { window.print(); } catch(e){} }, 60);
+    }
+  });
+});
+</script>

@@ -3,3 +3,12 @@ node_modules/
 *.log
 .env
 .env.*
+
+# Copyrighted reference book — kept locally, never redistributed via git
+docs/the-math-academy-way.pdf
+
+# Generated content pipeline output (mock/unreviewed)
+pipeline/out/
+
+# Generated seed SQL (run db/seed.mjs to produce)
+db/seed.sql

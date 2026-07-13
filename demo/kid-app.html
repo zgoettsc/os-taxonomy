@@ -1,0 +1,371 @@
+<meta charset="utf-8">
+<title>Marble — Student</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#eef1e8; --card:#fbfcf8; --card2:#f1f4ea;
+    --ink:#242a1d; --soft:#5d6353; --faint:#8a9079;
+    --line:#e0e4d6; --line2:#ebeee3;
+    --moss:#4c7a34; --moss-soft:#e5efd7; --moss-ink:#33571f;
+    --clay:#c07542; --clay-soft:#f4e6da;
+    --amber:#b07d1e;
+    --berry:#b23a6b; --berry-soft:#f6e0e9;
+    --sci:#2b8a8f; --sci-soft:#d9edee;
+    --good:#4c7a34; --nudge:#c07542;
+    --shadow:0 14px 40px -18px rgba(35,39,31,.4);
+    --shadow-sm:0 3px 10px -4px rgba(35,39,31,.3);
+    --disp:ui-rounded,"SF Pro Rounded","Segoe UI Rounded",system-ui,sans-serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#12150e; --card:#1d231a; --card2:#232a1e; --ink:#edf0e6; --soft:#9aa38c; --faint:#727a63;
+    --line:#2c3326; --line2:#262d20; --moss:#8cc063; --moss-soft:#25301b; --moss-ink:#bfe0a2;
+    --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a;
+    --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#1b2b2c;
+    --good:#8cc063; --nudge:#e0a075;
+    --shadow:0 16px 46px -18px rgba(0,0,0,.72); --shadow-sm:0 3px 12px -5px rgba(0,0,0,.6);
+  }}
+  :root[data-theme="light"]{--ground:#eef1e8;--card:#fbfcf8;--card2:#f1f4ea;--ink:#242a1d;--soft:#5d6353;--faint:#8a9079;--line:#e0e4d6;--line2:#ebeee3;--moss:#4c7a34;--moss-soft:#e5efd7;--moss-ink:#33571f;--clay:#c07542;--clay-soft:#f4e6da;--berry:#b23a6b;--berry-soft:#f6e0e9;--sci:#2b8a8f;--good:#4c7a34;--nudge:#c07542}
+  :root[data-theme="dark"]{--ground:#12150e;--card:#1d231a;--card2:#232a1e;--ink:#edf0e6;--soft:#9aa38c;--faint:#727a63;--line:#2c3326;--line2:#262d20;--moss:#8cc063;--moss-soft:#25301b;--moss-ink:#bfe0a2;--clay:#e0a075;--clay-soft:#33271c;--berry:#e07aa2;--berry-soft:#32202a;--sci:#5ab6bb;--good:#8cc063;--nudge:#e0a075}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);line-height:1.45;-webkit-font-smoothing:antialiased;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 14px 40px}
+  .lede{max-width:440px;text-align:center;color:var(--soft);font-size:.86rem;margin:0 auto 16px}
+  .lede b{color:var(--ink)}
+  .app{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:32px;
+    box-shadow:var(--shadow);overflow:hidden;height:812px;position:relative;display:flex;flex-direction:column}
+  a{text-decoration:none;color:inherit}
+
+  /* hidden radios drive the whole flow — no JS needed */
+  .nav{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+  .screens{flex:1;display:flex;flex-direction:column;min-height:0}
+  .screen{display:none;flex:1;flex-direction:column;padding:24px 22px 24px;overflow-y:auto}
+  #s-pick:checked~.screens #v-pick,
+  #s-today:checked~.screens #v-today,
+  #s-q1:checked~.screens #v-q1,
+  #s-q2:checked~.screens #v-q2,
+  #s-trace:checked~.screens #v-trace,
+  #s-done:checked~.screens #v-done{display:flex;animation:rise .3s ease}
+  @keyframes rise{from{transform:translateY(8px)}to{transform:none}}
+  @keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+  .hi{font-family:var(--disp);font-size:1.55rem;font-weight:800;letter-spacing:-.02em;text-align:center;margin:8px 0 2px}
+  .sub{text-align:center;color:var(--soft);font-size:.95rem;margin:0 0 26px}
+  .who{display:flex;flex-direction:column;gap:14px}
+  .pick{display:flex;align-items:center;gap:16px;background:var(--card2);border:1.5px solid var(--line);border-radius:22px;padding:16px 18px;cursor:pointer}
+  .pick:active{transform:scale(.98)}
+  .pick .ava{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;color:#fff;font-size:1.5rem;flex:none}
+  .pick .nm{font-family:var(--disp);font-weight:750;font-size:1.25rem;letter-spacing:-.01em}
+  .pick .todo{color:var(--soft);font-size:.85rem}
+  .pick .go{margin-left:auto;color:var(--faint)}
+
+  .thead{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+  .thead .ava{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;color:#fff;font-size:1.1rem;background:#4c7a34}
+  .thead .t{font-family:var(--disp);font-weight:750;font-size:1.2rem}
+  .thead .d{color:var(--faint);font-size:.8rem}
+  .exit{margin-left:auto;background:var(--card2);color:var(--faint);width:38px;height:38px;border-radius:12px;cursor:pointer;display:grid;place-items:center}
+  .progress-dots{display:flex;gap:7px;margin:20px 0 8px}
+  .progress-dots i{flex:1;height:7px;border-radius:5px;background:var(--line)}
+  .progress-dots i.now{background:var(--amber)}
+  .tcount{text-align:center;color:var(--soft);font-size:.86rem;margin:2px 0 18px}
+  .tcount b{color:var(--ink);font-family:var(--disp)}
+  .tasks{display:flex;flex-direction:column;gap:12px}
+  .task{display:flex;align-items:center;gap:15px;background:var(--card2);border:1.5px solid var(--line);border-radius:20px;padding:16px 18px;cursor:pointer}
+  .task:active{transform:scale(.99)}
+  .task .ic{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;flex:none}
+  .task .ic svg{width:26px;height:26px}
+  .task .nm{font-family:var(--disp);font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
+  .task .kind{color:var(--soft);font-size:.8rem}
+  .task .st{margin-left:auto;color:var(--faint)}
+
+  .qtop{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .qtop .back{background:var(--card2);color:var(--faint);width:38px;height:38px;border-radius:12px;cursor:pointer;display:grid;place-items:center;flex:none}
+  .qtop .pill{background:var(--card2);color:var(--soft);font-size:.75rem;font-weight:700;padding:6px 11px;border-radius:20px}
+  .qtop .count{margin-left:auto;color:var(--faint);font-size:.78rem;font-weight:600;font-variant-numeric:tabular-nums}
+
+  /* multi-question quiz: one question at a time, in the SAME place (no scroll).
+     Each question overlays the quiz area; a per-step radio picks which shows. */
+  .quiz{position:relative;flex:1;min-height:360px}
+  .qi{position:absolute;inset:0;display:none;flex-direction:column;gap:12px;background:var(--card2);border:1.5px solid var(--line);border-radius:22px;padding:18px 15px;overflow-y:auto}
+  /* which question shows is driven by the step radios (per subject, below) */
+  #ms0:checked~.quiz .qi.s0,#ms1:checked~.quiz .qi.s1,#ms2:checked~.quiz .qi.s2,#ms3:checked~.quiz .qi.s3,#ms4:checked~.quiz .qi.s4,
+  #rs0:checked~.quiz .qi.s0,#rs1:checked~.quiz .qi.s1,#rs2:checked~.quiz .qi.s2,#rs3:checked~.quiz .qi.s3,#rs4:checked~.quiz .qi.s4{display:flex;animation:rise .28s ease}
+  .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px}
+  .qnum{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:center;flex:none}
+  .qprompt{text-align:center;font-size:1rem;color:var(--soft)}
+  .qprompt b{display:block;font-family:var(--disp);font-weight:800;color:var(--ink);font-size:2.6rem;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
+  .qprompt b.sm{font-size:2rem}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .opt{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:18px;padding:18px 8px;font-family:var(--disp);font-weight:800;font-size:1.6rem;cursor:pointer;text-align:center;font-variant-numeric:tabular-nums;display:block}
+  .opt:active{transform:scale(.97)}
+  .opt.sm{font-size:1.2rem}
+  .oi{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+  .oi.right:checked + .opt{border-color:var(--good);background:var(--moss-soft);color:var(--moss-ink);animation:pop .32s ease}
+  .oi.wrong:checked + .opt{border-color:var(--nudge);background:var(--clay-soft);color:var(--clay)}
+  .feedback{text-align:center;font-family:var(--disp);font-weight:750;font-size:.98rem;height:22px;color:transparent}
+  .qi:has(.oi.right:checked) .feedback{color:var(--good)}
+  .qi:has(.oi.right:checked) .feedback::after{content:"Yes! 🌱"}
+  .qi:has(.oi.wrong:checked):not(:has(.oi.right:checked)) .feedback{color:var(--nudge)}
+  .qi:has(.oi.wrong:checked):not(:has(.oi.right:checked)) .feedback::after{content:"Not quite — try again"}
+  .qi .q-next{display:none;margin-top:2px}
+  .qi:has(.oi.right:checked) .q-next{display:flex;animation:rise .3s ease}
+
+  .trace-lab{text-align:center;color:var(--soft);font-size:.92rem;margin:2px 0 12px}
+  .trace-lab b{color:var(--ink);font-family:var(--disp)}
+  .canvas-box{position:relative;flex:1;min-height:280px;background:var(--card2);border:1.5px solid var(--line);border-radius:24px;overflow:hidden;touch-action:none}
+  .canvas-box canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+  .guide{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:14rem;color:var(--line);user-select:none;pointer-events:none;line-height:1}
+  .midline{position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--line);pointer-events:none}
+  .nojs-hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:.78rem;color:var(--faint);padding:0 20px;pointer-events:none}
+  .trace-meta{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;color:var(--faint);font-size:.8rem;font-weight:600}
+  .trace-tools{display:flex;gap:11px;margin-top:12px}
+  .trace-tools>*{flex:1}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;border:0;font-weight:700;padding:16px;border-radius:18px;cursor:pointer;font-size:1.02rem;font-family:var(--disp)}
+  .btn.primary{background:var(--moss);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn.primary:active{transform:translateY(1px)}
+  .btn.ghost{background:var(--card2);color:var(--ink);border:1.5px solid var(--line)}
+  [hidden]{display:none!important}
+
+  .done{align-items:center;justify-content:center;text-align:center}
+  .burst{width:120px;height:120px;display:grid;place-items:center;margin-bottom:18px;animation:pop .5s ease}
+  .burst svg{width:120px;height:120px;color:var(--moss)}
+  .done h1{font-family:var(--disp);font-size:2.1rem;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
+  .done p{color:var(--soft);font-size:1rem;margin:0 0 4px;max-width:280px}
+  .done .stats{display:flex;gap:12px;margin:26px 0 30px}
+  .done .stat{background:var(--card2);border-radius:18px;padding:14px 20px;min-width:92px}
+  .done .stat .n{font-family:var(--disp);font-weight:800;font-size:1.7rem;color:var(--moss);font-variant-numeric:tabular-nums}
+  .done .stat .l{font-size:.72rem;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .done .close{color:var(--soft);font-size:.85rem;margin-top:2px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<p class="lede"><b>Marble — student screen.</b> The exam a grown-up sends <i>after</i> you've learned it on paper: several questions per subject to check what you know, then letter-tracing, then a clear "you're done." <b>Tap through it.</b> (Tracing needs a real browser — it draws with your finger or Apple Pencil.)</p>
+
+<div class="app">
+  <input class="nav" type="radio" name="screen" id="s-pick" checked>
+  <input class="nav" type="radio" name="screen" id="s-today">
+  <input class="nav" type="radio" name="screen" id="s-q1">
+  <input class="nav" type="radio" name="screen" id="s-q2">
+  <input class="nav" type="radio" name="screen" id="s-trace">
+  <input class="nav" type="radio" name="screen" id="s-done">
+
+  <div class="screens">
+    <!-- PROFILE -->
+    <section class="screen" id="v-pick">
+      <h1 class="hi">Who's here?</h1>
+      <p class="sub">Tap your picture to start.</p>
+      <div class="who">
+        <label class="pick" for="s-today">
+          <span class="ava" style="background:#4c7a34">A</span>
+          <span><span class="nm">Ada</span><br><span class="todo">3 things to do</span></span>
+          <span class="go"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+        <label class="pick" for="s-today">
+          <span class="ava" style="background:#c07542">L</span>
+          <span><span class="nm">Leo</span><br><span class="todo">3 things to do</span></span>
+          <span class="go"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- TODAY -->
+    <section class="screen" id="v-today">
+      <div class="thead">
+        <span class="ava">A</span>
+        <span><span class="t">Ada</span><br><span class="d">Today's quiz · sent by a grown-up</span></span>
+        <label class="exit" for="s-pick" aria-label="Switch user"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M15 12H5"/></svg></label>
+      </div>
+      <div class="progress-dots"><i class="now"></i><i></i><i></i></div>
+      <p class="tcount"><b>3</b> things to do</p>
+      <div class="tasks">
+        <label class="task" for="s-q1">
+          <span class="ic" style="background:var(--moss-soft);color:var(--moss)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8l3-3M5 8l3 3M19 16H5M19 16l-3-3M19 16l-3 3"/></svg></span>
+          <span><span class="nm">Adding within 5</span><br><span class="kind">Quick math · 5 questions</span></span>
+          <span class="st"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+        <label class="task" for="s-q2">
+          <span class="ic" style="background:var(--clay-soft);color:var(--clay)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M6 8h9a3 3 0 0 1 0 6H6"/></svg></span>
+          <span><span class="nm">Rhyming words</span><br><span class="kind">Listen &amp; tap · 5 questions</span></span>
+          <span class="st"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+        <label class="task" for="s-trace">
+          <span class="ic" style="background:var(--clay-soft);color:var(--clay)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M4 20l1-4 11-11a2.8 2.8 0 0 1 4 4L9 20z"/></svg></span>
+          <span><span class="nm">Trace letters</span><br><span class="kind">Handwriting · a b c</span></span>
+          <span class="st"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- QUIZ 1: MATH — 5 questions, one at a time in place -->
+    <section class="screen" id="v-q1">
+      <input class="nav" type="radio" name="mstep" id="ms0" checked>
+      <input class="nav" type="radio" name="mstep" id="ms1">
+      <input class="nav" type="radio" name="mstep" id="ms2">
+      <input class="nav" type="radio" name="mstep" id="ms3">
+      <input class="nav" type="radio" name="mstep" id="ms4">
+      <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">Adding within 5</span><span class="count">5 questions</span></div>
+      <div class="quiz">
+        <div class="qi s0"><span class="qnum">Question 1 of 5</span><div class="qbody"><div class="qprompt">What is<b>3 + 2</b></div><div class="opts">
+          <input class="oi right" type="radio" name="m1" id="m1a"><label class="opt" for="m1a">5</label>
+          <input class="oi wrong" type="radio" name="m1" id="m1b"><label class="opt" for="m1b">4</label>
+          <input class="oi wrong" type="radio" name="m1" id="m1c"><label class="opt" for="m1c">6</label>
+          <input class="oi wrong" type="radio" name="m1" id="m1d"><label class="opt" for="m1d">8</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms1">Next →</label></div>
+        <div class="qi s1"><span class="qnum">Question 2 of 5</span><div class="qbody"><div class="qprompt">What is<b>1 + 4</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="m2" id="m2a"><label class="opt" for="m2a">3</label>
+          <input class="oi right" type="radio" name="m2" id="m2b"><label class="opt" for="m2b">5</label>
+          <input class="oi wrong" type="radio" name="m2" id="m2c"><label class="opt" for="m2c">6</label>
+          <input class="oi wrong" type="radio" name="m2" id="m2d"><label class="opt" for="m2d">2</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms2">Next →</label></div>
+        <div class="qi s2"><span class="qnum">Question 3 of 5</span><div class="qbody"><div class="qprompt">What is<b>2 + 2</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="m3" id="m3a"><label class="opt" for="m3a">5</label>
+          <input class="oi wrong" type="radio" name="m3" id="m3b"><label class="opt" for="m3b">3</label>
+          <input class="oi right" type="radio" name="m3" id="m3c"><label class="opt" for="m3c">4</label>
+          <input class="oi wrong" type="radio" name="m3" id="m3d"><label class="opt" for="m3d">6</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms3">Next →</label></div>
+        <div class="qi s3"><span class="qnum">Question 4 of 5</span><div class="qbody"><div class="qprompt">What is<b>5 − 2</b></div><div class="opts">
+          <input class="oi right" type="radio" name="m4" id="m4a"><label class="opt" for="m4a">3</label>
+          <input class="oi wrong" type="radio" name="m4" id="m4b"><label class="opt" for="m4b">2</label>
+          <input class="oi wrong" type="radio" name="m4" id="m4c"><label class="opt" for="m4c">4</label>
+          <input class="oi wrong" type="radio" name="m4" id="m4d"><label class="opt" for="m4d">7</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="ms4">Next →</label></div>
+        <div class="qi s4"><span class="qnum">Question 5 of 5</span><div class="qbody"><div class="qprompt">What is<b>4 + 1</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="m5" id="m5a"><label class="opt" for="m5a">4</label>
+          <input class="oi wrong" type="radio" name="m5" id="m5b"><label class="opt" for="m5b">6</label>
+          <input class="oi right" type="radio" name="m5" id="m5c"><label class="opt" for="m5c">5</label>
+          <input class="oi wrong" type="radio" name="m5" id="m5d"><label class="opt" for="m5d">3</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="s-q2">Next: Rhyming words →</label></div>
+      </div>
+    </section>
+
+    <!-- QUIZ 2: RHYMING — 5 questions, one at a time in place -->
+    <section class="screen" id="v-q2">
+      <input class="nav" type="radio" name="rstep" id="rs0" checked>
+      <input class="nav" type="radio" name="rstep" id="rs1">
+      <input class="nav" type="radio" name="rstep" id="rs2">
+      <input class="nav" type="radio" name="rstep" id="rs3">
+      <input class="nav" type="radio" name="rstep" id="rs4">
+      <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">Rhyming words</span><span class="count">5 questions</span></div>
+      <div class="quiz">
+        <div class="qi s0"><span class="qnum">Question 1 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">cat</b></div><div class="opts">
+          <input class="oi right" type="radio" name="r1" id="r1a"><label class="opt sm" for="r1a">hat</label>
+          <input class="oi wrong" type="radio" name="r1" id="r1b"><label class="opt sm" for="r1b">dog</label>
+          <input class="oi wrong" type="radio" name="r1" id="r1c"><label class="opt sm" for="r1c">sun</label>
+          <input class="oi wrong" type="radio" name="r1" id="r1d"><label class="opt sm" for="r1d">cup</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs1">Next →</label></div>
+        <div class="qi s1"><span class="qnum">Question 2 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">sun</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="r2" id="r2a"><label class="opt sm" for="r2a">tree</label>
+          <input class="oi right" type="radio" name="r2" id="r2b"><label class="opt sm" for="r2b">run</label>
+          <input class="oi wrong" type="radio" name="r2" id="r2c"><label class="opt sm" for="r2c">ball</label>
+          <input class="oi wrong" type="radio" name="r2" id="r2d"><label class="opt sm" for="r2d">fish</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs2">Next →</label></div>
+        <div class="qi s2"><span class="qnum">Question 3 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">bee</b></div><div class="opts">
+          <input class="oi right" type="radio" name="r3" id="r3a"><label class="opt sm" for="r3a">tree</label>
+          <input class="oi wrong" type="radio" name="r3" id="r3b"><label class="opt sm" for="r3b">car</label>
+          <input class="oi wrong" type="radio" name="r3" id="r3c"><label class="opt sm" for="r3c">book</label>
+          <input class="oi wrong" type="radio" name="r3" id="r3d"><label class="opt sm" for="r3d">hand</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs3">Next →</label></div>
+        <div class="qi s3"><span class="qnum">Question 4 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">star</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="r4" id="r4a"><label class="opt sm" for="r4a">leaf</label>
+          <input class="oi wrong" type="radio" name="r4" id="r4b"><label class="opt sm" for="r4b">moon</label>
+          <input class="oi right" type="radio" name="r4" id="r4c"><label class="opt sm" for="r4c">car</label>
+          <input class="oi wrong" type="radio" name="r4" id="r4d"><label class="opt sm" for="r4d">hand</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="rs4">Next →</label></div>
+        <div class="qi s4"><span class="qnum">Question 5 of 5</span><div class="qbody"><div class="qprompt">Which word rhymes with<b class="sm">dog</b></div><div class="opts">
+          <input class="oi wrong" type="radio" name="r5" id="r5a"><label class="opt sm" for="r5a">cat</label>
+          <input class="oi right" type="radio" name="r5" id="r5b"><label class="opt sm" for="r5b">log</label>
+          <input class="oi wrong" type="radio" name="r5" id="r5c"><label class="opt sm" for="r5c">sun</label>
+          <input class="oi wrong" type="radio" name="r5" id="r5d"><label class="opt sm" for="r5d">cup</label></div></div><div class="feedback"></div><label class="btn primary q-next" for="s-trace">Next: Trace letters →</label></div>
+      </div>
+    </section>
+
+    <!-- TRACE -->
+    <section class="screen" id="v-trace">
+      <div class="qtop"><label class="back" for="s-today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></label><span class="pill">Handwriting</span><span class="count" id="tr-count">Letter 1 of 3</span></div>
+      <p class="trace-lab">Trace the <b id="tr-letter">a</b> — use your finger or pencil.</p>
+      <div class="canvas-box" id="tr-box">
+        <div class="midline"></div>
+        <div class="guide" id="tr-guide">a</div>
+        <canvas id="tr-canvas"></canvas>
+        <div class="nojs-hint" id="nojsHint">Open in a web browser to draw here with your finger or Apple Pencil.</div>
+      </div>
+      <div class="trace-tools">
+        <button class="btn ghost" id="tr-clear" type="button">Clear</button>
+        <button class="btn ghost" id="tr-next" type="button" hidden>Next letter →</button>
+        <label class="btn primary" id="tr-done" for="s-done">Done →</label>
+      </div>
+    </section>
+
+    <!-- DONE -->
+    <section class="screen done" id="v-done">
+      <div class="burst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9" fill="var(--moss-soft)"/><path d="M8 12.5l2.5 2.5L16 9" stroke="var(--moss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1>All done, Ada!</h1>
+      <p>You finished everything. Nice work — that's a great session.</p>
+      <div class="stats">
+        <div class="stat"><div class="n">3</div><div class="l">Tasks</div></div>
+        <div class="stat"><div class="n">10</div><div class="l">Questions</div></div>
+        <div class="stat"><div class="n">3</div><div class="l">Letters</div></div>
+      </div>
+      <label class="btn ghost" for="s-pick" style="cursor:pointer">Back to start</label>
+      <p class="close">You can close the screen now.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+// Progressive enhancement: the letter-tracing canvas (Pointer Events cover mouse,
+// touch, and Apple Pencil). Everything else is pure CSS/HTML and needs no JS.
+(function(){
+  var cv=document.getElementById('tr-canvas');
+  if(!cv||!cv.getContext) return;
+  var hint=document.getElementById('nojsHint'); if(hint) hint.style.display='none';
+  var nextBtn=document.getElementById('tr-next'); if(nextBtn) nextBtn.hidden=false;
+  var ctx=cv.getContext('2d'), drawing=false, sized=false;
+  var letters=['a','b','c'], li=0;
+  var box=document.getElementById('tr-box');
+  function size(){
+    var r=box.getBoundingClientRect();
+    if(r.width<2||r.height<2) return; // not visible yet
+    var dpr=window.devicePixelRatio||1;
+    var img=null; try{ if(cv.width) img=ctx.getImageData(0,0,cv.width,cv.height);}catch(e){}
+    cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineWidth=14; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle=(getComputedStyle(document.documentElement).getPropertyValue('--moss')||'#4c7a34').trim();
+    sized=true;
+  }
+  function point(e){ var r=cv.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; }
+  cv.addEventListener('pointerdown', function(e){
+    if(!sized||cv.width===0) size();
+    drawing=true; try{cv.setPointerCapture(e.pointerId);}catch(_){}
+    var p=point(e); ctx.beginPath(); ctx.moveTo(p[0],p[1]);
+    // a dot so a tap leaves a mark
+    ctx.lineTo(p[0]+0.1,p[1]+0.1); ctx.stroke();
+    e.preventDefault();
+  });
+  cv.addEventListener('pointermove', function(e){
+    if(!drawing) return; var p=point(e); ctx.lineTo(p[0],p[1]); ctx.stroke(); e.preventDefault();
+  });
+  function stop(){ drawing=false; }
+  cv.addEventListener('pointerup', stop);
+  cv.addEventListener('pointercancel', stop);
+  cv.addEventListener('pointerleave', stop);
+
+  function clearCanvas(){ ctx.clearRect(0,0,cv.width,cv.height); }
+  document.getElementById('tr-clear').addEventListener('click', clearCanvas);
+
+  var letterEl=document.getElementById('tr-letter'),
+      guideEl=document.getElementById('tr-guide'),
+      countEl=document.getElementById('tr-count'),
+      doneEl=document.getElementById('tr-done');
+  function setLetter(){
+    letterEl.textContent=letters[li]; guideEl.textContent=letters[li];
+    countEl.textContent='Letter '+(li+1)+' of '+letters.length;
+    clearCanvas();
+    // on the last letter, hide "Next letter" so only "Done" remains
+    nextBtn.hidden = (li>=letters.length-1);
+  }
+  nextBtn.addEventListener('click', function(){
+    if(li<letters.length-1){ li++; setLetter(); }
+  });
+
+  // size when the trace screen becomes visible
+  var tr=document.getElementById('s-trace');
+  if(tr) tr.addEventListener('change', function(){ if(tr.checked){ requestAnimationFrame(function(){ requestAnimationFrame(size); }); } });
+  window.addEventListener('resize', function(){ sized=false; if(tr&&tr.checked) size(); });
+  // if this radio is already checked on load (deep link), size now
+  if(tr&&tr.checked) requestAnimationFrame(size);
+})();
+</script>

@@ -1,0 +1,55 @@
+name: Generate content (one topic)
+
+# Runs the grounded content pipeline for a single taxonomy topic and writes the
+# result to the DB. This is Runner 1 from docs/content-architecture.md: it has
+# open network (to fetch sources) + the keys, which the dev sandbox does not.
+#
+# Trigger it from the browser: Actions tab -> "Generate content (one topic)" ->
+# "Run workflow" -> paste a topic id (mt_...). Secrets never leave GitHub.
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Taxonomy topic id (mt_...)'
+        required: true
+        type: string
+      commercial:
+        description: 'Exclude NonCommercial sources (CK-12, Core Knowledge)?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the Anthropic SDK
+        run: npm install @anthropic-ai/sdk
+
+      - name: Ground -> generate -> verify -> store one topic
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node pipeline/generate.mjs \
+            --topic "${{ inputs.topic }}" \
+            --provider claude \
+            --live \
+            --store \
+            ${{ inputs.commercial && '--commercial' || '' }}
+
+      - name: Upload the generated JSON (for inspection)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-${{ inputs.topic }}
+          path: pipeline/out/*.json
+          if-no-files-found: ignore

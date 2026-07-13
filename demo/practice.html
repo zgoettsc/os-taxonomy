@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Marble — More practice</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#f1f2ee;--card:#fbfbf8;--card2:#f4f5ef;--ink:#23271f;--soft:#5d6353;--faint:#8a9079;
+    --line:#e1e3da;--line2:#eceee6;--moss:#4c7a34;--moss-soft:#e7eedd;--moss-ink:#33571f;--clay:#c07542;
+    --disp:ui-rounded,"SF Pro Rounded","Segoe UI Rounded",system-ui,sans-serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#14170f;--card:#1e241a;--card2:#232a1e;--ink:#eceee4;--soft:#9aa38c;--faint:#727a63;
+    --line:#2c3326;--line2:#262d20;--moss:#8cc063;--moss-soft:#26311c;--moss-ink:#bfe0a2;--clay:#e0a075;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:24px 16px 60px;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:720px}
+  h1{font-family:var(--disp);font-size:1.5rem;letter-spacing:-.02em;margin:0 0 2px}
+  .sub{color:var(--soft);font-size:.9rem;margin:0 0 20px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:18px;
+    display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+  .fld{display:flex;flex-direction:column;gap:5px}
+  .fld label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+  select,input{font:inherit;font-size:1rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:11px;background:var(--card2);color:var(--ink)}
+  .qty{display:inline-flex;align-items:center;gap:14px;background:var(--card2);border:1.5px solid var(--line);border-radius:11px;padding:6px 10px}
+  .qty button{width:30px;height:30px;border:0;border-radius:8px;background:var(--card);color:var(--ink);font-size:1.2rem;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+  .qty b{min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
+  button.act{font:inherit;font-weight:700;padding:12px 16px;border-radius:11px;border:0;cursor:pointer;font-size:.95rem}
+  .primary{background:var(--moss);color:#fff}
+  .ghost{background:var(--card2);color:var(--ink);border:1.5px solid var(--line)}
+  button:active{transform:translateY(1px)}
+
+  .sheet{background:#fff;color:#111;border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-bottom:16px}
+  @media (prefers-color-scheme:dark){.sheet{border-color:#000}}
+  .sheet .hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px}
+  .sheet .hd .t{font-family:var(--disp);font-weight:800;font-size:1.15rem}
+  .sheet .hd .m{font-size:.8rem;color:#555}
+  .sheet .instr{font-size:.9rem;color:#333;margin:0 0 16px}
+  .sheet .nmeta{display:flex;gap:26px;font-size:.85rem;color:#333;margin-bottom:20px}
+  .sheet .nmeta span{border-bottom:1px solid #bbb;padding-bottom:2px;min-width:120px}
+  .grid{display:grid;grid-template-columns:repeat(var(--cols,3),1fr);gap:20px 26px}
+  .prob{font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:8px}
+  .prob .n{color:#888;font-size:.85rem;min-width:20px}
+  .prob .q{font-family:var(--disp);font-weight:600;font-size:1.2rem}
+  .prob .blank{flex:1;border-bottom:1.5px solid #999;min-width:34px;margin-left:4px;align-self:flex-end}
+  .prob.choicep{display:flex}
+  .prob.choicep .body{flex:1}
+  .prob.choicep .q{display:block;margin-bottom:7px}
+  .choices{display:flex;flex-wrap:wrap;gap:8px 14px}
+  .choices .ch{border:1.5px solid #999;border-radius:20px;padding:3px 12px;font-size:1rem;font-family:var(--disp);font-weight:600}
+  .key h3{font-family:var(--disp);font-size:.95rem;margin:0 0 10px}
+  .key .grid{gap:10px 26px}
+  .key .prob .q{font-size:1rem}
+  .key .a{font-weight:800;color:#111;margin-left:6px}
+  .hint{font-size:.8rem;color:var(--soft);text-align:center;margin:2px 0 0}
+
+  @media print{
+    body{padding:0;background:#fff}
+    .wrap{max-width:none}
+    h1,.sub,.panel,.hint,.noprint{display:none!important}
+    .sheet{border:0;border-radius:0;padding:0;margin:0}
+    .sheet.worksheet{page-break-after:always}
+  }
+</style>
+<div class="wrap">
+  <h1>More practice 🌱</h1>
+  <p class="sub">Fresh, never-repeating worksheets across subjects — every answer is computed by code or drawn from a curated list, so the key is always right. Make as many as you want.</p>
+
+  <div class="panel noprint">
+    <div class="fld">
+      <label for="skill">Skill</label>
+      <select id="skill">
+        <optgroup label="Math">
+          <option value="addSubWithin5">Adding &amp; subtracting within 5</option>
+          <option value="addSubWithin10">Adding &amp; subtracting within 10</option>
+          <option value="addSubWithin20">Adding &amp; subtracting within 20</option>
+          <option value="numberBondsTo5">Number bonds to 5</option>
+          <option value="numberBondsTo10">Number bonds to 10</option>
+          <option value="counting">Counting</option>
+        </optgroup>
+        <optgroup label="English">
+          <option value="rhyming">Rhyming words</option>
+          <option value="opposites">Opposites</option>
+          <option value="nounverb">Nouns &amp; verbs</option>
+          <option value="firstsound">Beginning sounds</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="fld">
+      <label>Problems</label>
+      <div class="qty"><button id="minus" type="button">−</button><b id="qtyv">12</b><button id="plus" type="button">+</button></div>
+    </div>
+    <button class="act primary" id="gen" type="button">Generate a fresh sheet</button>
+    <button class="act ghost" id="again" type="button">New problems ↻</button>
+    <button class="act ghost" id="print" type="button">Print / Save PDF</button>
+  </div>
+
+  <div class="sheet worksheet" id="worksheet"></div>
+  <div class="sheet key" id="answerkey"></div>
+  <p class="hint noprint">Print / Save PDF → page 1 is the worksheet (no answers), page 2 is the answer key.</p>
+</div>
+
+<script>
+// ============================================================================
+// Generators — answers are computed by CODE or drawn from CURATED lists, never
+// guessed by a model. Seeded so a (skill, seed) pair is reproducible; a new
+// seed = a brand-new set. (Ports/extends scripts/generators.mjs.)
+// ============================================================================
+function rng(seed){ let a=seed>>>0; return ()=>{ a|=0; a=(a+0x6d2b79f5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+const intIn=(r,lo,hi)=>lo+Math.floor(r()*(hi-lo+1));
+const pick=(r,arr)=>arr[Math.floor(r()*arr.length)];
+function shuffle(r,arr){ arr=arr.slice(); for(let i=arr.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+// ---- Math ----
+function addSubWithin(max){ return (seed,count)=>{ const r=rng(seed); const items=[]; const seen=new Set(); let g=0;
+  while(items.length<count && g++<count*40){ const op=r()<0.5?'+':'-'; let a,b,ans;
+    if(op==='+'){ a=intIn(r,0,max); b=intIn(r,0,max-a); ans=a+b; } else { a=intIn(r,0,max); b=intIn(r,0,a); ans=a-b; }
+    const k=`${a}${op}${b}`; if(seen.has(k)) continue; seen.add(k);
+    items.push({prompt:`${a} ${op} ${b} =`, answer:ans}); }
+  return items; }; }
+function numberBonds(total){ return (seed,count)=>{ const r=rng(seed); const items=[];
+  for(let i=0;i<count;i++){ const a=intIn(r,0,total); items.push({prompt:`${a} + ___ = ${total}`, answer:total-a}); }
+  return items; }; }
+function counting(seed,count){ const r=rng(seed); const items=[];
+  for(let i=0;i<count;i++){ const n=intIn(r,1,10); items.push({prompt:'● '.repeat(n).trim(), answer:n}); }
+  return items; }
+
+// ---- English (correct by curation) ----
+const RHYME={ at:['cat','hat','bat','mat','rat','sat','fat'], un:['sun','run','bun','fun'], og:['dog','log','fog','hog','jog'],
+  ee:['bee','tree','see','knee','free'], ig:['pig','big','dig','wig','fig'], op:['top','hop','mop','pop'],
+  ed:['bed','red','fed','led'], ap:['map','cap','nap','tap','lap'], ake:['cake','lake','make','rake','snake'] };
+function rhyming(seed,count){ const r=rng(seed); const fams=Object.keys(RHYME); const items=[]; const used=new Set(); let g=0;
+  while(items.length<count && g++<count*50){
+    const fam=pick(r,fams), words=RHYME[fam], target=pick(r,words);
+    if(used.has(target)) continue; used.add(target);
+    const correct=pick(r,words.filter(w=>w!==target));
+    const others=fams.filter(f=>f!==fam).flatMap(f=>RHYME[f]);
+    const seen=new Set([correct,target]), distractors=[];
+    let gg=0; while(distractors.length<3 && gg++<200){ const d=pick(r,others); if(!seen.has(d)){ seen.add(d); distractors.push(d);} }
+    items.push({prompt:`rhymes with “${target}”`, answer:correct, choices:shuffle(r,[correct,...distractors])});
+  }
+  return items; }
+const OPPOSITES=[['big','small'],['hot','cold'],['up','down'],['fast','slow'],['happy','sad'],['day','night'],
+  ['open','closed'],['wet','dry'],['old','new'],['loud','quiet'],['full','empty'],['high','low'],['soft','hard'],['light','dark']];
+function opposites(seed,count){ const r=rng(seed); const items=[]; const used=new Set(); let g=0;
+  while(items.length<count && g++<count*40){ const pair=pick(r,OPPOSITES); const dir=r()<0.5?0:1;
+    const q=pair[dir], a=pair[1-dir]; if(used.has(q))continue; used.add(q);
+    items.push({prompt:`opposite of “${q}”`, answer:a}); }
+  return items; }
+const NOUNS=['dog','cup','tree','ball','park','cat','book','sun','hat','car','box','fish','shoe','cake','bird'];
+const VERBS=['run','jump','eat','sing','sit','hop','read','play','swim','clap','skip','draw','walk','fly','kick'];
+function nounverb(seed,count){ const r=rng(seed); const items=[]; const used=new Set(); let g=0;
+  while(items.length<count && g++<count*40){ const isNoun=r()<0.5; const w=pick(r,isNoun?NOUNS:VERBS);
+    if(used.has(w))continue; used.add(w);
+    items.push({prompt:`“${w}”`, answer:isNoun?'noun':'verb', choices:['noun','verb']}); }
+  return items; }
+// words whose first letter is the first sound (no digraphs/silent letters)
+const FS=['ball','cat','dog','fish','sun','moon','tree','hat','map','pig','net','cup','box','leg','rat','van','web','yak','zip','lamp','nest','tent'];
+function firstsound(seed,count){ const r=rng(seed); const items=[]; const used=new Set(); let g=0;
+  while(items.length<count && g++<count*40){ const w=pick(r,FS); if(used.has(w))continue; used.add(w);
+    items.push({prompt:`first sound in “${w}”`, answer:w[0]}); }
+  return items; }
+
+const SKILLS={
+  addSubWithin5:{label:'Adding & subtracting within 5',gen:addSubWithin(5),instr:'Solve each problem.'},
+  addSubWithin10:{label:'Adding & subtracting within 10',gen:addSubWithin(10),instr:'Solve each problem.'},
+  addSubWithin20:{label:'Adding & subtracting within 20',gen:addSubWithin(20),instr:'Solve each problem.'},
+  numberBondsTo5:{label:'Number bonds to 5',gen:numberBonds(5),instr:'Fill in the missing number.'},
+  numberBondsTo10:{label:'Number bonds to 10',gen:numberBonds(10),instr:'Fill in the missing number.'},
+  counting:{label:'Counting',gen:counting,instr:'Count the dots and write how many.'},
+  rhyming:{label:'Rhyming words',gen:rhyming,instr:'Circle the word that rhymes.'},
+  opposites:{label:'Opposites',gen:opposites,instr:'Write the opposite word on the line.'},
+  nounverb:{label:'Nouns & verbs',gen:nounverb,instr:'Circle whether each word is a noun or a verb.'},
+  firstsound:{label:'Beginning sounds',gen:firstsound,instr:'Write the first sound (letter) you hear.'},
+};
+
+let qty=12;
+const $=s=>document.querySelector(s);
+const randSeed=()=>Math.floor(Math.random()*1e9);
+
+function itemHTML(it,i,keyMode){
+  if(it.choices){
+    const choices = keyMode
+      ? `<span class="a">${it.answer}</span>`
+      : `<div class="choices">${it.choices.map(c=>`<span class="ch">${c}</span>`).join('')}</div>`;
+    return `<div class="prob choicep"><span class="n">${i+1}.</span><div class="body"><span class="q">${it.prompt}</span>${choices}</div></div>`;
+  }
+  const tail = keyMode ? `<span class="a">${it.answer}</span>` : `<span class="blank"></span>`;
+  return `<div class="prob"><span class="n">${i+1}.</span><span class="q">${it.prompt}</span>${tail}</div>`;
+}
+
+function render(){
+  const key=$('#skill').value, s=SKILLS[key], seed=randSeed();
+  const items=s.gen(seed, qty);
+  const cols = items[0] && items[0].choices ? 2 : 3;
+  const today=new Date().toLocaleDateString();
+  $('#worksheet').innerHTML =
+    `<div class="hd"><span class="t">${s.label}</span><span class="m">Marble · sheet #${String(seed).slice(-4)}</span></div>`
+    + `<p class="instr">${s.instr}</p>`
+    + `<div class="nmeta"><span>Name:&nbsp;</span><span>Date: ${today}</span></div>`
+    + `<div class="grid" style="--cols:${cols}">` + items.map((it,i)=>itemHTML(it,i,false)).join('') + `</div>`;
+  $('#answerkey').innerHTML =
+    `<div class="key"><h3>Answer key — ${s.label} (sheet #${String(seed).slice(-4)})</h3>`
+    + `<div class="grid" style="--cols:${cols}">` + items.map((it,i)=>itemHTML(it,i,true)).join('') + `</div></div>`;
+}
+
+$('#minus').onclick=()=>{ qty=Math.max(4,qty-2); $('#qtyv').textContent=qty; render(); };
+$('#plus').onclick=()=>{ qty=Math.min(40,qty+2); $('#qtyv').textContent=qty; render(); };
+$('#skill').onchange=render;
+$('#gen').onclick=render;
+$('#again').onclick=render;
+$('#print').onclick=()=>window.print();
+render();
+</script>
+</html>

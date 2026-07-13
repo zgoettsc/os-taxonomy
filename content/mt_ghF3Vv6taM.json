@@ -1,0 +1,120 @@
+{
+  "topicId": "mt_ghF3Vv6taM",
+  "name": "Fluent adding and subtracting within 5",
+  "subject": "Mathematics",
+  "domain": "Addition & Subtraction",
+  "ageRange": [
+    5,
+    6
+  ],
+  "standards": [
+    "ccss-math:K.OA.5"
+  ],
+  "prerequisites": [
+    "mt_OvyoRo47K-"
+  ],
+  "parent": {
+    "whyItMatters": "Recalling small sums and differences without counting frees up your child's attention for bigger ideas later — place value, adding within 20, and word problems all lean on this being automatic. Fluency here is the difference between 'can work it out' and 'just knows it'.",
+    "howToTeach": "Start concrete (fingers, blocks, buttons), move to spoken facts, then to written ones. Keep sessions short — five minutes of quick-fire facts beats twenty minutes of worksheets. Celebrate speed AND accuracy, but never trade one for the other.",
+    "watchFor": [
+      "Recounting from 1 every time instead of 'counting on' from the larger number — a sign the facts aren't yet memorized.",
+      "Always using fingers even for facts like 2+1 — fine early on, but the goal is recall.",
+      "Reversing subtraction (answering 5 for '2 − 5') — check they understand you can't take away more than you have, at this level."
+    ],
+    "tryAtHome": [
+      "Snack math: 'You have 3 grapes, I give you 2 more — how many now?'",
+      "Number-bond flashes: hold up fingers, ask 'how many more to make 5?'",
+      "Ten-second challenge: how many within-5 facts can they answer in ten seconds?"
+    ]
+  },
+  "student": {
+    "intro": "When we ADD, we put groups together to get more. When we SUBTRACT, we take some away to get less. Let's get so good at the small ones — all the way up to 5 — that you just KNOW them, quick as a blink!",
+    "readingLevelAge": 6,
+    "examples": [
+      {
+        "show": "🍎🍎  +  🍎🍎🍎",
+        "say": "2 apples and 3 more apples. Push them together… 5 apples! So 2 + 3 = 5."
+      },
+      {
+        "show": "🐟🐟🐟🐟🐟  →  🐟🐟🐟  (2 swam away)",
+        "say": "5 fish, 2 swim away, 3 are left. So 5 − 2 = 3."
+      },
+      {
+        "show": "3 + ___ = 5",
+        "say": "3 wants to become 5. How many more? 2! Because 3 and 2 make 5."
+      }
+    ]
+  },
+  "practice": {
+    "generator": "addSubWithin5",
+    "count": 10,
+    "items": []
+  },
+  "assessment": {
+    "masteryCriteria": [
+      "Answer 2 + 3 quickly without counting on fingers",
+      "Answer 5 – 2 from recall or with minimal counting",
+      "Complete a set of within-5 addition/subtraction facts accurately and quickly"
+    ],
+    "items": [
+      {
+        "id": "a1",
+        "kind": "numeric",
+        "generator": "addSubWithin5",
+        "prompt": "Quick-fire: answer each within-5 fact. (auto-generated set)",
+        "evidenceRef": 2
+      },
+      {
+        "id": "a2",
+        "kind": "numeric",
+        "prompt": "2 + 3 = ?",
+        "answer": 5,
+        "evidenceRef": 0
+      },
+      {
+        "id": "a3",
+        "kind": "numeric",
+        "prompt": "5 − 2 = ?",
+        "answer": 3,
+        "evidenceRef": 1
+      },
+      {
+        "id": "a4",
+        "kind": "mcq",
+        "prompt": "You have 4 stickers and give 1 away. How many are left?",
+        "choices": [
+          "5",
+          "3",
+          "4",
+          "1"
+        ],
+        "answerIndex": 1,
+        "evidenceRef": 1
+      }
+    ]
+  },
+  "provenance": {
+    "generatedBy": "Claude (opus 4.8), seeded from Marble taxonomy fields (description, evidence, assessmentPrompt, standard K.OA.5); practice + numeric assessment answers computed by scripts/generators.mjs, not by the model.",
+    "grounding": [
+      {
+        "title": "CCSS Math K.OA.5 (source standard, in curriculum-standards.json)",
+        "url": "http://www.corestandards.org/Math/Content/K/OA/",
+        "license": "public standard",
+        "verified": true
+      },
+      {
+        "title": "Illustrative Mathematics K (suggested OER grounding for RAG step)",
+        "url": "https://illustrativemathematics.org",
+        "license": "CC-BY-4.0",
+        "verified": false
+      }
+    ],
+    "verification": [
+      "numeric answers code-checked (correct by construction)",
+      "aligned to stated evidence[] and standard"
+    ],
+    "reviewed": false,
+    "reviewer": null
+  },
+  "license": "CC-BY-SA-4.0"
+}
