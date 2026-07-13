@@ -1,0 +1,9 @@
+{
+  "source": "coreknowledge",
+  "license": "CC-BY-NC-SA (Core Knowledge Foundation) — fine for family/personal use; attribution tracked",
+  "note": "Add one entry per Core Knowledge unit PDF. Two ways to point at a file: (a) \"url\": a direct PDF link, or (b) \"storagePath\": a path in a Supabase Storage bucket you uploaded the PDF to via the dashboard, e.g. \"corpus/coreknowledge/cksci-g1-animals.pdf\". Fill title/grade/subjects so citations and filtering work. Free downloads: coreknowledge.org/curriculum.",
+  "documents": [
+    { "url": "", "storagePath": "", "title": "CKSci Grade 1 — Animals and Their Needs", "grade": "1", "subjects": ["Science"] },
+    { "url": "", "storagePath": "", "title": "CKHG Grade 1 — Early World Civilizations", "grade": "1", "subjects": ["History"] }
+  ]
+}

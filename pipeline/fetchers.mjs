@@ -11,6 +11,8 @@
 // key, expose no topic-passage API, or are subject-specific — see ADAPTER_STATUS.
 // They slot in as adapters are written (and keys added).
 
+import { corpusRetrieve } from './corpus-retrieve.mjs';
+
 const UA = 'MarbleEdu/1.0 (homeschool content pipeline; +https://withmarble.com)';
 
 async function getJSON(url) {
@@ -109,6 +111,10 @@ const ADAPTERS = {
   nasa: fetchNasa,
   loc: fetchLoc,
   smithsonian: fetchSmithsonian,
+  // corpus sources: retrieved from our ingested source_documents (hybrid FTS+vector)
+  coreknowledge: (t) => corpusRetrieve('coreknowledge', t),
+  ck12: (t) => corpusRetrieve('ck12', t),
+  openstax: (t) => corpusRetrieve('openstax', t),
 };
 
 // Honest per-source status, so the grounding dump shows exactly what each source
@@ -123,9 +129,9 @@ export const ADAPTER_STATUS = {
   smithsonian:   'live IF SMITHSONIAN_API_KEY set (free api.data.gov key); else skipped',
   noaa:          'no topic-passage API (data feeds only) — needs corpus ingestion',
   usgs:          'no topic-passage API (data feeds only) — needs corpus ingestion',
-  openstax:      'books are CNXML/PDF; no search-passage API — needs corpus ingestion',
-  ck12:          'no public passage API — needs corpus ingestion (scrape/download)',
-  coreknowledge: 'no public passage API — needs corpus ingestion (PDF download)',
+  openstax:      'live from ingested corpus (run ingest for openstax first)',
+  ck12:          'live from ingested corpus (run ingest for ck12 first)',
+  coreknowledge: 'live from ingested corpus (run ingest for coreknowledge first)',
 };
 
 // The fetchImpl passed to gatherGrounding: dispatch by source id, fail soft to [].

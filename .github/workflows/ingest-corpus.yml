@@ -1,0 +1,35 @@
+name: Ingest corpus (Core Knowledge / CK-12 / OpenStax)
+
+# Download a corpus source's PDFs, chunk them into passages, embed, and store in
+# source_documents — so the generator can retrieve relevant curriculum passages.
+# One-time per source (re-run when the manifest changes). Browser-triggered.
+#
+# Prereqs: db/corpus.sql applied; secrets SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+# and (for embeddings) VOYAGE_API_KEY; data/corpus/<source>.json filled with PDFs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Corpus source to ingest (coreknowledge | ck12 | openstax)'
+        required: true
+        default: coreknowledge
+        type: string
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the PDF parser
+        run: npm install pdf-parse
+      - name: Download -> chunk -> embed -> store
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+        run: node pipeline/ingest.mjs --source "${{ inputs.source }}"
