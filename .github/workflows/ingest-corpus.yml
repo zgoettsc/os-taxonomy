@@ -1,0 +1,68 @@
+name: Ingest corpus (Core Knowledge / CK-12 / OpenStax)
+
+# Download a corpus source's PDFs, chunk them into passages, embed, and store in
+# source_documents — so the generator can retrieve relevant curriculum passages.
+# One-time per source (re-run when the manifest changes). Browser-triggered.
+#
+# Prereqs: db/corpus.sql applied; secrets SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+# and (for embeddings) VOYAGE_API_KEY; data/corpus/<source>.json filled with PDFs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Corpus source to ingest (coreknowledge | ck12 | openstax)'
+        required: true
+        default: coreknowledge
+        type: string
+      auto_discover:
+        description: 'Auto-crawl Core Knowledge for ALL units (ignores the manifest)'
+        required: false
+        default: false
+        type: boolean
+      discover_only:
+        description: 'Dry run: crawl and print what it found, do NOT ingest'
+        required: false
+        default: false
+        type: boolean
+      subjects:
+        description: 'Optional filter, comma-separated (Science,History,English,Mathematics)'
+        required: false
+        type: string
+      grades:
+        description: 'Optional filter, comma-separated grades (e.g. K,1,2,3)'
+        required: false
+        type: string
+      limit:
+        description: 'Optional cap on number of units (for testing the crawler)'
+        required: false
+        type: string
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the PDF + zip parsers
+        run: npm install pdf-parse adm-zip
+      - name: Discover / download -> chunk -> embed -> store
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+        run: |
+          ARGS=""
+          [ -n "${{ inputs.subjects }}" ] && ARGS="$ARGS --subjects ${{ inputs.subjects }}"
+          [ -n "${{ inputs.grades }}" ]   && ARGS="$ARGS --grades ${{ inputs.grades }}"
+          [ -n "${{ inputs.limit }}" ]    && ARGS="$ARGS --limit ${{ inputs.limit }}"
+          if [ "${{ inputs.discover_only }}" = "true" ]; then
+            echo "Dry run — discovery only (no ingest):"
+            node pipeline/discover-coreknowledge.mjs $ARGS
+          else
+            [ "${{ inputs.auto_discover }}" = "true" ] && ARGS="$ARGS --auto"
+            node pipeline/ingest.mjs --source "${{ inputs.source }}" $ARGS
+          fi
