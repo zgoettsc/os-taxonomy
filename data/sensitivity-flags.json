@@ -1,0 +1,61 @@
+{
+  "generated": "human-confirmed",
+  "confirmedBy": "parent/owner review, 2026-07-13",
+  "supersedes": "data/sensitivity-classified.json (AI-proposed). This is the authoritative set.",
+  "note": "The one-time sensitivity sweep surfaced ~84 candidates; on review only these 4 topics warrant a flag. Every other topic in the taxonomy is neutral — one universal version, no gate, no stance (see docs/content-architecture.md D9–D10). Each flag here is a GATE (parent show/hide at assignment time), not a content variant, so it does not fragment the content cache. gate_default 'hide' = opt-in: the topic is withheld until the parent turns it on.",
+  "axes": ["religion/origins", "body/reproduction", "politics/current-events", "violence/mature"],
+  "flags": [
+    {
+      "id": "mt_oqvJJKCJXw",
+      "name": "Systemic Inequality and Allyship",
+      "subject": "Personal & Social Development",
+      "domain": "Empathy & Social Awareness",
+      "ageRange": [11, 12],
+      "sensitivity": {
+        "domains": ["politics/current-events"],
+        "gate_default": "hide",
+        "stances": []
+      },
+      "rationale": "Contested modern-values framing, not contested facts. Parent flagged this as a viewpoint many families (e.g. conservative households) will not want taught. Withheld until the parent opts in; the parent is the authority."
+    },
+    {
+      "id": "mt_5XLhiqmocP",
+      "name": "Global Citizenship",
+      "subject": "Personal & Social Development",
+      "domain": "Empathy & Social Awareness",
+      "ageRange": [13, 14],
+      "sensitivity": {
+        "domains": ["politics/current-events"],
+        "gate_default": "hide",
+        "stances": []
+      },
+      "rationale": "Climate justice / forced migration / effective altruism / cross-border ethical obligation is a values fork. Parent flagged this as a viewpoint many families will not want taught. Withheld until the parent opts in."
+    },
+    {
+      "id": "mt_pu2mmK27UA",
+      "name": "Growing Up & Puberty",
+      "subject": "Science",
+      "domain": "The Human Body",
+      "ageRange": [9, 11],
+      "sensitivity": {
+        "domains": ["body/reproduction"],
+        "gate_default": "hide",
+        "stances": []
+      },
+      "rationale": "Puberty / human-body sex-ed. Facts are neutral and clinical in every source; the concern is timing. Withheld until the parent opts in (sexual gate)."
+    },
+    {
+      "id": "mt_tQkCzRcWG7",
+      "name": "Human Reproduction",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [12, 13],
+      "sensitivity": {
+        "domains": ["body/reproduction"],
+        "gate_default": "hide",
+        "stances": []
+      },
+      "rationale": "Human reproductive biology (gametes, fertilisation, gestation). Facts are neutral and clinical in every source; the concern is timing. Withheld until the parent opts in (sexual gate)."
+    }
+  ]
+}

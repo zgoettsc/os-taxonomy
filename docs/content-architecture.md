@@ -242,4 +242,10 @@ This is **trusted, server-side infrastructure — not the app:**
   citations link, sensitivity flags on `topics`.
 - ⬜ The freshness/re-fetch job; the auto-review gate; the serve-resolution.
 - ⬜ Live source fetching (needs network + keys).
-- ⬜ The one-time sensitivity classification sweep + human confirm.
+- ✅ The one-time sensitivity classification sweep + **human confirm** — done.
+  Authoritative result: **`data/sensitivity-flags.json`** (4 confirmed flags of ~84
+  candidates; everything else is neutral). All four are **gates** (`gate_default:
+  'hide'`, opt-in), no stance forks:
+  - *Growing Up & Puberty*, *Human Reproduction* — `body/reproduction` (sexual gate);
+  - *Systemic Inequality and Allyship*, *Global Citizenship* — `politics/current-events`
+    (contested-values gate).
