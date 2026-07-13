@@ -48,7 +48,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install the PDF + zip parsers
-        run: npm install pdf-parse adm-zip
+        run: npm install pdf-parse@1.1.1 adm-zip
       - name: Discover / download -> chunk -> embed -> store
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

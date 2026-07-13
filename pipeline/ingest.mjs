@@ -43,7 +43,10 @@ if (!docs.length) { console.error(`No documents to ingest for '${source}'.`); pr
 console.log(`${docs.length} document(s) to ingest.`);
 
 // --- pdf + zip extraction (dynamic import so the module loads without the deps) ---
-const pdfParse = (await import('pdf-parse')).default;
+// Import pdf-parse's internal lib directly: it default-exports the parse function
+// (v1.1.1) and skips index.js's debug-mode test-file read. The workflow pins
+// pdf-parse@1.1.1 — v2 dropped the default-function export for a class.
+const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')).default;
 const AdmZip = (await import('adm-zip')).default;
 
 function chunk(text, { size = 1000 } = {}) {
