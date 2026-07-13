@@ -93,7 +93,10 @@ export async function claudeProvider() {
         + '3. student.intro should be several rich paragraphs — a real explanation a '
         + 'child could learn from — and student.examples should span the full range the '
         + 'grounding supports.\n'
-        + '4. Warm, concrete, age-appropriate. American English.';
+        + '4. Warm, concrete, age-appropriate. American English.\n'
+        + '5. practice items may be multiple-choice (kind "mcq" with choices) or short. '
+        + 'assessment items are rubric-graded OPEN questions — use kind "short" or '
+        + '"constructed" with a rubric, never "mcq" (they have no answer choices).';
       const user =
         `TOPIC: ${topic.name}\nDESCRIPTION: ${topic.description || ''}\n`
         + `AGE: ${topic.ageRangeStart}-${topic.ageRangeEnd}\nSUBJECT: ${topic.subject}\n`
