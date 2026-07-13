@@ -73,6 +73,23 @@ returns boolean language sql security definer set search_path = public as $$
   );
 $$;
 
+-- Bootstrap: a signed-in user creates their household and becomes its owner.
+-- SECURITY DEFINER so it can insert into households/household_members (which have
+-- no client INSERT policy) atomically and safely, keyed to the caller's auth.uid().
+create or replace function public.create_household(household_name text)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare hid uuid;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  insert into public.households (name) values (coalesce(nullif(household_name,''),'My household'))
+    returning id into hid;
+  insert into public.household_members (household_id, user_id, role)
+    values (hid, auth.uid(), 'owner');
+  return hid;
+end;
+$$;
+grant execute on function public.create_household(text) to authenticated;
+
 
 -- ============================================================================
 -- 3. Content library  (GLOBAL — shared across all households, read-only to them)
