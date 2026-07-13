@@ -1,0 +1,67 @@
+name: Generate content (age band)
+
+# Generate + store grounded content for EVERY in-band topic at a given age, in one
+# run. Same pipeline as the single-topic workflow, looped. Browser-triggered.
+#
+# Actions tab -> "Generate content (age band)" -> Run workflow -> enter an age
+# (e.g. 4 for Hugh). Optionally limit to one subject. Uses your secrets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      age:
+        description: 'Child age — generates every topic in this age band (e.g. 4)'
+        required: true
+        type: string
+      subject:
+        description: 'Optional: limit to one subject (e.g. Mathematics)'
+        required: false
+        type: string
+      commercial:
+        description: 'Exclude NonCommercial sources?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the Anthropic SDK
+        run: npm install @anthropic-ai/sdk
+      - name: Generate + store every in-band topic
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUBJECT: ${{ inputs.subject }}
+          COMMERCIAL: ${{ inputs.commercial }}
+        run: |
+          if [ -n "$SUBJECT" ]; then
+            IDS=$(node pipeline/list-topics.mjs --age "${{ inputs.age }}" --subject "$SUBJECT")
+          else
+            IDS=$(node pipeline/list-topics.mjs --age "${{ inputs.age }}")
+          fi
+          COUNT=$(printf '%s\n' "$IDS" | grep -c . || true)
+          echo "Generating $COUNT topic(s) for age ${{ inputs.age }}"
+          FLAG=""; [ "$COMMERCIAL" = "true" ] && FLAG="--commercial"
+          i=0
+          for id in $IDS; do
+            i=$((i+1))
+            echo "::group::[$i/$COUNT] $id"
+            node pipeline/generate.mjs --topic "$id" --provider claude --live --store $FLAG || echo "FAILED: $id"
+            echo "::endgroup::"
+          done
+          echo "Done: $COUNT topic(s) attempted."
+      - name: Upload generated JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-age-${{ inputs.age }}
+          path: pipeline/out/*.json
+          if-no-files-found: ignore

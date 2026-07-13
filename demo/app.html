@@ -411,6 +411,13 @@ async function openHome(kid, age){
 function renderHome(kid, age, topics, hard, seed){
   const cards=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
   CURRENT={kid, age, cards};
+  if(!cards.length){
+    document.getElementById("homeFocus").textContent = `${kid.first_name} is a little young for the curriculum yet`;
+    document.getElementById("homeCounts").innerHTML="";
+    document.getElementById("cards").innerHTML=`<div class="note">The Marble curriculum starts at about age 4. When ${esc(kid.first_name)} is ready, today's session will appear right here — nothing to do until then.</div>`;
+    document.getElementById("homeActions").innerHTML="";
+    return;
+  }
   const subjects=[...new Set(cards.map(c=>c.topic.subject))];
   document.getElementById("homeFocus").textContent = `${cards.length} things to learn across ${subjects.length} subjects`;
   document.getElementById("homeCounts").innerHTML = subjects.map(s=>`<span class="pill">${SUBJ[s]?.e||""} ${esc(s)}</span>`).join("");
