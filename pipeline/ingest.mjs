@@ -26,9 +26,21 @@ const SB = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 if (!SB || !KEY) { console.error('needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY'); process.exit(1); }
 const sbHeaders = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 
-const manifest = JSON.parse(fs.readFileSync(path.join(root, 'data', 'corpus', `${source}.json`), 'utf8'));
-const docs = manifest.documents || [];
-if (!docs.length) { console.error(`No documents in data/corpus/${source}.json — add PDF urls first.`); process.exit(1); }
+const subjects = argv.subjects ? argv.subjects.split(',') : null;
+const grades = argv.grades ? argv.grades.split(',') : null;
+const limit = Number(argv.limit) || 0;
+
+let docs;
+if (process.argv.includes('--auto') && source === 'coreknowledge') {
+  console.log('Auto-discovering Core Knowledge units…');
+  const { discoverCoreKnowledge } = await import('./discover-coreknowledge.mjs');
+  docs = await discoverCoreKnowledge({ subjects, grades, limit });
+} else {
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'data', 'corpus', `${source}.json`), 'utf8'));
+  docs = manifest.documents || [];
+}
+if (!docs.length) { console.error(`No documents to ingest for '${source}'.`); process.exit(1); }
+console.log(`${docs.length} document(s) to ingest.`);
 
 // --- pdf + zip extraction (dynamic import so the module loads without the deps) ---
 const pdfParse = (await import('pdf-parse')).default;
