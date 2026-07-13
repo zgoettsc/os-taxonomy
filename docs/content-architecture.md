@@ -204,16 +204,46 @@ this came from, and when we last checked it."
 
 ---
 
-## Where it runs
+## Where it runs — the two runners
 
-This is **trusted, server-side infrastructure — not the app:**
-- A backend job (with `service_role` + network + the Anthropic key) does:
-  **fetch sources → write snapshots → generate core → skin presentations →
-  verify → auto-approve or queue for review.**
-- The **app only ever reads reviewed content.** Clients never fetch sources
-  directly (keys, rate limits, trust).
-- Live source-fetching needs network + keys (blocked in the dev sandbox, same as
-  images — see [`image-setup.md`](image-setup.md)).
+This is **trusted, server-side infrastructure — not the app.** It splits into two
+jobs by cost and latency, each in the home it fits. **The app never holds a key
+and never generates — it reads cached, reviewed content, and on a cache miss it
+*asks* a server function.**
+
+### Runner 1 — the fact core (heavy · batch · rare) → **GitHub Actions**
+Generates the **neutral, verified `content_core`** for a topic:
+**ground → adapt (cite-or-abstain) → verify → review-gate → store.** This is the
+expensive, high-stakes part (fabrication risk lives here), so it's grounded and
+never rushed. It reuses the existing Node pipeline (`pipeline/`), runs in GitHub's
+cloud, is **triggered by "Run workflow" in the browser** (no CLI), keeps the
+Anthropic key + DB service key as **GitHub Secrets**, and writes finished content
+to the DB. A **scheduled run** drives the freshness loop (re-check stale snapshots;
+a changed source flags dependent content to re-verify). Done **once, globally.**
+
+### Runner 2 — the interest skin (cheap · on-demand · cached) → **serverless function**
+When a child's interest is entered (`frogs`, `air conditioners`, `garbage
+trucks`), a small fast function (a **Supabase Edge Function**) re-skins the
+**already-verified** core to that interest in seconds and **stores it** in
+`content_presentation`, so the next child with that interest is a cache hit.
+Because re-skinning **adds no new facts** (it reuses the locked core), it does
+**not** re-open fact-verification — only a light appropriateness pass — which is
+exactly why it can run on demand without weakening the grounded promise.
+
+**No pre-baked theme menu (Decision):** interests are too long-tailed to
+enumerate, so we **theme at input time and cache**, keyed by a **normalized**
+interest (`cats/kitty/kitten → cats`) so the cache converges instead of
+fragmenting. The free-text interest is **safety-classified before** it becomes a
+theme (optionally parent-approved) — the interest box is a known risk surface.
+
+**Why not the app / why two runners:** a key in a client is an exposed key, and
+content is **global** (generate once, serve every family) — so neither job is
+app-side. The heavy grounded batch needs long timeouts (GitHub Actions); the
+interactive skin needs low latency (an Edge Function). They split naturally.
+
+Live source-fetching + model calls need network + keys — they run in the two
+runners above, **not** in the dev sandbox (same constraint as images — see
+[`image-setup.md`](image-setup.md)).
 
 ---
 
@@ -233,6 +263,10 @@ This is **trusted, server-side infrastructure — not the app:**
 | D10 | Sensitivity = **topic-level flag**; axes = **religion/origins, body & reproduction, politics/current events, violence/mature**; set by **AI sweep + human-confirm the flagged subset**, one-time |
 | D11 | Transparency = **"verified on ___" + clickable source links** on every item |
 | D12 | Fetch/generation is **server-side (service_role + keys)**; the app reads **reviewed** content only |
+| D13 | Two runners: **fact core = GitHub Actions** (heavy grounded batch, browser-triggered, keys as GitHub Secrets); **interest skin = a serverless/Edge Function** (cheap, on-demand, cached) |
+| D14 | **No pre-baked theme menu** — theme **at interest-input time and cache**; interests are too long-tailed to enumerate |
+| D15 | Interest theming reuses the **verified core, adds no facts** → **no re-fact-check**, only a light appropriateness pass; cache keyed by a **normalized** interest so it converges |
+| D16 | The free-text interest is **safety-classified before** becoming a theme (optional parent approval); the **app holds no key** and never generates — it reads cache, and on a miss asks the function |
 
 ## Status
 

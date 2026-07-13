@@ -39,6 +39,21 @@ The generator never calls a model directly — it goes through `pipeline/provide
 Swapping providers changes nothing else in the pipeline — the seam is what keeps
 generation reviewable and the pipeline itself testable offline.
 
+## Where it runs (the two runners)
+
+The five stages above are the **fact-core** job — the heavy, grounded, once-per-
+topic work. It runs in **GitHub Actions**: browser-triggered ("Run workflow"),
+Anthropic + DB keys as **GitHub Secrets**, writing reviewed `content_core` to the
+DB. A scheduled run drives freshness (re-check stale snapshots).
+
+A **second, separate runner** handles **interest theming**: a small **Edge
+Function** that, on demand, re-skins the already-verified core to a child's
+interest and caches it (`content_presentation`). It adds no facts, so it skips
+fact-verification (light appropriateness pass only). See
+[`content-architecture.md`](content-architecture.md#where-it-runs--the-two-runners)
+for the full split (D13–D16). **The app holds no key and never generates** — it
+reads cached content and, on a miss, asks the Edge Function.
+
 ## Why this answers the "coverage" edge
 
 The two curated samples in `content/` were hand-made. This pipeline runs over
@@ -54,7 +69,8 @@ cited, human-reviewed facts.
   the review gate, provenance stamping, American-English normalization.
 - **Stubbed for production:** RAG retrieval over a real OER corpus (grounding is
   currently the standards + taxonomy description), the second-model refutation
-  pass (verify is deterministic checks today), and the human review UI.
+  pass (verify is deterministic checks today), the human review UI, and the two
+  runners (the GitHub Actions workflow + the interest-theming Edge Function).
 
 ## Try it
 
