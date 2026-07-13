@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Marble — parent app</title>
+<style>
+  :root{
+    --ground:#f1f2ee; --card:#fbfbf8; --card2:#f4f5ef;
+    --ink:#23271f; --soft:#5d6353; --faint:#8a9079;
+    --line:#e1e3da; --line2:#eceee6;
+    --moss:#4c7a34; --moss-soft:#e7eedd; --moss-ink:#33571f;
+    --clay:#c07542; --clay-soft:#f4e6da;
+    --amber:#b07d1e; --amber-soft:#f4ead0;
+    --berry:#b23a6b; --berry-soft:#f6e0e9;
+    --sci:#2b8a8f; --sci-soft:#d9edee;
+    --shadow:0 10px 34px -16px rgba(35,39,31,.42);
+    --shadow-sm:0 2px 8px -3px rgba(35,39,31,.28);
+    --disp:ui-rounded,"SF Pro Rounded","Segoe UI Rounded",system-ui,sans-serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --r:16px;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#14170f; --card:#1e241a; --card2:#232a1e; --ink:#eceee4; --soft:#9aa38c; --faint:#727a63;
+    --line:#2c3326; --line2:#262d20; --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
+    --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a; --amber-soft:#312a17;
+    --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#1b2b2c;
+    --shadow:0 14px 40px -18px rgba(0,0,0,.7); --shadow-sm:0 2px 10px -4px rgba(0,0,0,.6);
+  }}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:20px 14px;display:flex;justify-content:center}
+  .app{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:28px;
+    box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-height:80vh}
+  .disp{font-family:var(--disp)}
+  h1,h2,h3{font-family:var(--disp);letter-spacing:-.015em;margin:0}
+  .eyebrow{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0 0 6px}
+  .muted{color:var(--soft)} .faint{color:var(--faint)}
+
+  /* top bar */
+  .top{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line2);min-height:58px}
+  .brand{font-family:var(--disp);font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:7px}
+  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--moss);display:grid;place-items:center;color:#fff;font-size:.8rem}
+  .top .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .link{background:none;border:0;color:var(--faint);font:inherit;font-size:.78rem;cursor:pointer;padding:6px 8px;border-radius:9px}
+  .link:hover{background:var(--card2);color:var(--ink)}
+  .back{cursor:pointer;color:var(--faint);font-size:.82rem;background:none;border:0;font:inherit;padding:6px 4px}
+  .back:hover{color:var(--ink)}
+
+  .body{padding:18px;display:flex;flex-direction:column;gap:14px;flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+
+  /* forms */
+  .field{display:flex;flex-direction:column;gap:5px;text-align:left}
+  .field label{font-size:.74rem;font-weight:700;color:var(--soft)}
+  input{font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink)}
+  input:focus{outline:2px solid var(--moss);outline-offset:1px}
+  .btn{font:inherit;font-weight:700;border:0;border-radius:13px;padding:12px 16px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;gap:8px}
+  .btn.primary{background:var(--moss);color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
+  .btn[disabled]{opacity:.5;cursor:default}
+  .row{display:flex;gap:8px}
+  .tabs{display:inline-flex;background:var(--card2);border-radius:14px;padding:3px;margin:0 auto}
+  .tabs button{border:0;background:none;font:inherit;font-weight:650;color:var(--soft);padding:7px 15px;border-radius:11px;cursor:pointer}
+  .tabs button.on{background:var(--moss);color:#fff}
+  .note{font-size:.8rem;padding:10px 12px;border-radius:11px;background:var(--card2);border:1px solid var(--line)}
+  .note.err{background:var(--berry-soft);border-color:transparent;color:var(--berry)}
+  .note.ok{background:var(--moss-soft);border-color:transparent;color:var(--moss-ink)}
+
+  /* kids list */
+  .kid{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--r);padding:13px 14px;cursor:pointer}
+  .kid:hover{border-color:var(--moss);box-shadow:var(--shadow-sm)}
+  .ava{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;
+    color:#fff;font-size:1.15rem;flex:none;background:var(--moss)}
+  .kid .nm{font-family:var(--disp);font-weight:700;font-size:1.05rem}
+  .kid .sub{font-size:.76rem;color:var(--faint)}
+  .kid .chev{margin-left:auto;color:var(--faint)}
+
+  /* home / session */
+  .brief{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
+  .brief h2{font-size:1.18rem;margin:2px 0}
+  .brief .focus{font-size:.8rem;color:var(--moss-ink);font-weight:600}
+  .counts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .pill{font-size:.68rem;font-weight:700;padding:4px 9px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--soft)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .card>summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
+  .card>summary::-webkit-details-marker{display:none}
+  .card[open]>summary{border-bottom:1px solid var(--line2)}
+  .tag{flex:none;width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:1.15rem}
+  .meta{flex:1;min-width:0}
+  .meta .sj{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+  .meta .nm{font-family:var(--disp);font-weight:700;font-size:1rem;letter-spacing:-.01em;margin:1px 0}
+  .meta .dm{font-size:.73rem;color:var(--faint)}
+  .lane{flex:none;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:3px 7px;border-radius:7px;margin-top:3px}
+  .lane.practice{background:var(--amber-soft);color:var(--amber)}
+  .lane.lesson{background:var(--sci-soft);color:var(--sci)}
+  .detail{padding:4px 14px 15px;display:flex;flex-direction:column;gap:11px;font-size:.85rem}
+  .detail .h{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin-bottom:3px}
+  .detail p{margin:0}
+  .crit{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+  .crit li{position:relative;padding-left:20px;color:var(--soft)}
+  .crit li::before{content:"✓";position:absolute;left:0;color:var(--moss);font-weight:800}
+  .say{background:var(--card2);border:1px dashed var(--line);border-radius:11px;padding:9px 11px;font-style:italic;color:var(--soft)}
+  .prov{font-size:.74rem;color:var(--faint);display:flex;gap:6px;align-items:flex-start}
+  .prob{display:flex;gap:8px;flex-wrap:wrap}
+  .prob span{font-variant-numeric:tabular-nums;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-weight:600}
+
+  .gate{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px dashed var(--line);border-radius:var(--r);padding:12px 14px;font-size:.82rem}
+  .gate .lbl{flex:1} .gate b{color:var(--ink)}
+  .switch{flex:none;width:44px;height:26px;border-radius:20px;background:var(--line);position:relative;cursor:pointer;border:0;transition:background .15s}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .switch.on{background:var(--moss)} .switch.on::after{left:21px}
+
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--moss);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hidden{display:none!important}
+  .foot{padding:12px 18px;border-top:1px solid var(--line2);font-size:.7rem;color:var(--faint);text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <button class="back hidden" id="backBtn">‹ Back</button>
+    <div class="brand"><span class="dot">🌱</span> Marble</div>
+    <div class="right">
+      <span class="faint" id="whoami" style="font-size:.74rem"></span>
+      <button class="link hidden" id="signOut">Sign out</button>
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <section class="body center" id="screen-auth">
+    <div style="max-width:320px;width:100%;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <h1 style="font-size:1.4rem">Empowering parents,<br>not screens.</h1>
+        <p class="muted" style="font-size:.85rem;margin:8px 0 0">Sign in to plan your children's learning.</p>
+      </div>
+      <div class="tabs"><button id="tabIn" class="on">Sign in</button><button id="tabUp">Create account</button></div>
+      <div class="field"><label>Email</label><input id="email" type="email" autocomplete="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+      <button class="btn primary" id="authBtn">Sign in</button>
+      <div id="authNote" class="note hidden"></div>
+    </div>
+  </section>
+
+  <!-- KIDS -->
+  <section class="body hidden" id="screen-kids">
+    <p class="eyebrow">Your household</p>
+    <h2 style="font-size:1.3rem;margin:-6px 0 2px">Who are we planning for?</h2>
+    <p class="muted" style="font-size:.83rem;margin:0 0 4px">Pick a child to see today's session.</p>
+    <div id="kidsList" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div id="kidsEmpty" class="note hidden">No children yet on this account. Add one from the first-run setup page, then refresh.</div>
+  </section>
+
+  <!-- HOME -->
+  <section class="body hidden" id="screen-home">
+    <div class="brief">
+      <p class="eyebrow" style="color:var(--moss-ink)">Today's session</p>
+      <h2 id="homeName">—</h2>
+      <div class="focus" id="homeFocus"></div>
+      <div class="counts" id="homeCounts"></div>
+    </div>
+    <div id="cards" style="display:flex;flex-direction:column;gap:11px"></div>
+    <div id="gates" style="display:flex;flex-direction:column;gap:9px"></div>
+  </section>
+
+  <div class="foot" id="foot">Connected to your live curriculum · 1,590 topics</div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ruzpgmaupprsjeiugevw.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1enBnbWF1cHByc2plaXVnZXZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MjYxOTksImV4cCI6MjA5OTMwMjE5OX0.fu7AM9qonLjywnbWNfG93cAwKCLLQuOsjO2tPSbq-I8";
+
+// ---- Sensitivity gates (from data/sensitivity-flags.json; opt-in per child) ----
+const GATED = {
+  mt_pu2mmK27UA: { name:"Growing Up & Puberty", why:"Puberty & the human body (sex-ed). Off until you opt in." },
+  mt_tQkCzRcWG7: { name:"Human Reproduction",    why:"Human reproductive biology. Off until you opt in." },
+  mt_oqvJJKCJXw: { name:"Systemic Inequality & Allyship", why:"A contested-values topic. Off until you opt in." },
+  mt_5XLhiqmocP: { name:"Global Citizenship",    why:"A contested-values topic. Off until you opt in." },
+};
+const allow = (childId, topicId, val) => {
+  const k = "allow:"+childId;
+  const s = new Set(JSON.parse(localStorage.getItem(k) || "[]"));
+  if (val===undefined) return s.has(topicId);
+  val ? s.add(topicId) : s.delete(topicId);
+  localStorage.setItem(k, JSON.stringify([...s]));
+};
+
+// ---- Supabase REST/Auth via plain fetch ----
+let session = null;  // {access_token, user}
+async function sb(path, { method="GET", body, auth=true } = {}){
+  const headers = { apikey: ANON, "Content-Type":"application/json" };
+  if (auth && session) headers.Authorization = "Bearer " + session.access_token;
+  else headers.Authorization = "Bearer " + ANON;
+  const res = await fetch(SUPABASE_URL + path, { method, headers, body: body?JSON.stringify(body):undefined });
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new Error((data && (data.msg||data.message||data.error_description||data.error)) || ("HTTP "+res.status));
+  return data;
+}
+
+// ---- the session engine (ported from scripts/session.mjs) ----
+const CORE = ["English","Mathematics","Science"];
+const ROTATE = ["History","Personal & Social Development","Life Skills","Computing","Learning to Learn"];
+function laneOf(t){
+  const proc = t.type==="PROCEDURAL" || (t.subject==="Mathematics" && t.type!=="CONCEPTUAL");
+  return proc ? {lane:"practice",source:"generator"} : {lane:"lesson",source:"pipeline"};
+}
+function readyBySubject(topics, hardPrereqs, age, mastered, childId){
+  const byId = new Map(topics.map(t=>[t.id,t]));
+  const known = t => mastered.has(t.id) || t.age_range_end < age;
+  const ready = topics.filter(t=>{
+    if(!(t.age_range_start<=age && t.age_range_end>=age)) return false;
+    if(known(t)) return false;
+    if(GATED[t.id] && !allow(childId,t.id)) return false;         // parent gate
+    const pre = hardPrereqs.get(t.id) || [];
+    return pre.every(p=>{ const pt=byId.get(p); return !pt || known(pt); });
+  });
+  ready.sort((a,b)=>(b.centrality||0)-(a.centrality||0) || a.age_range_start-b.age_range_start);
+  const bySub={}; for(const t of ready)(bySub[t.subject] ||= []).push(t); return bySub;
+}
+function composeSession(topics, hardPrereqs, age, mastered, childId, size=6, seed=0){
+  const bySub = readyBySubject(topics, hardPrereqs, age, mastered, childId);
+  const pick={}; const take=s=>{const l=bySub[s]; if(!l||!l.length)return null; const i=(pick[s]??(seed%l.length)); pick[s]=i+1; return l[i%l.length];};
+  const cards=[];
+  for(const s of CORE){const t=take(s); if(t)cards.push(t);}
+  let rot=ROTATE.filter(s=>bySub[s]&&bySub[s].length);
+  for(let i=0; cards.length<size && rot.length; i++){
+    const t=take(rot[(seed+i)%rot.length]);
+    if(t)cards.push(t); else {rot.splice((seed+i)%rot.length,1); i--;}
+    if(i>size*4)break;
+  }
+  for(let i=0; cards.length<size; i++){const t=take(CORE[i%CORE.length]); if(!t)break; cards.push(t);}
+  return cards.map(t=>({topic:t, ...laneOf(t)}));
+}
+
+// tiny in-browser arithmetic generator for procedural math practice cards
+function sampleProblems(topic){
+  const d=(topic.domain||"").toLowerCase(), n=(topic.name||"").toLowerCase(), hay=d+" "+n;
+  const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+  const mk=(f)=>Array.from({length:3},f);
+  if(hay.includes("multipl")) return mk(()=>{const a=R(2,9),b=R(2,9);return `${a} × ${b} = ${a*b}`;});
+  if(hay.includes("divis"))   return mk(()=>{const b=R(2,9),q=R(2,9);return `${b*q} ÷ ${b} = ${q}`;});
+  if(hay.includes("subtract")||hay.includes("change")) return mk(()=>{const a=R(20,90),b=R(1,a-1);return `${a} − ${b} = ${a-b}`;});
+  if(hay.includes("add")||hay.includes("sum"))         return mk(()=>{const a=R(10,60),b=R(5,40);return `${a} + ${b} = ${a+b}`;});
+  return null;
+}
+
+// ---- subject styling ----
+const SUBJ = {
+  "English":{c:"var(--berry)",bg:"var(--berry-soft)",e:"📖"},
+  "Mathematics":{c:"var(--amber)",bg:"var(--amber-soft)",e:"➗"},
+  "Science":{c:"var(--sci)",bg:"var(--sci-soft)",e:"🔬"},
+  "History":{c:"var(--clay)",bg:"var(--clay-soft)",e:"🏛️"},
+  "Personal & Social Development":{c:"var(--moss)",bg:"var(--moss-soft)",e:"💚"},
+  "Life Skills":{c:"var(--moss)",bg:"var(--moss-soft)",e:"🧰"},
+  "Computing":{c:"var(--sci)",bg:"var(--sci-soft)",e:"💻"},
+  "Learning to Learn":{c:"var(--amber)",bg:"var(--amber-soft)",e:"🧠"},
+};
+const initials = s => (s||"?").trim()[0].toUpperCase();
+const esc = s => (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// ---- screen router ----
+const screens = ["auth","kids","home"];
+function show(name){
+  screens.forEach(s=>document.getElementById("screen-"+s).classList.toggle("hidden", s!==name));
+  document.getElementById("backBtn").classList.toggle("hidden", name!=="home");
+  document.getElementById("signOut").classList.toggle("hidden", name==="auth");
+  document.getElementById("whoami").textContent = (name!=="auth" && session) ? session.user.email : "";
+}
+
+// ---- AUTH ----
+let mode="in";
+const setMode=m=>{mode=m;
+  document.getElementById("tabIn").classList.toggle("on",m==="in");
+  document.getElementById("tabUp").classList.toggle("on",m==="up");
+  document.getElementById("authBtn").textContent = m==="in"?"Sign in":"Create account";
+  document.getElementById("password").setAttribute("autocomplete", m==="in"?"current-password":"new-password");
+};
+document.getElementById("tabIn").onclick=()=>setMode("in");
+document.getElementById("tabUp").onclick=()=>setMode("up");
+const note=(el,msg,kind)=>{const n=document.getElementById(el);n.className="note "+(kind||"");n.textContent=msg;n.classList.remove("hidden");};
+
+document.getElementById("authBtn").onclick=async()=>{
+  const email=document.getElementById("email").value.trim(), password=document.getElementById("password").value;
+  if(!email||!password) return note("authNote","Enter your email and password.","err");
+  const btn=document.getElementById("authBtn"); btn.disabled=true; btn.textContent="…";
+  try{
+    if(mode==="up"){
+      await sb("/auth/v1/signup",{method:"POST",auth:false,body:{email,password}});
+      note("authNote","Account created. Signing you in…","ok");
+    }
+    const tok=await sb("/auth/v1/token?grant_type=password",{method:"POST",auth:false,body:{email,password}});
+    session={access_token:tok.access_token, user:tok.user};
+    localStorage.setItem("session", JSON.stringify(session));
+    await loadKids();
+  }catch(e){ note("authNote", e.message.includes("Invalid")?"Wrong email or password.":e.message, "err"); }
+  finally{ btn.disabled=false; setMode(mode); }
+};
+document.getElementById("signOut").onclick=()=>{ session=null; localStorage.removeItem("session"); show("auth"); };
+document.getElementById("backBtn").onclick=()=>show("kids");
+
+// ---- KIDS ----
+async function loadKids(){
+  show("kids");
+  const list=document.getElementById("kidsList"); list.innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
+  try{
+    const kids=await sb("/rest/v1/children?select=id,first_name,birth_year,avatar&order=first_name");
+    list.innerHTML="";
+    document.getElementById("kidsEmpty").classList.toggle("hidden", kids.length>0);
+    const yr=new Date().getFullYear();
+    for(const k of kids){
+      const age=yr-k.birth_year;
+      const el=document.createElement("button"); el.className="kid";
+      el.innerHTML=`<div class="ava">${esc(k.avatar||initials(k.first_name))}</div>
+        <div><div class="nm">${esc(k.first_name)}</div><div class="sub">Age ${age} · tap for today's session</div></div>
+        <div class="chev">›</div>`;
+      el.onclick=()=>openHome(k, age);
+      list.appendChild(el);
+    }
+  }catch(e){ list.innerHTML=`<div class="note err">Couldn't load children: ${esc(e.message)}</div>`; }
+}
+
+// ---- HOME ----
+let TOPICS=null, HARD=null;    // cached taxonomy
+async function loadTaxonomy(age){
+  // Only what we need: in-band topics + all hard prerequisite edges.
+  const cols="id,subject,domain,name,description,type,age_range_start,age_range_end,centrality,evidence";
+  const topics=await sb(`/rest/v1/topics?select=${cols}&age_range_start=lte.${age}&age_range_end=gte.${age}&limit=2000`);
+  const deps=await sb(`/rest/v1/dependencies?select=topic_id,prerequisite_id&strength=eq.hard&limit=10000`);
+  const hard=new Map(); for(const d of deps){ (hard.get(d.topic_id)||hard.set(d.topic_id,[]).get(d.topic_id)).push(d.prerequisite_id); }
+  return {topics, hard};
+}
+async function openHome(kid, age){
+  show("home");
+  document.getElementById("homeName").textContent = kid.first_name+"'s session";
+  document.getElementById("homeFocus").textContent = "Loading today's plan…";
+  document.getElementById("homeCounts").innerHTML="";
+  document.getElementById("cards").innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
+  document.getElementById("gates").innerHTML="";
+  try{
+    const {topics, hard}=await loadTaxonomy(age);
+    const seed=Math.floor(Date.now()/864e5) % 7;        // rotates day to day
+    renderHome(kid, age, topics, hard, seed);
+  }catch(e){
+    document.getElementById("cards").innerHTML=`<div class="note err">Couldn't build the session: ${esc(e.message)}</div>`;
+  }
+}
+function renderHome(kid, age, topics, hard, seed){
+  const cards=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
+  const subjects=[...new Set(cards.map(c=>c.topic.subject))];
+  document.getElementById("homeFocus").textContent = `${cards.length} things to learn across ${subjects.length} subjects`;
+  document.getElementById("homeCounts").innerHTML = subjects.map(s=>`<span class="pill">${SUBJ[s]?.e||""} ${esc(s)}</span>`).join("");
+
+  const wrap=document.getElementById("cards"); wrap.innerHTML="";
+  for(const {topic:t, lane} of cards){
+    const st=SUBJ[t.subject]||{c:"var(--soft)",bg:"var(--card2)",e:"•"};
+    const crit=(Array.isArray(t.evidence)?t.evidence:[]).map(x=>`<li>${esc(x)}</li>`).join("");
+    const probs=lane==="practice"?sampleProblems(t):null;
+    const laneBody = lane==="practice"
+      ? (probs ? `<div><div class="h">Sample practice (fresh every session)</div><div class="prob">${probs.map(p=>`<span>${p}</span>`).join("")}</div></div>`
+               : `<div class="prov">⚙️ <span>Unlimited practice items generated by code — correct by construction, never repeats.</span></div>`)
+      : `<div class="prov">📚 <span>Full lesson prose is produced by the knowledge pipeline — grounded in reputable sources, cite-or-abstain, verified before it reaches ${esc(kid.first_name)}. The skill, description and mastery check above come straight from the curriculum.</span></div>`;
+    const d=document.createElement("details"); d.className="card";
+    d.innerHTML=`
+      <summary>
+        <div class="tag" style="background:${st.bg}">${st.e}</div>
+        <div class="meta">
+          <div class="sj" style="color:${st.c}">${esc(t.subject)}</div>
+          <div class="nm">${esc(t.name)}</div>
+          <div class="dm">${esc(t.domain||"")} · ages ${t.age_range_start}–${t.age_range_end}</div>
+        </div>
+        <div class="lane ${lane}">${lane}</div>
+      </summary>
+      <div class="detail">
+        <div><div class="h">What ${esc(kid.first_name)} will learn</div><p>${esc(t.description||"")}</p></div>
+        ${crit?`<div><div class="h">You'll know they've got it when…</div><ul class="crit">${crit}</ul></div>`:""}
+        ${laneBody}
+      </div>`;
+    wrap.appendChild(d);
+  }
+  renderGates(kid);
+}
+function renderGates(kid){
+  const g=document.getElementById("gates"); g.innerHTML="";
+  const head=document.createElement("p"); head.className="eyebrow"; head.style.marginTop="6px"; head.textContent="Parent-gated topics"; g.appendChild(head);
+  for(const [id,info] of Object.entries(GATED)){
+    const on=allow(kid.id,id);
+    const el=document.createElement("div"); el.className="gate";
+    el.innerHTML=`<div class="lbl"><b>${esc(info.name)}</b><br><span class="faint" style="font-size:.76rem">${esc(info.why)}</span></div>
+      <button class="switch ${on?"on":""}" aria-label="toggle"></button>`;
+    el.querySelector(".switch").onclick=(ev)=>{ const nv=!allow(kid.id,id); allow(kid.id,id,nv);
+      ev.target.classList.toggle("on",nv); openHome(kid, new Date().getFullYear()-kid.birth_year); };
+    g.appendChild(el);
+  }
+}
+
+// ---- boot: resume a saved session ----
+(async()=>{
+  setMode("in");
+  const saved=localStorage.getItem("session");
+  if(saved){ try{ session=JSON.parse(saved); await loadKids(); return; }catch{} }
+  show("auth");
+})();
+</script>
+</body>
+</html>

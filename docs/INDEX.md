@@ -51,11 +51,12 @@ content generation, and build the apps. Start here when you're ready to build.
 | `data/` | The Marble taxonomy (topics, dependencies, standards, clusters) | source data |
 | `packages/engine/` | **`@marble/engine`** — the real shared TypeScript engine (graph + scheduler), strict-typed, tested | ✅ built + tested |
 | `engine/*.mjs` | JS prototypes (scheduler demo, worksheet-packet, lesson-page) | prototype |
-| `scripts/*.mjs` | Planner, math generators, printable worksheets, American-English normalizer | ✅ runnable |
+| `scripts/*.mjs` | Planner, **whole-curriculum session composer** (`session.mjs`), math generators, printable worksheets, American-English normalizer | ✅ runnable |
 | `pipeline/*.mjs` | Content generation (text + image source router + bake-off), behind mock/real seams | ✅ runnable (mock) |
 | `db/` | Supabase schema + idempotent seed generator | ✅ schema + seed |
 | `demo/parent-app.html` | **Parent app** hi-fi mockup — Today/Plan/Print/Progress + Record (Garden theme) | ✅ runnable |
 | `demo/kid-app.html` | **Student app** hi-fi mockup — profile → today → quiz → letter-tracing → done wall | ✅ runnable |
+| `demo/app.html` | **Live parent app shell** — real Supabase auth → your kids → a child's whole-curriculum session (composed from the seeded taxonomy), expandable cards, sensitivity gates. Open in a browser. | ✅ wired to DB |
 | `demo/index.html` | Earlier self-contained app-screen demo | ✅ runnable |
 
 ## Try it (no setup, offline)
