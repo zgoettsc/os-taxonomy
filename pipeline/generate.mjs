@@ -25,6 +25,8 @@ import { mascotSVG, seedFromId } from './illustrate.mjs';
 import { GENERATORS } from '../scripts/generators.mjs';
 import { americanizeDeep } from '../scripts/americanize.mjs';
 import { gatherGrounding } from './sources.mjs';
+import { liveFetch } from './fetchers.mjs';
+import { storeContentItem } from './store.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const topics = JSON.parse(fs.readFileSync(path.join(dir, '..', 'data', 'topics.json'), 'utf8')).topics;
@@ -61,7 +63,8 @@ const anchor = (topic.standards || []).map((s) => ({
 }));
 if (topic.description) anchor.push({ source: 'taxonomy:description', license: 'public-domain', commercial: true, text: topic.description, verified: true });
 
-const sourced = await gatherGrounding(topic, { allowNonCommercial });
+const live = process.argv.includes('--live'); // pass --live to fetch real source passages (needs egress)
+const sourced = await gatherGrounding(topic, { allowNonCommercial, live, fetchImpl: live ? liveFetch : undefined });
 const grounding = [...anchor, ...sourced.grounding];   // the layered, multi-source material
 
 // --- 2. Generate ----------------------------------------------------------
@@ -107,6 +110,12 @@ content = americanizeDeep(content); // normalize on the way out
 const report = verify(content, { grounding, mathGen });
 content.provenance.verification = report.passed;
 
+// Auto-review gate (D8): approve when nothing was flagged; otherwise leave it
+// reviewed:false for a human. The app only serves reviewed content.
+const autoReviewed = report.flags.length === 0;
+content.provenance.reviewed = autoReviewed;
+content.provenance.reviewer = autoReviewed ? 'auto' : null;
+
 // --- 5. Gate + write ------------------------------------------------------
 const outDir = path.join(dir, 'out');
 fs.mkdirSync(outDir, { recursive: true });
@@ -121,5 +130,17 @@ console.log(`  math practice: ${mathGen ? 'code-generated (answers correct by co
 console.log(`  illustration:  procedural SVG (unique, dependency-free)`);
 console.log(`  verify:        ${report.passed.length} check(s) passed${report.flags.length ? ', ' + report.flags.length + ' FLAG(s)' : ''}`);
 report.flags.forEach((f) => console.log(`     ⚠ ${f}`));
-console.log(`  reviewed:      false  →  will NOT ship to a child until a human signs off`);
-console.log(`  wrote:         ${path.relative(path.join(dir, '..'), outPath)}\n`);
+console.log(`  reviewed:      ${content.provenance.reviewed}${content.provenance.reviewed ? ' (auto-approved: cited + verified + no flags)' : '  → held for human review'}`);
+console.log(`  wrote:         ${path.relative(path.join(dir, '..'), outPath)}`);
+
+// --- 6. Store to the DB (optional; needs SUPABASE_* env — runs in the Action) ---
+if (process.argv.includes('--store')) {
+  try {
+    const saved = await storeContentItem(content, { reviewed: content.provenance.reviewed });
+    console.log(`  stored:        content_items ${saved?.id || '(ok)'} — the app can now serve this topic`);
+  } catch (e) {
+    console.error(`  store FAILED:  ${e.message}`);
+    process.exitCode = 1;
+  }
+}
+console.log('');

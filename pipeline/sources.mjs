@@ -110,6 +110,7 @@ export async function gatherGrounding(topic, { allowNonCommercial = true, live =
         attribution: s.attribution,
         text: p.text,
         url: p.url,
+        verified: p.verified === true,   // live-fetched passages are real sources; mock passages are not
       });
     }
   }
