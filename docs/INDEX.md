@@ -53,6 +53,8 @@ content generation, and build the apps. Start here when you're ready to build.
 | `engine/*.mjs` | JS prototypes (scheduler demo, worksheet-packet, lesson-page) | prototype |
 | `scripts/*.mjs` | Planner, **whole-curriculum session composer** (`session.mjs`), math generators, printable worksheets, American-English normalizer | ✅ runnable |
 | `pipeline/*.mjs` | Content generation (text + image source router + bake-off), behind mock/real seams | ✅ runnable (mock) |
+| `content/lessons/*.mjs` | **Authored lesson + practice content** (age 4–6 starter set) — real teaching material, the shape the pipeline produces per topic | ✅ real content |
+| `scripts/render-packet.mjs` | Renders a multi-page printable learning packet (grown-up lesson + child practice + answer key) from authored content | ✅ runnable |
 | `db/` | Supabase schema + idempotent seed generator | ✅ schema + seed |
 | `demo/parent-app.html` | **Parent app** hi-fi mockup — Today/Plan/Print/Progress + Record (Garden theme) | ✅ runnable |
 | `demo/kid-app.html` | **Student app** hi-fi mockup — profile → today → quiz → letter-tracing → done wall | ✅ runnable |
