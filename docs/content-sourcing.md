@@ -45,6 +45,44 @@ We prefer sources in this order, and only fall back down the list when necessary
   second human reviewer at the point of use** — they see material before printing
   or assigning it.
 
+## The source registry & the commercial switch
+
+Sources live in a registry (`pipeline/sources.mjs`), each carrying its **license**
+and a **derived `commercial` flag** (plus `shareAlike`, `attribution`). For any
+topic, `gatherGrounding()` consults **every enabled source** and compiles their
+passages into one layered grounding set — each passage tagged with where it came
+from and under what license. Richer, cross-referenced grounding = better content
+and stronger verification (claims corroborated across sources).
+
+**One switch controls licensing.** `allowNonCommercial: false` (or `--commercial`
+on `generate.mjs`) instantly drops every NonCommercial source from the mix, so
+the *same pipeline* runs two ways:
+
+- **personal** — includes NC sources (CK-12, Core Knowledge) for maximum depth;
+- **commercial** — clean licenses only (public-domain gov, CC0, CC-BY; CC-BY-SA
+  with attribution) — CK-12 / Core Knowledge automatically excluded.
+
+Every content item's `provenance` records `sourcesUsed`, `mode`, and a
+`usedNonCommercial` audit flag, so if the project ever goes commercial you can
+**find and regenerate** any content that was built on an NC source
+(`dependsOnNonCommercial()`), not just disable them going forward.
+
+| Source | Subjects | License | Commercial? |
+|---|---|---|---|
+| NASA, NOAA, USGS | Science | public domain | ✅ |
+| Smithsonian Open Access | Science, History | CC0 | ✅ |
+| Library of Congress | History, English | public domain* | ✅ |
+| Wikidata | any | CC0 | ✅ |
+| OpenStax | Science, Math | CC-BY | ✅ |
+| Simple English Wikipedia, Wikijunior | any | CC-BY-SA | ✅ (attribution + share-alike) |
+| **CK-12** | Science, Math | CC-BY-NC | ❌ NonCommercial |
+| **Core Knowledge** | any | CC-BY-NC-SA | ❌ NonCommercial + ShareAlike |
+
+*Library of Congress: mostly public domain; verify per item. **Note:** the Core
+Knowledge *Sequence* (what to teach) is an idea and free to draw on for scope;
+its *text* is NC. Licenses change — confirm current terms before shipping; this
+is policy, not legal advice.
+
 ## How we stop fabrication (concretely)
 
 Not one safeguard — a stack, because any single one can fail:

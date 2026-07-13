@@ -24,6 +24,7 @@ import { verify } from './verify.mjs';
 import { mascotSVG, seedFromId } from './illustrate.mjs';
 import { GENERATORS } from '../scripts/generators.mjs';
 import { americanizeDeep } from '../scripts/americanize.mjs';
+import { gatherGrounding } from './sources.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const topics = JSON.parse(fs.readFileSync(path.join(dir, '..', 'data', 'topics.json'), 'utf8')).topics;
@@ -41,21 +42,27 @@ else {
 }
 if (!topic) { console.error('No topic found. Use --topic <id> or --age/--subject.'); process.exit(1); }
 
-// --- 1. Ground: collect authoritative source text -------------------------
-// Real pipeline runs RAG over OER; here we ground in the standards the topic is
-// distilled from (already in the repo), which are authoritative by definition.
+// --- 1. Ground: compile authoritative source text -------------------------
+// Two layers: (a) the curriculum standards the topic is distilled from (the
+// anchor), and (b) a compilation of reputable outside sources (NASA, Smithsonian,
+// Wikidata, OpenStax, and — in personal mode — CK-12 / Core Knowledge …), each
+// tagged with its license. `--commercial` drops every NonCommercial source.
+// See pipeline/sources.mjs + docs/content-sourcing.md.
+const allowNonCommercial = !process.argv.includes('--commercial'); // pass --commercial to exclude NC sources
 function findStandard(key) {
-  // curriculum-standards.json is grouped by curriculum; do a shallow search.
   const flat = JSON.stringify(standards);
   const idx = flat.indexOf(key.split(':').pop());
   return idx >= 0 ? key : null;
 }
-const grounding = (topic.standards || []).map((s) => ({
-  source: s,
+const anchor = (topic.standards || []).map((s) => ({
+  source: `standard:${s}`, license: 'public-domain', commercial: true,
   text: findStandard(s) ? `Curriculum standard ${s} (see data/curriculum-standards.json).` : `Standard ${s}.`,
   verified: !!findStandard(s),
 }));
-if (topic.description) grounding.push({ source: 'taxonomy:description', text: topic.description, verified: true });
+if (topic.description) anchor.push({ source: 'taxonomy:description', license: 'public-domain', commercial: true, text: topic.description, verified: true });
+
+const sourced = await gatherGrounding(topic, { allowNonCommercial });
+const grounding = [...anchor, ...sourced.grounding];   // the layered, multi-source material
 
 // --- 2. Generate ----------------------------------------------------------
 const provider = await getProvider(argv.provider || 'mock');
@@ -84,7 +91,10 @@ let content = {
   },
   provenance: {
     generatedBy: `content pipeline · provider=${provider.name}`,
-    grounding: grounding.map((g) => ({ title: g.source, license: 'source', verified: g.verified })),
+    grounding: grounding.map((g) => ({ title: g.sourceName || g.source, source: g.source, license: g.license || 'source', commercial: g.commercial !== false, verified: g.verified })),
+    sourcesUsed: sourced.sourcesUsed,
+    usedNonCommercial: sourced.usedNonCommercial,       // ← audit flag: did any NC source feed this?
+    mode: sourced.mode,                                  // 'personal' | 'commercial'
     citations: gen.citations || [],
     verification: [],
     reviewed: false, reviewer: null,
@@ -105,7 +115,8 @@ fs.writeFileSync(outPath, JSON.stringify(content, null, 2) + '\n');
 
 console.log(`\nGenerated content for: ${topic.name} (${topic.subject}, age ${content.ageRange.join('-')})`);
 console.log(`  provider:      ${provider.name}`);
-console.log(`  grounded on:   ${grounding.length} source(s) (${grounding.filter((g) => g.verified).length} verified)`);
+console.log(`  grounded on:   ${grounding.length} passage(s) from ${sourced.sourcesUsed.length} source(s): ${sourced.sourcesUsed.join(', ')}`);
+console.log(`  license mode:  ${sourced.mode}${sourced.usedNonCommercial ? ' (uses NonCommercial sources — excluded with --commercial)' : ' (commercial-safe licenses only)'}`);
 console.log(`  math practice: ${mathGen ? 'code-generated (answers correct by construction)' : 'n/a'}`);
 console.log(`  illustration:  procedural SVG (unique, dependency-free)`);
 console.log(`  verify:        ${report.passed.length} check(s) passed${report.flags.length ? ', ' + report.flags.length + ' FLAG(s)' : ''}`);
