@@ -51,8 +51,8 @@ async function getPdf(doc) {
     if (!r.ok) throw new Error(`download ${r.status} ${doc.url}`);
     return Buffer.from(await r.arrayBuffer());
   }
-  if (doc.storagePath) { // a file in a Supabase Storage bucket
-    const r = await fetch(`${SB}/storage/v1/object/${doc.storagePath}`, { headers: { Authorization: 'Bearer ' + KEY } });
+  if (doc.storagePath) { // "<bucket>/<path>" in Supabase Storage (uploaded via dashboard)
+    const r = await fetch(`${SB}/storage/v1/object/authenticated/${doc.storagePath}`, { headers: { Authorization: 'Bearer ' + KEY } });
     if (!r.ok) throw new Error(`storage ${r.status} ${doc.storagePath}`);
     return Buffer.from(await r.arrayBuffer());
   }
