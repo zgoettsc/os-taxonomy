@@ -1,0 +1,1547 @@
+{
+  "generated": "ai-proposed · confirm before use",
+  "total": 84,
+  "classified": [
+    {
+      "id": "mt__BbOjiY5A5",
+      "name": "Bias in AI Systems",
+      "subject": "Computing",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "body/reproduction": [
+          "gender"
+        ]
+      }
+    },
+    {
+      "id": "mt_oqvJJKCJXw",
+      "name": "Systemic Inequality and Allyship",
+      "subject": "Personal & Social Development",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "body/reproduction": [
+          "gender"
+        ]
+      }
+    },
+    {
+      "id": "mt_pu2mmK27UA",
+      "name": "Growing Up & Puberty",
+      "subject": "Science",
+      "bucket": "SEX_ED",
+      "confirmed": true,
+      "domains": [
+        "body/reproduction"
+      ],
+      "gate_default": "hide",
+      "stances": [],
+      "note": "human puberty/reproduction — opt-in; factual-neutral when shown",
+      "matched": {
+        "body/reproduction": [
+          "puberty"
+        ]
+      }
+    },
+    {
+      "id": "mt_6xsEXxKdUX",
+      "name": "How Plant Parts Work",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_tQkCzRcWG7",
+      "name": "Human Reproduction",
+      "subject": "Science",
+      "bucket": "SEX_ED",
+      "confirmed": true,
+      "domains": [
+        "body/reproduction"
+      ],
+      "gate_default": "hide",
+      "stances": [],
+      "note": "human puberty/reproduction — opt-in; factual-neutral when shown",
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "reproductive",
+          "fertilisation"
+        ]
+      }
+    },
+    {
+      "id": "mt_4IVWRAZoNC",
+      "name": "Life Cycles of Organisms",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_zexbopQjG0",
+      "name": "Living Things Vocabulary",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_Te-ulgYMUd",
+      "name": "Ocean Animal Migrations",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_yNWt3GQBNp",
+      "name": "Plant & Animal Reproduction",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "sexual"
+        ]
+      }
+    },
+    {
+      "id": "mt_ck57CDFGet",
+      "name": "Plant Reproduction",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "fertilisation"
+        ]
+      }
+    },
+    {
+      "id": "mt_wWpa5fFDZP",
+      "name": "Pollination & Pollinator Decline",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_o7FJPDsHiW",
+      "name": "Predicting Inherited Traits",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "sexual"
+        ]
+      }
+    },
+    {
+      "id": "mt_8VA40Tumth",
+      "name": "Structures for Survival",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_5_Zr9xXDNH",
+      "name": "The most successful animals on Earth",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_UR5LvBeyF1",
+      "name": "Variation & Survival Advantage",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "body/reproduction": [
+          "reproducing"
+        ]
+      }
+    },
+    {
+      "id": "mt_XMz_ohNjYO",
+      "name": "Alexander the Great's Empire",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_pTz6u49fQt",
+      "name": "Ancient Egypt on the Timeline",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ],
+        "violence/mature": [
+          "conquest"
+        ]
+      }
+    },
+    {
+      "id": "mt_8ad4U6msea",
+      "name": "Athenian Democracy",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      }
+    },
+    {
+      "id": "mt_CSGqz245rV",
+      "name": "Athens Versus Sparta",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      }
+    },
+    {
+      "id": "mt_e1Yr6rhRNW",
+      "name": "Boudicca's Revolt Against Rome",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_HZyUwycFvf",
+      "name": "Cleopatra and the End of Egypt",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_6nqVnVdexe",
+      "name": "Daily Life in a Roman Town",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_NnlnxCx1DO",
+      "name": "Egypt and Its Neighbours",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "politics/current-events": [
+          "empire",
+          "treaty"
+        ],
+        "violence/mature": [
+          "battle",
+          "invasion"
+        ]
+      }
+    },
+    {
+      "id": "mt__o3TCmfomv",
+      "name": "Fall of the Roman Republic",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "politics/current-events": [
+          "political"
+        ],
+        "violence/mature": [
+          "war"
+        ]
+      }
+    },
+    {
+      "id": "mt_H4bLNkDrGJ",
+      "name": "Fall of the Western Roman Empire",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "politics/current-events": [
+          "political",
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_lzCcQzPJZi",
+      "name": "Greek and Roman Architecture",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "government"
+        ]
+      }
+    },
+    {
+      "id": "mt_Nj32xtOhno",
+      "name": "Greek and Roman Legacy Today",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      }
+    },
+    {
+      "id": "mt_EHiM4_qg1R",
+      "name": "Inclusion and Exclusion in Athens",
+      "subject": "History",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      }
+    },
+    {
+      "id": "mt_8ShghTx0jd",
+      "name": "Magna Carta and Limiting Royal Power",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      }
+    },
+    {
+      "id": "mt_14F_x1Xwwp",
+      "name": "Marathon and Thermopylae",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_Ik-WC2ARPf",
+      "name": "Medieval Legacy in Modern Life",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "parliament"
+        ]
+      }
+    },
+    {
+      "id": "mt_eosO26KE-Z",
+      "name": "Medieval Worlds Beyond Europe",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_B1LdSGMP66",
+      "name": "Modern Archaeology and Egyptian Ethics",
+      "subject": "History",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "politics/current-events": [
+          "colonial"
+        ]
+      }
+    },
+    {
+      "id": "mt_MlD0gwLSw9",
+      "name": "Roman Army and Conquest of Britain",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ],
+        "violence/mature": [
+          "conquest"
+        ]
+      }
+    },
+    {
+      "id": "mt_vFYFvgrPgD",
+      "name": "Roman Republic and Empire",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "government",
+          "democracy",
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_VjxyJLtIbT",
+      "name": "Roman soldiers & builders",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_UMOjbmLcbM",
+      "name": "Towns & Trade",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "governance"
+        ]
+      }
+    },
+    {
+      "id": "mt_zIzJGkaj0Q",
+      "name": "Basic digital citizenship",
+      "subject": "Personal & Social Development",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "citizenship"
+        ]
+      }
+    },
+    {
+      "id": "mt_5XLhiqmocP",
+      "name": "Global Citizenship",
+      "subject": "Personal & Social Development",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "politics/current-events": [
+          "citizenship"
+        ]
+      }
+    },
+    {
+      "id": "mt_h-z88yf9Pn",
+      "name": "Vocabulary: ethics and citizenship",
+      "subject": "Personal & Social Development",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "citizenship"
+        ]
+      }
+    },
+    {
+      "id": "mt_itldWmVItr",
+      "name": "Antarctic Treaty & Research",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "politics",
+          "treaty"
+        ]
+      }
+    },
+    {
+      "id": "mt_LQt4vnKeB4",
+      "name": "Earth & Space Vocabulary",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "revolution"
+        ]
+      }
+    },
+    {
+      "id": "mt_edaoZRkK6M",
+      "name": "Hazard Assessment & Evacuation",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "politics"
+        ]
+      }
+    },
+    {
+      "id": "mt_Wzj1RETm9A",
+      "name": "Net Zero & Energy Transition",
+      "subject": "Science",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "politics/current-events": [
+          "governance"
+        ]
+      }
+    },
+    {
+      "id": "mt_7QeiS95TRC",
+      "name": "Polar Conservation & Future",
+      "subject": "Science",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "politics/current-events": [
+          "treaty"
+        ]
+      }
+    },
+    {
+      "id": "mt_ZanQuV90qi",
+      "name": "Cultural Allusions and Word Meaning",
+      "subject": "English",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "religion/origins": [
+          "mythology"
+        ]
+      }
+    },
+    {
+      "id": "mt_JdAnBKIDnw",
+      "name": "Ancient Egypt's Lasting Legacy",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ]
+      }
+    },
+    {
+      "id": "mt_pitjUcaAdy",
+      "name": "Art & Architecture",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "religion/origins": [
+          "faith"
+        ]
+      }
+    },
+    {
+      "id": "mt__qlBYNP62H",
+      "name": "Egyptian Art and Architecture",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "gods",
+          "temple"
+        ]
+      }
+    },
+    {
+      "id": "mt_B1ATUEVNPz",
+      "name": "Egyptian Gods and Goddesses",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "god",
+          "gods"
+        ]
+      }
+    },
+    {
+      "id": "mt_bvxkT1nepy",
+      "name": "Egyptian Gods and the Afterlife",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "gods"
+        ]
+      }
+    },
+    {
+      "id": "mt_5qNMVZi3dQ",
+      "name": "Fall of Ancient Egyptian Civilisation",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ],
+        "politics/current-events": [
+          "political"
+        ]
+      }
+    },
+    {
+      "id": "mt_W_CNRTBgYR",
+      "name": "Gods & the Parthenon",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "gods",
+          "temple"
+        ],
+        "violence/mature": [
+          "war",
+          "warfare"
+        ]
+      }
+    },
+    {
+      "id": "mt_H1pAi4F_Oh",
+      "name": "Greek gods & Mount Olympus",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "god",
+          "gods"
+        ]
+      }
+    },
+    {
+      "id": "mt_FDKd7I79JZ",
+      "name": "Greek Gods with Roman Names",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "gods"
+        ]
+      }
+    },
+    {
+      "id": "mt_PhIZNl2230",
+      "name": "Greek Myths and Heroes",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "myth"
+        ]
+      }
+    },
+    {
+      "id": "mt_cUMUYkDqZp",
+      "name": "Greek Philosophers and Medicine",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "religion/origins": [
+          "gods"
+        ]
+      }
+    },
+    {
+      "id": "mt_f4O__f3OU4",
+      "name": "Greek theatre",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "religion/origins": [
+          "religious",
+          "god"
+        ]
+      }
+    },
+    {
+      "id": "mt_8qQ2IosZZw",
+      "name": "Judgement of the Dead",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "belief"
+        ]
+      }
+    },
+    {
+      "id": "mt_uzk7qs4KxE",
+      "name": "Roman Law, Latin, and Christianity",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ],
+        "politics/current-events": [
+          "empire"
+        ]
+      }
+    },
+    {
+      "id": "mt_zh_RyesCgZ",
+      "name": "Romulus & Remus",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "myth"
+        ]
+      }
+    },
+    {
+      "id": "mt_LuwHnQItF_",
+      "name": "The Medieval Church",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "religious",
+          "church"
+        ]
+      }
+    },
+    {
+      "id": "mt_PCX1jZZnf9",
+      "name": "The Pharaoh as Living God",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "god",
+          "gods"
+        ],
+        "politics/current-events": [
+          "government"
+        ]
+      }
+    },
+    {
+      "id": "mt_aXNlkbAeIk",
+      "name": "Troy: Myth or History?",
+      "subject": "History",
+      "bucket": "RELIGION_HIST",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "historical belief — teach factual-neutral (\"people believed…\"); parent-gate-able",
+      "matched": {
+        "religion/origins": [
+          "myth"
+        ],
+        "violence/mature": [
+          "war"
+        ]
+      }
+    },
+    {
+      "id": "mt_szw1Ln490b",
+      "name": "Vocabulary: ancient egypt",
+      "subject": "History",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ]
+      }
+    },
+    {
+      "id": "mt_xAG0aMeAIN",
+      "name": "Who Really Built the Pyramids",
+      "subject": "History",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "religion/origins": [
+          "religious",
+          "myth"
+        ],
+        "politics/current-events": [
+          "slave"
+        ]
+      }
+    },
+    {
+      "id": "mt_p-8Hlf6_9k",
+      "name": "Identity and Belonging in Adolescence",
+      "subject": "Personal & Social Development",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "religion/origins": [
+          "religious"
+        ]
+      }
+    },
+    {
+      "id": "mt_WtO50EZQkf",
+      "name": "Online Identity and Misinformation",
+      "subject": "Personal & Social Development",
+      "bucket": "DROP",
+      "confirmed": false,
+      "domains": [],
+      "gate_default": null,
+      "stances": [],
+      "note": "false positive — treat as neutral, no flag",
+      "matched": {
+        "religion/origins": [
+          "creation"
+        ]
+      }
+    },
+    {
+      "id": "mt_2oswCNuapH",
+      "name": "Stereotypes and Individual Differences",
+      "subject": "Personal & Social Development",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "religion/origins": [
+          "beliefs"
+        ],
+        "body/reproduction": [
+          "gender"
+        ]
+      }
+    },
+    {
+      "id": "mt_DkzsZdyaL2",
+      "name": "The world contains many cultures, traditions",
+      "subject": "Personal & Social Development",
+      "bucket": "VALUES",
+      "confirmed": true,
+      "domains": [
+        "politics/current-events"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "contested modern values — factual-neutral; parents likely to gate",
+      "matched": {
+        "religion/origins": [
+          "belief"
+        ]
+      }
+    },
+    {
+      "id": "mt_ohUnzoI_nx",
+      "name": "Evidence for Evolution",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      }
+    },
+    {
+      "id": "mt_lWqmKn5Jvr",
+      "name": "Evolution vocabulary",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolution",
+          "natural selection"
+        ]
+      }
+    },
+    {
+      "id": "mt_-r3B4FQyX3",
+      "name": "Extinction & Rapid Change",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "natural selection"
+        ]
+      }
+    },
+    {
+      "id": "mt_fqAkSv3cUE",
+      "name": "Grouping Species Using DNA",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      }
+    },
+    {
+      "id": "mt_LRzjbo1Fn6",
+      "name": "How animals adapt to environments",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      }
+    },
+    {
+      "id": "mt_FuVEZ1Ac9s",
+      "name": "How Natural Selection Works",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolution",
+          "natural selection"
+        ],
+        "body/reproduction": [
+          "reproduction"
+        ]
+      }
+    },
+    {
+      "id": "mt_7_XXh9NCp0",
+      "name": "Insect Adaptations",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolution",
+          "natural selection"
+        ],
+        "politics/current-events": [
+          "revolution"
+        ]
+      }
+    },
+    {
+      "id": "mt_IP0PTVfTXp",
+      "name": "Mass Extinctions in Earth History",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolutionary"
+        ]
+      }
+    },
+    {
+      "id": "mt_YNrrNE23dZ",
+      "name": "Sexual Selection",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "natural selection"
+        ],
+        "body/reproduction": [
+          "sexual"
+        ]
+      }
+    },
+    {
+      "id": "mt_EaWjCyn8W2",
+      "name": "Structural Adaptations",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "natural selection"
+        ]
+      }
+    },
+    {
+      "id": "mt_mKNmXqz_Oo",
+      "name": "The Red Queen Hypothesis",
+      "subject": "Science",
+      "bucket": "ORIGINS_FORK",
+      "confirmed": true,
+      "domains": [
+        "religion/origins"
+      ],
+      "gate_default": "show",
+      "stances": [
+        "factual-neutral",
+        "faith-inclusive"
+      ],
+      "note": "origins / evolution — the genuine stance fork",
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      }
+    },
+    {
+      "id": "mt_OiDHqtLoln",
+      "name": "Battle of Hastings and 1066",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "violence/mature": [
+          "battle"
+        ]
+      }
+    },
+    {
+      "id": "mt_CqzsM0BDFP",
+      "name": "Siege Warfare",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "violence/mature": [
+          "warfare"
+        ]
+      }
+    },
+    {
+      "id": "mt_8oAzr0WxRb",
+      "name": "The Black Death",
+      "subject": "History",
+      "bucket": "VIOLENCE",
+      "confirmed": true,
+      "domains": [
+        "violence/mature"
+      ],
+      "gate_default": "show",
+      "stances": [],
+      "note": "war/death — factual-neutral, age-appropriate framing; parent-gate-able",
+      "matched": {
+        "violence/mature": [
+          "plague"
+        ]
+      }
+    }
+  ]
+}
