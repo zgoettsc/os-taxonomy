@@ -33,8 +33,12 @@ content generation, and build the apps. Start here when you're ready to build.
 
 ## Content, safety & images
 
+- [`content-architecture.md`](content-architecture.md) — the content data model:
+  topics → source snapshots → core + themed presentations; freshness (1yr TTL),
+  minimal auto-review, generate-once/serve-many reuse, and the content-policy
+  (gate vs stance) model. **The decision record for how content is stored & governed.**
 - [`content-sourcing.md`](content-sourcing.md) — where material comes from,
-  anti-fabrication, the parent content policy.
+  the source registry + commercial switch, anti-fabrication, the parent content policy.
 - [`content-pipeline.md`](content-pipeline.md) — the five-stage generation pipeline.
 - [`illustrations.md`](illustrations.md) — the image strategy (source router:
   NASA / photo / generate / diagram).

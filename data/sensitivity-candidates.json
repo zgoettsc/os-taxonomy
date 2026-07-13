@@ -1,0 +1,1933 @@
+{
+  "generated": "heuristic-sweep",
+  "total": 84,
+  "candidates": [
+    {
+      "id": "mt__BbOjiY5A5",
+      "name": "Bias in AI Systems",
+      "subject": "Computing",
+      "domain": "Artificial Intelligence",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "gender"
+        ]
+      },
+      "description": "If training data is biased, AI will be biased; examples: facial recognition working better for some skin tones, translation assuming gender;",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_oqvJJKCJXw",
+      "name": "Systemic Inequality and Allyship",
+      "subject": "Personal & Social Development",
+      "domain": "Empathy & Social Awareness",
+      "ageRange": [
+        11,
+        12
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "gender"
+        ]
+      },
+      "description": "Move beyond 'treating everyone the same' to understand that structural advantages and disadvantages exist regardless of individual effort or",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_pu2mmK27UA",
+      "name": "Growing Up & Puberty",
+      "subject": "Science",
+      "domain": "The Human Body",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "puberty"
+        ]
+      },
+      "description": "Describe the stages of human development from birth to old age: baby, toddler, child, adolescent (puberty), young adult, middle-aged adult, ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_6xsEXxKdUX",
+      "name": "How Plant Parts Work",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        7,
+        8
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "Identify and describe the functions of different parts of flowering plants: roots absorb water and nutrients, stems transport materials, lea",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_tQkCzRcWG7",
+      "name": "Human Reproduction",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        12,
+        13
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "reproductive",
+          "fertilisation"
+        ]
+      },
+      "description": "Describe the structure and function of the male and female human reproductive systems, and explain the processes of fertilisation, gestation",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_4IVWRAZoNC",
+      "name": "Life Cycles of Organisms",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "Develop models to describe that organisms have unique and diverse life cycles but all share the common stages of birth, growth, reproduction",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_zexbopQjG0",
+      "name": "Living Things Vocabulary",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        5,
+        7
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "Name and use vocabulary for what makes something living — alive, dead, never been alive, movement, nutrition, growth, reproduction, sensitiv",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_Te-ulgYMUd",
+      "name": "Ocean Animal Migrations",
+      "subject": "Science",
+      "domain": "Ocean Life",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "Know that many ocean animals undertake remarkable migrations — humpback whales travel thousands of miles between feeding and breeding ground",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_yNWt3GQBNp",
+      "name": "Plant & Animal Reproduction",
+      "subject": "Science",
+      "domain": "Ecosystems & Habitats",
+      "ageRange": [
+        9,
+        10
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "sexual"
+        ]
+      },
+      "description": "Describe the life process of reproduction in some plants and animals, including sexual and asexual reproduction in plants",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_ck57CDFGet",
+      "name": "Plant Reproduction",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        12,
+        13
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "fertilisation"
+        ]
+      },
+      "description": "Describe the structure of a flower and explain the processes of wind and insect pollination, fertilisation, seed and fruit formation, and se",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_wWpa5fFDZP",
+      "name": "Pollination & Pollinator Decline",
+      "subject": "Science",
+      "domain": "Ecosystems & Habitats",
+      "ageRange": [
+        11,
+        12
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "Explain the importance of insect pollination for plant reproduction and human food security, and discuss the consequences of pollinator decl",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_o7FJPDsHiW",
+      "name": "Predicting Inherited Traits",
+      "subject": "Science",
+      "domain": "Ecosystems & Habitats",
+      "ageRange": [
+        13,
+        14
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction",
+          "sexual"
+        ]
+      },
+      "description": "Explain how alleles are inherited in sexual reproduction and use Punnett squares to predict the probability of offspring inheriting a charac",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_8VA40Tumth",
+      "name": "Structures for Survival",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        9,
+        10
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "Construct an argument that plants and animals have internal and external structures that function to support survival, growth, behaviour, an",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_5_Zr9xXDNH",
+      "name": "The most successful animals on Earth",
+      "subject": "Science",
+      "domain": "Insects & Minibeasts",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "The most successful animals on Earth: there are roughly one million described insect species, and scientists estimate 5–10 million may exist",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_UR5LvBeyF1",
+      "name": "Variation & Survival Advantage",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        8,
+        9
+      ],
+      "axes": [
+        "body/reproduction"
+      ],
+      "matched": {
+        "body/reproduction": [
+          "reproducing"
+        ]
+      },
+      "description": "Use evidence to explain how variations in characteristics among individuals of the same species may provide advantages in surviving, finding",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_XMz_ohNjYO",
+      "name": "Alexander the Great's Empire",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "Describe how Alexander the Great of Macedon conquered a vast empire stretching from Greece to Egypt to India, spreading Greek language, cult",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_pTz6u49fQt",
+      "name": "Ancient Egypt on the Timeline",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events",
+        "violence/mature"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ],
+        "violence/mature": [
+          "conquest"
+        ]
+      },
+      "description": "Place ancient Egypt on a timeline spanning over 3,000 years — from around 3100 BCE (unification under the first pharaoh) to 30 BCE (Roman co",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_8ad4U6msea",
+      "name": "Athenian Democracy",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      },
+      "description": "Understand that Athens invented democracy — a system where free male citizens gathered in an Assembly to debate and vote on important decisi",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_CSGqz245rV",
+      "name": "Athens Versus Sparta",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      },
+      "description": "Compare Athens and Sparta as two very different Greek city-states: Athens focused on learning, arts, debate, and democracy, while Sparta foc",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_e1Yr6rhRNW",
+      "name": "Boudicca's Revolt Against Rome",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "Tell the story of Boudicca, queen of the Iceni tribe, who led a fierce revolt against Roman rule in Britain — burning Colchester, London, an",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_HZyUwycFvf",
+      "name": "Cleopatra and the End of Egypt",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "Know that ancient Egypt eventually came to an end: the last pharaoh was Cleopatra VII, who allied with Rome but was defeated by Octavian (la",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_6nqVnVdexe",
+      "name": "Daily Life in a Roman Town",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "Describe daily life in a Roman town — the forum (marketplace and meeting place), public baths, amphitheatre, and villas — and explain that t",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_NnlnxCx1DO",
+      "name": "Egypt and Its Neighbours",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        12,
+        13
+      ],
+      "axes": [
+        "politics/current-events",
+        "violence/mature"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire",
+          "treaty"
+        ],
+        "violence/mature": [
+          "battle",
+          "invasion"
+        ]
+      },
+      "description": "Examine Egypt's relationships with neighbouring civilisations: trade networks reaching Nubia, the Levant, and Punt; the Hyksos invasion and ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt__o3TCmfomv",
+      "name": "Fall of the Roman Republic",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        12,
+        14
+      ],
+      "axes": [
+        "politics/current-events",
+        "violence/mature"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "political"
+        ],
+        "violence/mature": [
+          "war"
+        ]
+      },
+      "description": "Trace how Roman political violence — the murder of the Gracchi brothers, civil wars between Marius and Sulla, Caesar's crossing of the Rubic",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_H4bLNkDrGJ",
+      "name": "Fall of the Western Roman Empire",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "political",
+          "empire"
+        ]
+      },
+      "description": "Describe how the Western Roman Empire gradually declined due to a combination of factors — military pressure from invading peoples, politica",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_lzCcQzPJZi",
+      "name": "Greek and Roman Architecture",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "government"
+        ]
+      },
+      "description": "Identify Greek column styles — Doric (plain and sturdy), Ionic (scroll-shaped capitals), and Corinthian (ornate leafy capitals) — and Roman ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_Nj32xtOhno",
+      "name": "Greek and Roman Legacy Today",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      },
+      "description": "Evaluate the lasting contributions of Greek and Roman civilisations to modern life — democracy, law, language (Latin roots), architecture (c",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_EHiM4_qg1R",
+      "name": "Inclusion and Exclusion in Athens",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        11,
+        13
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      },
+      "description": "Analyse who was included and excluded from Athenian democracy — only free adult male citizens (roughly 30% of adults) could participate, whi",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_8ShghTx0jd",
+      "name": "Magna Carta and Limiting Royal Power",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "democracy"
+        ]
+      },
+      "description": "King John, the barons' revolt, and the sealing of the Magna Carta in 1215; what the Magna Carta said about limiting the king's power; its la",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_14F_x1Xwwp",
+      "name": "Marathon and Thermopylae",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "Describe the battles of Marathon and Thermopylae as moments when Greek city-states united against the invading Persian Empire — the runner P",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_Ik-WC2ARPf",
+      "name": "Medieval Legacy in Modern Life",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "parliament"
+        ]
+      },
+      "description": "What the Middle Ages gave us: Parliament, universities, common law, Gothic architecture, the English language (Anglo-Saxon + Norman French),",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_eosO26KE-Z",
+      "name": "Medieval Worlds Beyond Europe",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "The medieval world beyond Europe: the Islamic Golden Age (maths, medicine, architecture), the Mali Empire and Mansa Musa, Song Dynasty China",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_B1LdSGMP66",
+      "name": "Modern Archaeology and Egyptian Ethics",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        10,
+        12
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "colonial"
+        ]
+      },
+      "description": "Understand that modern Egyptologists use advanced technologies — CT scanning of mummies, satellite imagery to find buried structures, DNA an",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_MlD0gwLSw9",
+      "name": "Roman Army and Conquest of Britain",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events",
+        "violence/mature"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ],
+        "violence/mature": [
+          "conquest"
+        ]
+      },
+      "description": "Describe how the Roman army was organised into legions of highly trained soldiers, how Julius Caesar first raided Britain in 55 BC and Emper",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_vFYFvgrPgD",
+      "name": "Roman Republic and Empire",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "government",
+          "democracy",
+          "empire"
+        ]
+      },
+      "description": "Explain how Rome was first governed as a republic — with elected consuls, a powerful Senate, and a distinction between patricians and plebei",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_VjxyJLtIbT",
+      "name": "Roman soldiers & builders",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        5,
+        7
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "Know that Roman soldiers marched across a huge empire building straight roads and strong walls, and that some Roman roads, walls, and buildi",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_UMOjbmLcbM",
+      "name": "Towns & Trade",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "governance"
+        ]
+      },
+      "description": "The growth of medieval towns: markets, guilds, the merchant class; how towns won charters of self-governance; the shift from purely rural to",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_zIzJGkaj0Q",
+      "name": "Basic digital citizenship",
+      "subject": "Personal & Social Development",
+      "domain": "Responsible Decision-Making",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "citizenship"
+        ]
+      },
+      "description": "Understand basic digital citizenship — being kind online, protecting personal information, recognising that people behind screens are real p",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_5XLhiqmocP",
+      "name": "Global Citizenship",
+      "subject": "Personal & Social Development",
+      "domain": "Empathy & Social Awareness",
+      "ageRange": [
+        13,
+        14
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "citizenship"
+        ]
+      },
+      "description": "Understand what it means to be a citizen in an interconnected world where decisions in one place affect people elsewhere; explore global iss",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_h-z88yf9Pn",
+      "name": "Vocabulary: ethics and citizenship",
+      "subject": "Personal & Social Development",
+      "domain": "Responsible Decision-Making",
+      "ageRange": [
+        7,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "citizenship"
+        ]
+      },
+      "description": "Know and use the vocabulary of ethics and citizenship — bullying, cyberbullying, bystander, upstander, peer pressure, digital citizenship, r",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_itldWmVItr",
+      "name": "Antarctic Treaty & Research",
+      "subject": "Science",
+      "domain": "Polar Regions",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "politics",
+          "treaty"
+        ]
+      },
+      "description": "Know that Antarctica is governed by the Antarctic Treaty (signed 1959, in force since 1961) — which sets Antarctica aside for peaceful purpo",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_LQt4vnKeB4",
+      "name": "Earth & Space Vocabulary",
+      "subject": "Science",
+      "domain": "Space Systems & Earth's History",
+      "ageRange": [
+        8,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "revolution"
+        ]
+      },
+      "description": "Use technical vocabulary for Earth's motion and the wider universe — rotation, revolution, axis, tilt, orbit, light year, gravitational forc",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_edaoZRkK6M",
+      "name": "Hazard Assessment & Evacuation",
+      "subject": "Science",
+      "domain": "Volcanoes & Earthquakes",
+      "ageRange": [
+        12,
+        14
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "politics"
+        ]
+      },
+      "description": "Explain probabilistic hazard assessment using eruption recurrence intervals and fault slip rates; describe how volcano observatories monitor",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_Wzj1RETm9A",
+      "name": "Net Zero & Energy Transition",
+      "subject": "Science",
+      "domain": "Weather & Climate",
+      "ageRange": [
+        13,
+        14
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "governance"
+        ]
+      },
+      "description": "Evaluate the energy transition required to reach net zero: renewable energy scaling, electrification of transport and heat, green hydrogen; ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_7QeiS95TRC",
+      "name": "Polar Conservation & Future",
+      "subject": "Science",
+      "domain": "Polar Regions",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "politics/current-events"
+      ],
+      "matched": {
+        "politics/current-events": [
+          "treaty"
+        ]
+      },
+      "description": "Understand the conservation challenges facing polar regions — marine protected areas in the Southern Ocean aim to preserve Antarctic ecosyst",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_ZanQuV90qi",
+      "name": "Cultural Allusions and Word Meaning",
+      "subject": "English",
+      "domain": "Reading Comprehension",
+      "ageRange": [
+        9,
+        10
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "mythology"
+        ]
+      },
+      "description": "Determine the meaning of words and phrases as used in literary texts, including understanding references to mythology and cultural allusions",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_JdAnBKIDnw",
+      "name": "Ancient Egypt's Lasting Legacy",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ]
+      },
+      "description": "Evaluate ancient Egypt's lasting legacy: the Egyptians developed early forms of medicine, mathematics (used to build pyramids and survey lan",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_pitjUcaAdy",
+      "name": "Art & Architecture",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "faith"
+        ]
+      },
+      "description": "Medieval cultural achievements: illuminated manuscripts, Gothic cathedrals (flying buttresses, stained glass), Gregorian chant, the Bayeux T",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt__qlBYNP62H",
+      "name": "Egyptian Art and Architecture",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "gods",
+          "temple"
+        ]
+      },
+      "description": "Analyse Egyptian art and architecture: understand that Egyptian paintings followed strict conventions (people shown from the side with eyes ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_B1ATUEVNPz",
+      "name": "Egyptian Gods and Goddesses",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "god",
+          "gods"
+        ]
+      },
+      "description": "Name and describe key Egyptian gods and goddesses: Ra the sun god who sailed across the sky each day, Osiris the ruler of the afterlife, Isi",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_bvxkT1nepy",
+      "name": "Egyptian Gods and the Afterlife",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        5,
+        7
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "gods"
+        ]
+      },
+      "description": "Understand that the ancient Egyptians believed in many gods and goddesses and believed that life continued after death in a wonderful afterl",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_5qNMVZi3dQ",
+      "name": "Fall of Ancient Egyptian Civilisation",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        13,
+        14
+      ],
+      "axes": [
+        "religion/origins",
+        "politics/current-events"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ],
+        "politics/current-events": [
+          "political"
+        ]
+      },
+      "description": "Trace the end of ancient Egyptian civilisation through its successive conquests — Assyrian, Persian, Macedonian (Alexander the Great), and f",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_W_CNRTBgYR",
+      "name": "Gods & the Parthenon",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "religion/origins",
+        "violence/mature"
+      ],
+      "matched": {
+        "religion/origins": [
+          "gods",
+          "temple"
+        ],
+        "violence/mature": [
+          "war",
+          "warfare"
+        ]
+      },
+      "description": "Name the major Greek gods and their roles — Zeus (king, thunder), Hera (queen, marriage), Athena (wisdom, warfare), Poseidon (sea), Apollo (",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_H1pAi4F_Oh",
+      "name": "Greek gods & Mount Olympus",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        5,
+        7
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "god",
+          "gods"
+        ]
+      },
+      "description": "Know that the ancient Greeks believed in many gods and goddesses who lived on Mount Olympus — including Zeus (king of the gods, thunder), At",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_FDKd7I79JZ",
+      "name": "Greek Gods with Roman Names",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "gods"
+        ]
+      },
+      "description": "Understand that the Romans adopted the Greek gods but gave them new names — Zeus became Jupiter, Hera became Juno, Ares became Mars, Athena ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_PhIZNl2230",
+      "name": "Greek Myths and Heroes",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        5,
+        7
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "myth"
+        ]
+      },
+      "description": "Retell at least one Greek myth involving a hero and a monster — such as Theseus and the Minotaur in the labyrinth, Heracles (Hercules) and t",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_cUMUYkDqZp",
+      "name": "Greek Philosophers and Medicine",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "gods"
+        ]
+      },
+      "description": "Know that Greek thinkers called philosophers developed ways of understanding the world that still influence us today — Socrates asked challe",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_f4O__f3OU4",
+      "name": "Greek theatre",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religious",
+          "god"
+        ]
+      },
+      "description": "Know that the ancient Greeks invented theatre, performing tragedies and comedies in large open-air amphitheatres with actors wearing masks —",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_8qQ2IosZZw",
+      "name": "Judgement of the Dead",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "belief"
+        ]
+      },
+      "description": "Describe the Egyptian belief in the judgement of the dead: after death, the heart was weighed against the feather of Ma'at in the Hall of Ju",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_uzk7qs4KxE",
+      "name": "Roman Law, Latin, and Christianity",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins",
+        "politics/current-events"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ],
+        "politics/current-events": [
+          "empire"
+        ]
+      },
+      "description": "Understand that Roman law became the basis for legal systems across Europe and beyond, that Latin is the root of French, Spanish, Italian, P",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_zh_RyesCgZ",
+      "name": "Romulus & Remus",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        5,
+        7
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "myth"
+        ]
+      },
+      "description": "Know the Roman founding myth of Romulus and Remus — twin brothers abandoned as babies, raised by a she-wolf, who grew up to found the city o",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_LuwHnQItF_",
+      "name": "The Medieval Church",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religious",
+          "church"
+        ]
+      },
+      "description": "The enormous power of the medieval Church: monasteries and the daily life of monks and nuns; building great cathedrals; pilgrimage as a reli",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_PCX1jZZnf9",
+      "name": "The Pharaoh as Living God",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins",
+        "politics/current-events"
+      ],
+      "matched": {
+        "religion/origins": [
+          "god",
+          "gods"
+        ],
+        "politics/current-events": [
+          "government"
+        ]
+      },
+      "description": "Understand that the pharaoh was not just a ruler but was believed to be a living god — the intermediary between the gods and the people — an",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_aXNlkbAeIk",
+      "name": "Troy: Myth or History?",
+      "subject": "History",
+      "domain": "Ancient Greece & Rome",
+      "ageRange": [
+        11,
+        13
+      ],
+      "axes": [
+        "religion/origins",
+        "violence/mature"
+      ],
+      "matched": {
+        "religion/origins": [
+          "myth"
+        ],
+        "violence/mature": [
+          "war"
+        ]
+      },
+      "description": "Explore how Heinrich Schliemann's excavation at Hisarlik in modern Turkey raised questions about whether the Trojan War described in Homer's",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_szw1Ln490b",
+      "name": "Vocabulary: ancient egypt",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        5,
+        9
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religion"
+        ]
+      },
+      "description": "Know and use the key vocabulary of ancient Egypt — pharaoh, pyramid, tomb, mummy/mummification, hieroglyphs, papyrus, sarcophagus, canopic j",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_xAG0aMeAIN",
+      "name": "Who Really Built the Pyramids",
+      "subject": "History",
+      "domain": "Ancient Egypt",
+      "ageRange": [
+        12,
+        14
+      ],
+      "axes": [
+        "religion/origins",
+        "politics/current-events"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religious",
+          "myth"
+        ],
+        "politics/current-events": [
+          "slave"
+        ]
+      },
+      "description": "Analyse who built the pyramids and why, evaluating the evidence against the alien-builder myth and the slave-labour myth: archaeological evi",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_p-8Hlf6_9k",
+      "name": "Identity and Belonging in Adolescence",
+      "subject": "Personal & Social Development",
+      "domain": "Emotional Literacy",
+      "ageRange": [
+        12,
+        13
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "religious"
+        ]
+      },
+      "description": "Understand that adolescence involves active construction of identity, leading to emotional complexity around questions of 'who am I?'; explo",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_WtO50EZQkf",
+      "name": "Online Identity and Misinformation",
+      "subject": "Personal & Social Development",
+      "domain": "Responsible Decision-Making",
+      "ageRange": [
+        12,
+        13
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "creation"
+        ]
+      },
+      "description": "Understand the ethics of online identity and the importance of consistency between who you are online and offline; explain how recommendatio",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_2oswCNuapH",
+      "name": "Stereotypes and Individual Differences",
+      "subject": "Personal & Social Development",
+      "domain": "Empathy & Social Awareness",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins",
+        "body/reproduction"
+      ],
+      "matched": {
+        "religion/origins": [
+          "beliefs"
+        ],
+        "body/reproduction": [
+          "gender"
+        ]
+      },
+      "description": "Recognise stereotypes — oversimplified beliefs about groups of people based on gender, race, age, or other characteristics — and understand ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_DkzsZdyaL2",
+      "name": "The world contains many cultures, traditions",
+      "subject": "Personal & Social Development",
+      "domain": "Empathy & Social Awareness",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "belief"
+        ]
+      },
+      "description": "Understand that the world contains many cultures, traditions, and belief systems, and that learning about others' perspectives enriches our ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_ohUnzoI_nx",
+      "name": "Evidence for Evolution",
+      "subject": "Science",
+      "domain": "Ecosystems & Habitats",
+      "ageRange": [
+        12,
+        14
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      },
+      "description": "Describe the main types of evidence for evolution: the fossil record (change over time), comparative anatomy (homologous structures), and th",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_lWqmKn5Jvr",
+      "name": "Evolution vocabulary",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        10,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolution",
+          "natural selection"
+        ]
+      },
+      "description": "Use technical vocabulary for evolution and natural selection — adaptation, evolution, natural selection, extinct, extinction, fossil record,",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_-r3B4FQyX3",
+      "name": "Extinction & Rapid Change",
+      "subject": "Science",
+      "domain": "Ecosystems & Habitats",
+      "ageRange": [
+        12,
+        14
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "natural selection"
+        ]
+      },
+      "description": "Explain how environmental change can outpace a species' ability to adapt through natural selection, leading to extinction, using historical ",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_fqAkSv3cUE",
+      "name": "Grouping Species Using DNA",
+      "subject": "Science",
+      "domain": "Animals of the World",
+      "ageRange": [
+        13,
+        14
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      },
+      "description": "Explain cladistics: organisms are grouped by shared derived characters, not just similarity; how phylogenetic trees are built using molecula",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_LRzjbo1Fn6",
+      "name": "How animals adapt to environments",
+      "subject": "Science",
+      "domain": "Organisms & Life Processes",
+      "ageRange": [
+        8,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      },
+      "description": "Identify how animals and plants are adapted to suit their environment and understand that adaptation may lead to evolution over time",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_FuVEZ1Ac9s",
+      "name": "How Natural Selection Works",
+      "subject": "Science",
+      "domain": "Ecosystems & Habitats",
+      "ageRange": [
+        12,
+        14
+      ],
+      "axes": [
+        "religion/origins",
+        "body/reproduction"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolution",
+          "natural selection"
+        ],
+        "body/reproduction": [
+          "reproduction"
+        ]
+      },
+      "description": "Explain natural selection as the mechanism of evolution: heritable variation + competition for resources + differential survival and reprodu",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_7_XXh9NCp0",
+      "name": "Insect Adaptations",
+      "subject": "Science",
+      "domain": "Insects & Minibeasts",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins",
+        "politics/current-events"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolution",
+          "natural selection"
+        ],
+        "politics/current-events": [
+          "revolution"
+        ]
+      },
+      "description": "Adaptation and evolution in insects: peppered moths as a famous example of natural selection (dark moths survived better on soot-covered tre",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_IP0PTVfTXp",
+      "name": "Mass Extinctions in Earth History",
+      "subject": "Science",
+      "domain": "Dinosaurs & Paleontology",
+      "ageRange": [
+        12,
+        14
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolutionary"
+        ]
+      },
+      "description": "Compare the five major mass extinction events in Earth history (End-Ordovician, Late Devonian, End-Permian, End-Triassic, K-Pg), describe pr",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_YNrrNE23dZ",
+      "name": "Sexual Selection",
+      "subject": "Science",
+      "domain": "Animals of the World",
+      "ageRange": [
+        12,
+        13
+      ],
+      "axes": [
+        "religion/origins",
+        "body/reproduction"
+      ],
+      "matched": {
+        "religion/origins": [
+          "natural selection"
+        ],
+        "body/reproduction": [
+          "sexual"
+        ]
+      },
+      "description": "Explain sexual selection as a form of natural selection: runaway selection for peacock tails, bird of paradise displays, and frog calls; exp",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_EaWjCyn8W2",
+      "name": "Structural Adaptations",
+      "subject": "Science",
+      "domain": "Animals of the World",
+      "ageRange": [
+        9,
+        11
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "natural selection"
+        ]
+      },
+      "description": "Understand that animals have structural adaptations (body features like the giraffe's long neck, eagle's talons, dolphin's streamlined shape",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_mKNmXqz_Oo",
+      "name": "The Red Queen Hypothesis",
+      "subject": "Science",
+      "domain": "Animals of the World",
+      "ageRange": [
+        11,
+        12
+      ],
+      "axes": [
+        "religion/origins"
+      ],
+      "matched": {
+        "religion/origins": [
+          "evolution"
+        ]
+      },
+      "description": "Introduce the Red Queen hypothesis — species must keep evolving just to maintain fitness relative to co-evolving partners; describe predator",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_OiDHqtLoln",
+      "name": "Battle of Hastings and 1066",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "violence/mature"
+      ],
+      "matched": {
+        "violence/mature": [
+          "battle"
+        ]
+      },
+      "description": "The events of 1066: the death of Edward the Confessor, three claimants to the throne, the Battle of Hastings, William the Conqueror, and the",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_CqzsM0BDFP",
+      "name": "Siege Warfare",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "violence/mature"
+      ],
+      "matched": {
+        "violence/mature": [
+          "warfare"
+        ]
+      },
+      "description": "How castles were attacked and defended: siege weapons (trebuchets, battering rams, siege towers), boiling liquids, arrow slits, murder holes",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    },
+    {
+      "id": "mt_8oAzr0WxRb",
+      "name": "The Black Death",
+      "subject": "History",
+      "domain": "Medieval Times",
+      "ageRange": [
+        7,
+        9
+      ],
+      "axes": [
+        "violence/mature"
+      ],
+      "matched": {
+        "violence/mature": [
+          "plague"
+        ]
+      },
+      "description": "The Black Death of 1348-49: what the plague was, how it spread, its devastating death toll; how it changed society by giving surviving worke",
+      "confirmed": null,
+      "gate_default": null,
+      "stances": []
+    }
+  ]
+}
