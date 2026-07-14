@@ -111,7 +111,9 @@ const ADAPTERS = {
   nasa: fetchNasa,
   loc: fetchLoc,
   smithsonian: fetchSmithsonian,
-  // corpus sources: retrieved from our ingested source_documents (hybrid FTS+vector)
+  // corpus sources: retrieved from our ingested source_documents (hybrid FTS+vector).
+  // How much comes back is governed by a token budget inside corpusRetrieve (as
+  // much relevant curriculum as exists, up to ~a whole unit), not a fixed count.
   coreknowledge: (t) => corpusRetrieve('coreknowledge', t),
   ck12: (t) => corpusRetrieve('ck12', t),
   openstax: (t) => corpusRetrieve('openstax', t),

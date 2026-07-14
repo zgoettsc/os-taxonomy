@@ -51,22 +51,25 @@ const LESSON_SCHEMA = {
   type: 'object', additionalProperties: false,
   required: ['student', 'parent', 'practice', 'assessment', 'citations'],
   properties: {
+    // NOTE: Anthropic structured output supports minItems only 0 or 1 (not higher),
+    // so we forbid EMPTY sections with minItems:1. The system prompt asks for depth;
+    // the verify gate still holds anything thin for human review.
     student: { type: 'object', additionalProperties: false, required: ['intro', 'examples'],
-      properties: { intro: { type: 'string' },
-        examples: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['show', 'say'], properties: { show: { type: 'string' }, say: { type: 'string' } } } } } },
+      properties: { intro: { type: 'string', minLength: 200 },
+        examples: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false, required: ['show', 'say'], properties: { show: { type: 'string' }, say: { type: 'string' } } } } } },
     parent: { type: 'object', additionalProperties: false, required: ['whyItMatters', 'howToTeach', 'watchFor', 'tryAtHome'],
-      properties: { whyItMatters: { type: 'string' }, howToTeach: { type: 'string' },
-        watchFor: { type: 'array', items: { type: 'string' } }, tryAtHome: { type: 'array', items: { type: 'string' } } } },
-    practice: { type: 'array', items: { type: 'object', additionalProperties: false,
+      properties: { whyItMatters: { type: 'string', minLength: 40 }, howToTeach: { type: 'string', minLength: 40 },
+        watchFor: { type: 'array', minItems: 1, items: { type: 'string' } }, tryAtHome: { type: 'array', minItems: 1, items: { type: 'string' } } } },
+    practice: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false,
       required: ['kind', 'prompt'],
       properties: { kind: { type: 'string' }, prompt: { type: 'string' },
         choices: { type: 'array', items: { type: 'string' } },
         answerIndex: { type: 'integer' }, answer: { type: 'string' } } } },
-    assessment: { type: 'array', items: { type: 'object', additionalProperties: false,
+    assessment: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false,
       required: ['id', 'kind', 'prompt', 'evidenceRef'],
       properties: { id: { type: 'string' }, kind: { type: 'string' }, prompt: { type: 'string' },
         rubric: { type: 'array', items: { type: 'string' } }, evidenceRef: { type: 'integer' } } } },
-    citations: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['source', 'span'], properties: { source: { type: 'string' }, span: { type: 'string' } } } },
+    citations: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false, required: ['source', 'span'], properties: { source: { type: 'string' }, span: { type: 'string' } } } },
   },
 };
 
@@ -90,11 +93,23 @@ export async function claudeProvider() {
         + 'it is FOR, and a vivid example for each. Use everything relevant in the '
         + 'grounding; if the grounding covers categories the examples should span them '
         + '(e.g. for communication: sound, sight, scent, touch — not just sound).\n'
-        + '3. student.intro should be several rich paragraphs — a real explanation a '
+        + '3. Be CONCRETE and MEMORABLE, not vague and descriptive. When the grounding '
+        + 'gives a specific name, number, size, or comparison, USE it — name the real '
+        + 'thing (the Big Dipper, a specific animal or place), give the real number or '
+        + 'a striking comparison a child remembers ("the Sun is so wide that a hundred '
+        + 'Earths could line up across it"). A child should finish the lesson knowing '
+        + 'specific, true, wonderful facts — not just general statements. Do not leave '
+        + 'vivid, age-appropriate detail from the grounding on the table.\n'
+        + '4. CALIBRATE to the age. Teach at the grade\'s altitude: at this level cover '
+        + 'WHAT happens and the observable pattern; reach for a deeper mechanism only if '
+        + 'the grounding states it in age-appropriate terms — do not over-reach into '
+        + 'explanations above the grade. But never water it down either: pitched right '
+        + 'means substantive AND accessible, not thin.\n'
+        + '5. student.intro should be several rich paragraphs — a real explanation a '
         + 'child could learn from — and student.examples should span the full range the '
         + 'grounding supports.\n'
-        + '4. Warm, concrete, age-appropriate. American English.\n'
-        + '5. practice items may be multiple-choice (kind "mcq" with choices) or short. '
+        + '6. Warm, concrete, age-appropriate. American English.\n'
+        + '7. practice items may be multiple-choice (kind "mcq" with choices) or short. '
         + 'assessment items are rubric-graded OPEN questions — use kind "short" or '
         + '"constructed" with a rubric, never "mcq" (they have no answer choices).';
       const user =

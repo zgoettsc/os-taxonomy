@@ -25,7 +25,14 @@ create table if not exists public.source_documents (
 
 create index if not exists source_documents_fts on public.source_documents using gin (fts);
 create index if not exists source_documents_src on public.source_documents (source);
-create index if not exists source_documents_vec on public.source_documents using hnsw (embedding vector_cosine_ops);
+-- Vector (HNSW) index intentionally NOT created. On small compute a 100k+ vector
+-- index can't stay resident in RAM, so every write thrashes Disk IO. Retrieval is
+-- full-text (keyword) only — proven to surface the right curriculum passages.
+-- Drop it if an earlier apply created it (reclaims disk, stops the IO drain):
+drop index if exists public.source_documents_vec;
+-- Idempotent, incremental ingestion: upsert on (source, content_hash) so subject
+-- slices and re-runs accumulate without wiping, and duplicate passages are skipped.
+create unique index if not exists source_documents_uniq on public.source_documents (source, content_hash);
 
 alter table public.source_documents enable row level security;
 -- Global, service-role-managed. No family read/write policy: only the server
@@ -48,7 +55,7 @@ language sql stable as $$
     where d.source = src
       and query_text is not null
       and d.fts @@ websearch_to_tsquery('english', query_text)
-    limit 40
+    limit 120
   ),
   vec as (
     select d.id, row_number() over (order by d.embedding <=> query_embedding) as r
@@ -57,7 +64,7 @@ language sql stable as $$
       and query_embedding is not null
       and d.embedding is not null
     order by d.embedding <=> query_embedding
-    limit 40
+    limit 120
   )
   select d.id, d.text, d.title, d.url, d.grade,
          (coalesce(1.0/(60 + fts.r), 0) + coalesce(1.0/(60 + vec.r), 0))::real as score
@@ -70,3 +77,8 @@ language sql stable as $$
 $$;
 
 grant execute on function public.match_source_documents(text, vector, text, int) to service_role, authenticated;
+
+-- Bulk ingestion (deleting thousands of rows, upserting vector batches while the
+-- HNSW index maintains itself) exceeds the default ~8s API statement timeout.
+-- Give the service role (used by the ingest Action) generous headroom.
+alter role service_role set statement_timeout = '300s';
