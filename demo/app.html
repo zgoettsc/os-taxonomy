@@ -6,25 +6,32 @@
 <title>Marble — parent app</title>
 <style>
   :root{
-    --ground:#f1f2ee; --card:#fbfbf8; --card2:#f4f5ef;
-    --ink:#23271f; --soft:#5d6353; --faint:#8a9079;
-    --line:#e1e3da; --line2:#eceee6;
+    --ground:#f2f0ea; --card:#ffffff; --card2:#f6f4ee;
+    --ink:#23262e; --soft:#5c6472; --faint:#8b93a2;
+    --line:#e4e0d6; --line2:#efece4;
+    /* brand identity — matches the printable packet */
+    --navy:#232c52; --navy-soft:#e7e9f2; --navy-ink:#2c3566;
+    --gold:#b07d1e; --gold-soft:#f4ead0;
+    --teal:#1f8f82; --teal-soft:#dcede9;
     --moss:#4c7a34; --moss-soft:#e7eedd; --moss-ink:#33571f;
     --clay:#c07542; --clay-soft:#f4e6da;
     --amber:#b07d1e; --amber-soft:#f4ead0;
     --berry:#b23a6b; --berry-soft:#f6e0e9;
-    --sci:#2b8a8f; --sci-soft:#d9edee;
-    --shadow:0 10px 34px -16px rgba(35,39,31,.42);
-    --shadow-sm:0 2px 8px -3px rgba(35,39,31,.28);
-    --disp:ui-rounded,"SF Pro Rounded","Segoe UI Rounded",system-ui,sans-serif;
+    --sci:#1f8f82; --sci-soft:#d9edea;
+    --shadow:0 12px 40px -18px rgba(20,26,46,.4);
+    --shadow-sm:0 2px 8px -3px rgba(20,26,46,.26);
+    --disp:Georgia,"Iowan Old Style","Palatino Linotype",serif;
     --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     --r:16px;
   }
   @media (prefers-color-scheme:dark){:root{
-    --ground:#14170f; --card:#1e241a; --card2:#232a1e; --ink:#eceee4; --soft:#9aa38c; --faint:#727a63;
-    --line:#2c3326; --line2:#262d20; --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
+    --ground:#12141c; --card:#1b1f2b; --card2:#222634; --ink:#e9e7df; --soft:#a2a9b8; --faint:#767d8e;
+    --line:#2c3242; --line2:#252a37;
+    --navy:#8f9be0; --navy-soft:#232a44; --navy-ink:#b8c1ec;
+    --gold:#d8ac5a; --gold-soft:#312a17; --teal:#5ab6bb; --teal-soft:#183034;
+    --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
     --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a; --amber-soft:#312a17;
-    --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#1b2b2c;
+    --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#183034;
     --shadow:0 14px 40px -18px rgba(0,0,0,.7); --shadow-sm:0 2px 10px -4px rgba(0,0,0,.6);
   }}
   *{box-sizing:border-box}
@@ -41,7 +48,7 @@
   /* top bar */
   .top{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line2);min-height:58px}
   .brand{font-family:var(--disp);font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:7px}
-  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--moss);display:grid;place-items:center;color:#fff;font-size:.8rem}
+  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--navy);display:grid;place-items:center;color:#fff;font-size:.8rem}
   .top .right{margin-left:auto;display:flex;gap:6px;align-items:center}
   .link{background:none;border:0;color:var(--faint);font:inherit;font-size:.78rem;cursor:pointer;padding:6px 8px;border-radius:9px}
   .link:hover{background:var(--card2);color:var(--ink)}
@@ -55,17 +62,17 @@
   .field{display:flex;flex-direction:column;gap:5px;text-align:left}
   .field label{font-size:.74rem;font-weight:700;color:var(--soft)}
   input{font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink)}
-  input:focus{outline:2px solid var(--moss);outline-offset:1px}
+  input:focus{outline:2px solid var(--navy);outline-offset:1px}
   .btn{font:inherit;font-weight:700;border:0;border-radius:13px;padding:12px 16px;cursor:pointer;display:flex;
     align-items:center;justify-content:center;gap:8px}
-  .btn.primary{background:var(--moss);color:#fff}
+  .btn.primary{background:var(--navy);color:#fff}
   .btn.primary:hover{filter:brightness(1.05)}
   .btn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
   .btn[disabled]{opacity:.5;cursor:default}
   .row{display:flex;gap:8px}
   .tabs{display:inline-flex;background:var(--card2);border-radius:14px;padding:3px;margin:0 auto}
   .tabs button{border:0;background:none;font:inherit;font-weight:650;color:var(--soft);padding:7px 15px;border-radius:11px;cursor:pointer}
-  .tabs button.on{background:var(--moss);color:#fff}
+  .tabs button.on{background:var(--navy);color:#fff}
   .note{font-size:.8rem;padding:10px 12px;border-radius:11px;background:var(--card2);border:1px solid var(--line)}
   .note.err{background:var(--berry-soft);border-color:transparent;color:var(--berry)}
   .note.ok{background:var(--moss-soft);border-color:transparent;color:var(--moss-ink)}
@@ -75,20 +82,20 @@
     border-radius:var(--r);padding:13px 14px;cursor:pointer}
   .kid:hover{border-color:var(--moss);box-shadow:var(--shadow-sm)}
   .ava{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;
-    color:#fff;font-size:1.15rem;flex:none;background:var(--moss)}
+    color:#fff;font-size:1.15rem;flex:none;background:var(--navy)}
   .kid .nm{font-family:var(--disp);font-weight:700;font-size:1.05rem}
   .kid .sub{font-size:.76rem;color:var(--faint)}
   .kid .chev{margin-left:auto;color:var(--faint)}
 
   /* home / session */
-  .brief{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
+  .brief{background:linear-gradient(160deg,var(--navy-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
   .brief h2{font-size:1.18rem;margin:2px 0}
-  .brief .focus{font-size:.8rem;color:var(--moss-ink);font-weight:600}
+  .brief .focus{font-size:.8rem;color:var(--navy-ink);font-weight:600}
   .counts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   .pill{font-size:.68rem;font-weight:700;padding:4px 9px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--soft)}
   .actions{display:flex;gap:8px;margin-top:13px;align-items:center;flex-wrap:wrap}
   .actions .btn{padding:10px 14px;font-size:.85rem;flex:1;min-width:130px}
-  .sess{font-size:.72rem;color:var(--moss-ink);font-weight:700;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 11px;font-variant-numeric:tabular-nums}
+  .sess{font-size:.72rem;color:var(--navy-ink);font-weight:700;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 11px;font-variant-numeric:tabular-nums}
   .toast{background:var(--moss-soft);border:1px solid transparent;color:var(--moss-ink);border-radius:12px;padding:10px 12px;font-size:.82rem;font-weight:600}
   .cardprint{margin-top:2px}
   .cardprint button{background:none;border:0;color:var(--sci);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;padding:4px 0;display:inline-flex;gap:5px;align-items:center}
@@ -124,9 +131,9 @@
   .gate .lbl{flex:1} .gate b{color:var(--ink)}
   .switch{flex:none;width:44px;height:26px;border-radius:20px;background:var(--line);position:relative;cursor:pointer;border:0;transition:background .15s}
   .switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-  .switch.on{background:var(--moss)} .switch.on::after{left:21px}
+  .switch.on{background:var(--navy)} .switch.on::after{left:21px}
 
-  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--moss);border-radius:50%;animation:spin .8s linear infinite}
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .hidden{display:none!important}
   .foot{padding:12px 18px;border-top:1px solid var(--line2);font-size:.7rem;color:var(--faint);text-align:center}
@@ -171,7 +178,7 @@
   <!-- HOME -->
   <section class="body hidden" id="screen-home">
     <div class="brief">
-      <p class="eyebrow" style="color:var(--moss-ink)">Today's session</p>
+      <p class="eyebrow" style="color:var(--gold)">Today’s session</p>
       <h2 id="homeName">—</h2>
       <div class="focus" id="homeFocus"></div>
       <div class="counts" id="homeCounts"></div>
