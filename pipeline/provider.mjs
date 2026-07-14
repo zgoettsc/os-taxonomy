@@ -185,6 +185,63 @@ export async function practiceProvider(name) {
   };
 }
 
+// ---- image directives: turn picture-card descriptions into image jobs ----
+// For each student.examples[] "show" line, decide whether it's best shown by a
+// real PHOTO (a named, real thing) or an ILLUSTRATION (a generic concept), and
+// give a clean single-subject scene + a photo search query + alt text. The house
+// style is applied later (resolve-images.mjs) so every card in a day matches.
+const IMAGE_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['items'],
+  properties: {
+    items: { type: 'array', minItems: 1, items: {
+      type: 'object', additionalProperties: false, required: ['kind', 'subject', 'query', 'alt'],
+      properties: {
+        kind: { type: 'string' },      // 'photo' | 'illustration'
+        subject: { type: 'string' },   // one clear scene/object, no text, plain background
+        query: { type: 'string' },     // 3–6 word photo search terms (photo kind)
+        alt: { type: 'string' },       // one-sentence accessible description
+      },
+    } },
+  },
+};
+
+export async function imageProvider(name) {
+  if (name !== 'claude') {
+    return { name: 'mock', async imageDirectives({ examples = [] }) {
+      return examples.map((e) => ({ kind: 'illustration', subject: String(e.show || e.say || '').slice(0, 120), query: String(e.show || '').split(/\s+/).slice(0, 5).join(' '), alt: String(e.show || '') }));
+    } };
+  }
+  let Anthropic;
+  try { ({ default: Anthropic } = await import('@anthropic-ai/sdk')); }
+  catch { throw new Error('claude image provider needs @anthropic-ai/sdk installed'); }
+  const client = new Anthropic();
+  return {
+    name: 'claude',
+    async imageDirectives({ topic, examples = [] }) {
+      const system =
+        'You turn a children\'s lesson\'s picture-card descriptions into image directives, ONE per card, in order.\n'
+        + 'For each card decide kind:\n'
+        + '• "photo" — the card depicts a SPECIFIC, real, nameable thing best shown by a real photograph '
+        + '(an animal, a plant, a planet, a landmark, a real everyday object). \n'
+        + '• "illustration" — a generic concept, comparison, action, or scene with no single real referent.\n'
+        + 'For EVERY card provide: subject = one clear SCENE with a SINGLE main object, plain background, no text/letters, '
+        + 'uncluttered so a pre-reader instantly sees what it is; query = 3–6 word photo search terms (fill it even for '
+        + 'illustration); alt = one age-appropriate sentence describing the picture. Keep everything concrete, calm, and '
+        + 'age-appropriate. Return exactly one item per card, same order.';
+      const user =
+        `TOPIC: ${topic.name} (ages ${topic.ageRangeStart}-${topic.ageRangeEnd}, ${topic.subject})\n\n`
+        + `PICTURE CARDS:\n${examples.map((e, i) => `${i + 1}. show: ${e.show || ''}\n   say: ${e.say || ''}`).join('\n')}`;
+      const res = await client.messages.create({
+        model: 'claude-opus-4-8', max_tokens: 3000, system,
+        messages: [{ role: 'user', content: user }],
+        output_config: { format: { type: 'json_schema', schema: IMAGE_SCHEMA } },
+      });
+      const text = res.content.find((b) => b.type === 'text')?.text || '{}';
+      return JSON.parse(text).items || [];
+    },
+  };
+}
+
 export async function getProvider(name) {
   if (name === 'claude') return claudeProvider();
   return mockProvider();
