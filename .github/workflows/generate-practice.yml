@@ -1,0 +1,43 @@
+name: Generate practice (more questions for a topic)
+
+# Makes a fresh batch of auto-checkable practice items for one topic, grounded in
+# that topic's already-stored lesson citations, and stores them in practice_items.
+# Re-run as often as you like — it dedupes, so every run adds NEW questions.
+#
+# Prereqs: db/practice.sql applied; the topic already has a generated lesson.
+# Secrets: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Taxonomy topic id (mt_...) — must already have a lesson'
+        required: true
+        type: string
+      count:
+        description: 'How many new items to generate'
+        required: false
+        default: '8'
+        type: string
+
+jobs:
+  practice:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the Anthropic SDK
+        run: npm install @anthropic-ai/sdk
+      - name: Generate + store practice
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node pipeline/generate-practice.mjs \
+            --topic "${{ inputs.topic }}" \
+            --count "${{ inputs.count }}" \
+            --provider claude \
+            --store

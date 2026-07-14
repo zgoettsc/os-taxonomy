@@ -6,25 +6,32 @@
 <title>Marble — parent app</title>
 <style>
   :root{
-    --ground:#f1f2ee; --card:#fbfbf8; --card2:#f4f5ef;
-    --ink:#23271f; --soft:#5d6353; --faint:#8a9079;
-    --line:#e1e3da; --line2:#eceee6;
+    --ground:#f2f0ea; --card:#ffffff; --card2:#f6f4ee;
+    --ink:#23262e; --soft:#5c6472; --faint:#8b93a2;
+    --line:#e4e0d6; --line2:#efece4;
+    /* brand identity — matches the printable packet */
+    --navy:#232c52; --navy-soft:#e7e9f2; --navy-ink:#2c3566;
+    --gold:#b07d1e; --gold-soft:#f4ead0;
+    --teal:#1f8f82; --teal-soft:#dcede9;
     --moss:#4c7a34; --moss-soft:#e7eedd; --moss-ink:#33571f;
     --clay:#c07542; --clay-soft:#f4e6da;
     --amber:#b07d1e; --amber-soft:#f4ead0;
     --berry:#b23a6b; --berry-soft:#f6e0e9;
-    --sci:#2b8a8f; --sci-soft:#d9edee;
-    --shadow:0 10px 34px -16px rgba(35,39,31,.42);
-    --shadow-sm:0 2px 8px -3px rgba(35,39,31,.28);
-    --disp:ui-rounded,"SF Pro Rounded","Segoe UI Rounded",system-ui,sans-serif;
+    --sci:#1f8f82; --sci-soft:#d9edea;
+    --shadow:0 12px 40px -18px rgba(20,26,46,.4);
+    --shadow-sm:0 2px 8px -3px rgba(20,26,46,.26);
+    --disp:Georgia,"Iowan Old Style","Palatino Linotype",serif;
     --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     --r:16px;
   }
   @media (prefers-color-scheme:dark){:root{
-    --ground:#14170f; --card:#1e241a; --card2:#232a1e; --ink:#eceee4; --soft:#9aa38c; --faint:#727a63;
-    --line:#2c3326; --line2:#262d20; --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
+    --ground:#12141c; --card:#1b1f2b; --card2:#222634; --ink:#e9e7df; --soft:#a2a9b8; --faint:#767d8e;
+    --line:#2c3242; --line2:#252a37;
+    --navy:#8f9be0; --navy-soft:#232a44; --navy-ink:#b8c1ec;
+    --gold:#d8ac5a; --gold-soft:#312a17; --teal:#5ab6bb; --teal-soft:#183034;
+    --moss:#8cc063; --moss-soft:#26311c; --moss-ink:#bfe0a2;
     --clay:#e0a075; --clay-soft:#33271c; --amber:#d8ac5a; --amber-soft:#312a17;
-    --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#1b2b2c;
+    --berry:#e07aa2; --berry-soft:#32202a; --sci:#5ab6bb; --sci-soft:#183034;
     --shadow:0 14px 40px -18px rgba(0,0,0,.7); --shadow-sm:0 2px 10px -4px rgba(0,0,0,.6);
   }}
   *{box-sizing:border-box}
@@ -41,7 +48,7 @@
   /* top bar */
   .top{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line2);min-height:58px}
   .brand{font-family:var(--disp);font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:7px}
-  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--moss);display:grid;place-items:center;color:#fff;font-size:.8rem}
+  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--navy);display:grid;place-items:center;color:#fff;font-size:.8rem}
   .top .right{margin-left:auto;display:flex;gap:6px;align-items:center}
   .link{background:none;border:0;color:var(--faint);font:inherit;font-size:.78rem;cursor:pointer;padding:6px 8px;border-radius:9px}
   .link:hover{background:var(--card2);color:var(--ink)}
@@ -55,40 +62,40 @@
   .field{display:flex;flex-direction:column;gap:5px;text-align:left}
   .field label{font-size:.74rem;font-weight:700;color:var(--soft)}
   input{font:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--ink)}
-  input:focus{outline:2px solid var(--moss);outline-offset:1px}
+  input:focus{outline:2px solid var(--navy);outline-offset:1px}
   .btn{font:inherit;font-weight:700;border:0;border-radius:13px;padding:12px 16px;cursor:pointer;display:flex;
     align-items:center;justify-content:center;gap:8px}
-  .btn.primary{background:var(--moss);color:#fff}
+  .btn.primary{background:var(--navy);color:#fff}
   .btn.primary:hover{filter:brightness(1.05)}
   .btn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
   .btn[disabled]{opacity:.5;cursor:default}
   .row{display:flex;gap:8px}
   .tabs{display:inline-flex;background:var(--card2);border-radius:14px;padding:3px;margin:0 auto}
   .tabs button{border:0;background:none;font:inherit;font-weight:650;color:var(--soft);padding:7px 15px;border-radius:11px;cursor:pointer}
-  .tabs button.on{background:var(--moss);color:#fff}
+  .tabs button.on{background:var(--navy);color:#fff}
   .note{font-size:.8rem;padding:10px 12px;border-radius:11px;background:var(--card2);border:1px solid var(--line)}
   .note.err{background:var(--berry-soft);border-color:transparent;color:var(--berry)}
   .note.ok{background:var(--moss-soft);border-color:transparent;color:var(--moss-ink)}
 
   /* kids list */
   .kid{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
-    border-radius:var(--r);padding:13px 14px;cursor:pointer}
+    border-radius:var(--r);padding:13px 14px;cursor:pointer;color:var(--ink)}
   .kid:hover{border-color:var(--moss);box-shadow:var(--shadow-sm)}
   .ava{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-family:var(--disp);font-weight:800;
-    color:#fff;font-size:1.15rem;flex:none;background:var(--moss)}
+    color:#fff;font-size:1.15rem;flex:none;background:var(--navy)}
   .kid .nm{font-family:var(--disp);font-weight:700;font-size:1.05rem}
   .kid .sub{font-size:.76rem;color:var(--faint)}
   .kid .chev{margin-left:auto;color:var(--faint)}
 
   /* home / session */
-  .brief{background:linear-gradient(180deg,var(--moss-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
+  .brief{background:linear-gradient(160deg,var(--navy-soft),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
   .brief h2{font-size:1.18rem;margin:2px 0}
-  .brief .focus{font-size:.8rem;color:var(--moss-ink);font-weight:600}
+  .brief .focus{font-size:.8rem;color:var(--navy-ink);font-weight:600}
   .counts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   .pill{font-size:.68rem;font-weight:700;padding:4px 9px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--soft)}
   .actions{display:flex;gap:8px;margin-top:13px;align-items:center;flex-wrap:wrap}
   .actions .btn{padding:10px 14px;font-size:.85rem;flex:1;min-width:130px}
-  .sess{font-size:.72rem;color:var(--moss-ink);font-weight:700;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 11px;font-variant-numeric:tabular-nums}
+  .sess{font-size:.72rem;color:var(--navy-ink);font-weight:700;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 11px;font-variant-numeric:tabular-nums}
   .toast{background:var(--moss-soft);border:1px solid transparent;color:var(--moss-ink);border-radius:12px;padding:10px 12px;font-size:.82rem;font-weight:600}
   .cardprint{margin-top:2px}
   .cardprint button{background:none;border:0;color:var(--sci);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;padding:4px 0;display:inline-flex;gap:5px;align-items:center}
@@ -124,12 +131,87 @@
   .gate .lbl{flex:1} .gate b{color:var(--ink)}
   .switch{flex:none;width:44px;height:26px;border-radius:20px;background:var(--line);position:relative;cursor:pointer;border:0;transition:background .15s}
   .switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-  .switch.on{background:var(--moss)} .switch.on::after{left:21px}
+  .switch.on{background:var(--navy)} .switch.on::after{left:21px}
 
-  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--moss);border-radius:50%;animation:spin .8s linear infinite}
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .hidden{display:none!important}
   .foot{padding:12px 18px;border-top:1px solid var(--line2);font-size:.7rem;color:var(--faint);text-align:center}
+  /* calendar + sessions */
+  .week{display:flex;gap:5px;width:100%}
+  .cday{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 2px 6px;cursor:pointer}
+  .cday.on{border-color:var(--navy);background:var(--navy-soft)}
+  .cday.today .cn{color:var(--navy);font-weight:800}
+  .cdow{font-size:.58rem;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);font-weight:700}
+  .cn{font-family:var(--disp);font-weight:700;font-size:1rem}
+  .cdot{width:6px;height:6px;border-radius:50%;background:var(--gold);margin-top:1px}
+  .cdot.done{background:var(--teal)}
+  .dayhead{display:flex;align-items:baseline;justify-content:space-between;margin:2px 0}
+  .dayhead h3{font-size:1.05rem}
+  .schip{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border:1px solid;border-radius:20px;padding:2px 8px}
+  .prow{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  /* prepare-ahead (road trip) */
+  .prep{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:9px 12px}
+  .preplabel{font-size:.82rem;font-weight:700;color:var(--soft)}
+  .prepbtns{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .prepdays{width:56px;font:inherit;font-weight:700;text-align:center;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 6px}
+  .prepdays:focus{outline:2px solid var(--navy);outline-offset:1px}
+  .prepunit{font-size:.82rem;font-weight:700;color:var(--soft)}
+  .seclabel{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:6px 0 -3px}
+  /* session preview (inline expander, sits at the bottom of the card) */
+  .pvwrap{margin:11px 0 0;border-top:1px solid var(--line2);padding-top:9px}
+  .pvlink{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;font-size:.74rem;font-weight:700;color:var(--faint);cursor:pointer}
+  .pvlink:hover{color:var(--navy)}
+  .pvcaret{font-size:.6rem;width:8px;display:inline-block}
+  .pvbody{margin-top:9px}
+  .pvtopic{border-top:1px solid var(--line2);padding:10px 0} .pvtopic:first-child{border-top:0;padding-top:2px}
+  .pvtop{font-size:.9rem;margin-bottom:2px;display:flex;flex-wrap:wrap;align-items:baseline;gap:5px}
+  .pvdesc{font-size:.82rem;color:var(--soft);margin:2px 0 5px}
+  .pvfield{font-size:.8rem;color:var(--soft);margin:5px 0} .pvfield b{color:var(--ink);font-weight:700;display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;margin-bottom:1px}
+  .pvul{margin:2px 0 0;padding-left:16px} .pvul li{margin:2px 0}
+  .pvex{color:var(--ink);font-family:var(--disp);text-transform:none;letter-spacing:0}
+  .pvbadge{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;border:1px solid var(--line);color:var(--faint);border-radius:20px;padding:1px 7px}
+  .pvbadge.ok{color:var(--teal);border-color:var(--teal)}
+  .pvhint{font-size:.74rem;color:var(--faint);font-style:italic;margin:6px 0 0}
+  /* history calendar */
+  .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .histnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .histnav b{font-family:var(--disp);font-size:1rem}
+  .hnav{background:var(--card2);border:1px solid var(--line);border-radius:9px;width:30px;height:30px;font-size:1rem;color:var(--ink);cursor:pointer;line-height:1}
+  .histdow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+  .histdow span{text-align:center;font-size:.56rem;font-weight:700;text-transform:uppercase;color:var(--faint)}
+  .histgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .hd{position:relative;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--card);border:1px solid var(--line2);border-radius:9px;font:inherit;font-size:.8rem;font-weight:600;color:var(--ink);cursor:pointer}
+  .hd[disabled]{cursor:default;color:var(--faint);opacity:.55;border-color:transparent;background:transparent}
+  .hd.off{opacity:.35} .hd.off[disabled]{opacity:.2}
+  .hd.tod{border-color:var(--gold)}
+  .hd.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+  .hd:not([disabled]):hover{border-color:var(--navy)}
+  .hdot{width:5px;height:5px;border-radius:50%;background:var(--teal)}
+  .hd.sel .hdot{background:#fff}
+  /* assessment modal */
+  .modal{position:fixed;inset:0;background:rgba(20,26,46,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+  @media(min-width:520px){.modal{align-items:center;padding:20px}}
+  .sheet{background:var(--card);width:100%;max-width:440px;max-height:92vh;display:flex;flex-direction:column;border-radius:22px 22px 0 0;overflow:hidden;box-shadow:0 -8px 40px rgba(20,26,46,.3)}
+  @media(min-width:520px){.sheet{border-radius:22px}}
+  .mhead{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line2)}
+  .mhead b{font-size:1.1rem}
+  .mx{background:none;border:0;font-size:1.1rem;color:var(--faint);cursor:pointer;line-height:1;padding:4px}
+  .mbody{padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+  .mfoot{display:flex;gap:8px;padding:13px 18px;border-top:1px solid var(--line2)}
+  .mfoot .btn{flex:1}
+  .ablock{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 13px}
+  .atop{margin-bottom:8px} .atop b{font-size:.98rem}
+  .aitem{margin:9px 0;padding-top:9px;border-top:1px solid var(--line2)}
+  .aitem:first-of-type{border-top:0;padding-top:0}
+  .ap{font-size:.86rem;font-weight:600;margin-bottom:6px}
+  .rc{display:flex;align-items:flex-start;gap:8px;margin:5px 0;font-size:.83rem;color:var(--soft);cursor:pointer;line-height:1.35}
+  .rc input{margin-top:2px;width:16px;height:16px;accent-color:var(--teal);flex:none}
+  .aresult{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:.8rem;font-weight:700;color:var(--soft)}
+  .rbtn{font:inherit;font-size:.78rem;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--soft);border-radius:20px;padding:5px 11px;cursor:pointer}
+  .rbtn.on[data-v="mastered"]{background:var(--teal);border-color:var(--teal);color:#fff}
+  .rbtn.on[data-v="learning"]{background:var(--gold);border-color:var(--gold);color:#fff}
+  .rauto{color:var(--faint);font-weight:600;margin-left:auto}
 </style>
 </head>
 <body>
@@ -171,7 +253,7 @@
   <!-- HOME -->
   <section class="body hidden" id="screen-home">
     <div class="brief">
-      <p class="eyebrow" style="color:var(--moss-ink)">Today's session</p>
+      <p class="eyebrow" style="color:var(--gold)" id="homeEyebrow">Homeschool plan</p>
       <h2 id="homeName">—</h2>
       <div class="focus" id="homeFocus"></div>
       <div class="counts" id="homeCounts"></div>
@@ -209,12 +291,19 @@ const allow = (childId, topicId, val) => {
   val ? s.add(topicId) : s.delete(topicId);
   localStorage.setItem(k, JSON.stringify([...s]));
 };
+// New topics per subject in each session (1–3), parent-set, stored per child.
+const persub = (childId, val) => {
+  const k = "persub:"+childId;
+  if (val===undefined){ const v=Number(localStorage.getItem(k)); return (v>=1&&v<=3)?v:1; }
+  localStorage.setItem(k, String(Math.max(1, Math.min(3, val))));
+};
 
 // ---- Supabase REST/Auth via plain fetch ----
 let session = null;  // {access_token, refresh_token, user}
 async function sb(path, opts = {}){
-  const { method="GET", body, auth=true, _retry=false } = opts;
+  const { method="GET", body, auth=true, _retry=false, prefer } = opts;
   const headers = { apikey: ANON, "Content-Type":"application/json" };
+  if(prefer) headers.Prefer = prefer;
   headers.Authorization = "Bearer " + ((auth && session) ? session.access_token : ANON);
   const res = await fetch(SUPABASE_URL + path, { method, headers, body: body?JSON.stringify(body):undefined });
   const text = await res.text();
@@ -242,6 +331,10 @@ async function refreshSession(){
 
 // ---- American-English normalizer (display-time; the taxonomy is UK-authored) ----
 const AMAP = {"maths":"math","centres":"centers","recognise":"recognize","capitalise":"capitalize","recognising":"recognizing","regularised":"regularized","mum":"mom","grey":"gray","colour":"color","travelling":"traveling","capitalisation":"capitalization","practise":"practice","practised":"practiced","organised":"organized","programme":"program","favourite":"favorite","summarise":"summarize","labours":"labors","summarising":"summarizing","emphasises":"emphasizes","synthesise":"synthesize","emphasised":"emphasized","synthesising":"synthesizing","synthesises":"synthesizes","organisation":"organization","humour":"humor","behaviour":"behavior","metre":"meter","organise":"organize","hypothesising":"hypothesizing","neighbour":"neighbor","plough":"plow","licence":"license","categorising":"categorizing","colours":"colors","tick":"check","organising":"organizing","signalling":"signaling","jewellery":"jewelry","mummy":"mommy","specialised":"specialized","labour":"labor","specialise":"specialize","neighbours":"neighbors","neighbouring":"neighboring","honour":"honor","theatre":"theater","honouring":"honoring","favours":"favors","centre":"center","defence":"defense","travelled":"traveled","prioritising":"prioritizing","biscuits":"cookies","labelled":"labeled","litre":"liter","litres":"liters","modelling":"modeling","visualising":"visualizing","labelling":"labeling","generalising":"generalizing","generalise":"generalize","metres":"meters","generalisation":"generalization","analogue":"analog","coloured":"colored","minimise":"minimize","behaviours":"behaviors","rumours":"rumors","practising":"practicing","minimising":"minimizing","recognises":"recognizes","ticks":"checks","prioritise":"prioritize","summarises":"summarizes","vapour":"vapor","recognised":"recognized","lustre":"luster","fibre":"fiber","categorises":"categorizes","characterised":"characterized","rubber":"eraser","flavours":"flavors","odours":"odors","favour":"favor","full stop":"period","full stops":"periods"};
+// Friendly gloss for topic names that use correct-but-unfamiliar jargon, so a
+// parent isn't stumped by a technical term. Display-only; the taxonomy is unchanged.
+const GLOSS = { "onsets & rimes":"word families", "onsets and rimes":"word families" };
+function glossName(name){ const g=GLOSS[String(name||"").toLowerCase().trim()]; return g ? `${name} (${g})` : name; }
 const AKEYS = Object.keys(AMAP).sort((a,b)=>b.length-a.length);
 function amz(text){ if(typeof text!=="string") return text; let out=text;
   for(const k of AKEYS){ const re=new RegExp("\\b"+k.replace(/ /g,"\\s+")+"\\b","gi");
@@ -270,18 +363,22 @@ function readyBySubject(topics, hardPrereqs, age, mastered, childId){
   ready.sort((a,b)=>(b.centrality||0)-(a.centrality||0) || a.age_range_start-b.age_range_start);
   const bySub={}; for(const t of ready)(bySub[t.subject] ||= []).push(t); return bySub;
 }
-function composeSession(topics, hardPrereqs, age, mastered, childId, size=6, seed=0){
+// A session = `perSubject` NEW topics from each ready subject, interleaved
+// (breadth-first). Per the learning-science plan a sitting is a small dose of new
+// material — default 1 per subject (age 4 → one English + one Math). Reviews layer
+// on later once the spaced-repetition scheduler is built.
+function composeSession(topics, hardPrereqs, age, mastered, childId, perSubject=1, seed=0){
   const bySub = readyBySubject(topics, hardPrereqs, age, mastered, childId);
-  const pick={}; const take=s=>{const l=bySub[s]; if(!l||!l.length)return null; const i=(pick[s]??(seed%l.length)); pick[s]=i+1; return l[i%l.length];};
+  // Subjects that actually have something ready, in CORE-first order.
+  const order = [...CORE, ...ROTATE].filter(s=>bySub[s] && bySub[s].length);
+  // Each subject gets a queue of its distinct ready topics, rotated by the seed.
+  const q={};
+  for(const s of order){ const l=bySub[s], off=l.length?seed%l.length:0; q[s]=l.slice(off).concat(l.slice(0,off)); }
+  // `perSubject` breadth-first passes: one per subject each pass, up to perSubject each.
   const cards=[];
-  for(const s of CORE){const t=take(s); if(t)cards.push(t);}
-  let rot=ROTATE.filter(s=>bySub[s]&&bySub[s].length);
-  for(let i=0; cards.length<size && rot.length; i++){
-    const t=take(rot[(seed+i)%rot.length]);
-    if(t)cards.push(t); else {rot.splice((seed+i)%rot.length,1); i--;}
-    if(i>size*4)break;
+  for(let pass=0; pass<perSubject; pass++){
+    for(const s of order){ if(q[s].length) cards.push(q[s].shift()); }
   }
-  for(let i=0; cards.length<size; i++){const t=take(CORE[i%CORE.length]); if(!t)break; cards.push(t);}
   return cards.map(t=>({topic:t, ...laneOf(t)}));
 }
 
@@ -408,87 +505,420 @@ async function loadTaxonomy(age){
   const hard=new Map(); for(const d of deps){ (hard.get(d.topic_id)||hard.set(d.topic_id,[]).get(d.topic_id)).push(d.prerequisite_id); }
   return {topics, hard};
 }
+// ---- session state: a dateless QUEUE (the plan) + a dated LOG (what happened) ----
+// A session is 'planned' while it sits in the queue (no date). Starting it stamps
+// today's date and flips it to 'started'; assessing completes it. So the queue is
+// forward-looking, and the calendar below is a true record of what was taught and
+// when — click a past day to reprint its materials.
+let MASTERED=new Set();     // topic ids the child has mastered (excluded from new work)
+let SESSIONS=[];            // every persisted session for the open child
+let PREPN=3;                // how many sessions "prepare ahead" adds to the queue
+let PVSEED=0;               // shuffle offset for the look-ahead preview
+let HISTMON=null;           // yyyy-mm shown in the history calendar
+let HISTSEL=null;           // yyyy-mm-dd selected in the history calendar
+const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
+const ymd=(d)=>{const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
+const todayStr=()=>ymd(new Date());
+const dayNum=(x)=>Math.floor(new Date(x+"T00:00:00").getTime()/864e5);
+const seedFor=(x)=>((dayNum(x)%7)+7)%7;
+const dLabel=(x)=>{ const d=new Date(x+"T00:00:00"); return d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}); };
+const monStr=(x)=>x.slice(0,7);
+
+async function loadMastery(childId){
+  try{ const rows=await sb(`/rest/v1/mastery?select=topic_id,status&child_id=eq.${childId}&status=eq.mastered&limit=5000`);
+    MASTERED=new Set(rows.map(r=>r.topic_id)); }catch{ MASTERED=new Set(); }
+}
+async function loadSessions(childId){
+  try{ SESSIONS=await sb(`/rest/v1/sessions?select=id,topics,status,queue_pos,for_date,started_at,completed_at&child_id=eq.${childId}&order=created_at.asc&limit=1000`);
+    for(const s of SESSIONS){ if(typeof s.topics==="string"){ try{ s.topics=JSON.parse(s.topics); }catch{ s.topics=[]; } } } }
+  catch{ SESSIONS=[]; }
+}
+// derived views
+const queue  =()=>SESSIONS.filter(s=>s.status==="planned").sort((a,b)=>a.queue_pos-b.queue_pos);
+const active =()=>SESSIONS.filter(s=>s.status==="started").sort((a,b)=>String(a.started_at).localeCompare(String(b.started_at)));
+// topics already spoken for (queued or in progress) — never plan the same one twice
+const reservedTopics=()=>{ const set=new Set(); for(const s of SESSIONS){ if(s.status==="planned"||s.status==="started") for(const t of (s.topics||[])) set.add(t.topicId); } return set; };
+
 async function openHome(kid, age){
   show("home");
-  document.getElementById("homeName").textContent = kid.first_name+"'s session";
-  document.getElementById("homeFocus").textContent = "Loading today's plan…";
-  document.getElementById("homeCounts").innerHTML="";
+  CURRENT={kid, age, cards:[]};
+  document.getElementById("homeName").textContent = kid.first_name;
+  document.getElementById("homeFocus").textContent = "Loading…";
+  document.getElementById("homeCounts").innerHTML=""; document.getElementById("homeActions").innerHTML="";
   document.getElementById("cards").innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
-  document.getElementById("homeActions").innerHTML="";
   try{
     const {topics, hard}=await loadTaxonomy(age);
-    const seed=Math.floor(Date.now()/864e5) % 7;        // rotates day to day
-    const preview=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
-    CONTENT=await fetchContent(preview.map(c=>c.topic.id));  // real grounded content for these topics
-    renderHome(kid, age, topics, hard, seed);
-  }catch(e){
-    document.getElementById("cards").innerHTML=`<div class="note err">Couldn't build the session: ${esc(e.message)}</div>`;
-  }
+    TOPICS=topics; HARD=hard; TBYID.clear(); for(const t of topics) TBYID.set(t.id,t);
+    await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
+    HISTMON=monStr(todayStr()); HISTSEL=null;
+    renderHome();
+  }catch(e){ document.getElementById("cards").innerHTML=`<div class="note err">Couldn't load: ${esc(e.message)}</div>`; }
 }
-function renderHome(kid, age, topics, hard, seed){
-  const cards=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
-  CURRENT={kid, age, cards};
-  if(!cards.length){
-    document.getElementById("homeFocus").textContent = `${kid.first_name} is a little young for the curriculum yet`;
-    document.getElementById("homeCounts").innerHTML="";
-    document.getElementById("cards").innerHTML=`<div class="note">The Marble curriculum starts at about age 4. When ${esc(kid.first_name)} is ready, today's session will appear right here — nothing to do until then.</div>`;
-    document.getElementById("homeActions").innerHTML="";
-    return;
-  }
-  const subjects=[...new Set(cards.map(c=>c.topic.subject))];
-  document.getElementById("homeFocus").textContent = `${cards.length} things to learn across ${subjects.length} subjects`;
-  document.getElementById("homeCounts").innerHTML = subjects.map(s=>`<span class="pill">${SUBJ[s]?.e||""} ${esc(s)}</span>`).join("");
 
+function statusChip(st){ const m={planned:["Planned","var(--gold)"],started:["In progress","var(--navy)"],completed:["Completed","var(--teal)"]}[st]||["",""]; return `<span class="schip" style="color:${m[1]};border-color:${m[1]}">${m[0]}</span>`; }
+function sessionCardsFrom(s){ return (s.topics||[]).map(t=>({ topic: TBYID.get(t.topicId)||{id:t.topicId,name:t.name,subject:t.subject,age_range_start:CURRENT.age,age_range_end:CURRENT.age,description:"",evidence:[]}, lane:t.lane })); }
+function mkBtn(kind,label,fn){ const b=document.createElement("button"); b.className="btn "+kind; b.style.flex="0 0 auto"; b.style.fontSize=".8rem"; b.style.padding="8px 12px"; b.textContent=label; b.onclick=fn; return b; }
+function sectionLabel(text){ const d=document.createElement("div"); d.className="seclabel"; d.textContent=text; return d; }
+
+// One session rendered as a compact card (topics + optional preview + buttons).
+function sessionCard(s, title, buttons, preview){
+  const cards=sessionCardsFrom(s); const subj=[...new Set(cards.map(c=>c.topic.subject))];
+  const box=document.createElement("div"); box.className="card"; box.style.padding="14px";
+  box.innerHTML=`<div style="width:100%">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b class="disp">${esc(title)}</b>${statusChip(s.status)}</div>
+    <div class="faint" style="font-size:.8rem;margin-bottom:8px">${cards.length} topics · ${subj.map(esc).join(", ")}</div>
+    <ul class="crit" style="margin-bottom:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
+    <div class="prow"></div></div>`;
+  const prow=box.querySelector(".prow"); (buttons||[]).forEach(b=>prow.appendChild(b));
+  if(preview) prow.after(buildPreview(cards));
+  return box;
+}
+function printButtons(s){ return [ mkBtn("ghost","Full packet",()=>printSession(s,"full")), mkBtn("ghost","Materials",()=>printSession(s,"materials")), mkBtn("ghost","New worksheets",()=>printSession(s,"worksheets")) ]; }
+
+// Collapsible "what's in this session" brief. Objectives + description show
+// instantly from the taxonomy; opening it lazily fetches the generated lesson to
+// fill in why-it-matters / watch-for / examples where we have them.
+function buildPreview(cards){
+  const wrap=document.createElement("div"); wrap.className="pvwrap";
+  const toggle=document.createElement("button"); toggle.className="pvlink";
+  toggle.innerHTML=`<span class="pvcaret">▸</span><span>Preview this session</span>`;
+  const body=document.createElement("div"); body.className="pvbody"; body.style.display="none";
+  let open=false, fetched=false, loading=false;
+  const N=()=>esc(CURRENT.kid.first_name);
+  function render(){
+    body.innerHTML=cards.map(({topic:t})=>{
+      const c=getContent(t.id); const st=SUBJ[t.subject]||{c:"var(--navy)"};
+      const desc=t.description?`<p class="pvdesc">${esc(t.description)}</p>`:"";
+      const ev=(Array.isArray(t.evidence)?t.evidence:[]).slice(0,3).map(e=>`<li>${esc(e)}</li>`).join("");
+      const obj=ev?`<div class="pvfield"><b>By the end, ${N()} can…</b><ul class="pvul">${ev}</ul></div>`:"";
+      let example=""; const math=sampleProblems(t);
+      if(math&&math.length) example=`<div class="pvfield"><b>Examples</b> <span class="pvex">${math.slice(0,3).map(esc).join(" · ")}</span></div>`;
+      let coach="";
+      if(c){
+        const p=c.parent||{};
+        if(!example){ const ex=c.student&&c.student.examples&&c.student.examples[0]; if(ex&&(ex.say||ex.show)) example=`<div class="pvfield"><b>Example</b> <span class="pvex">${esc(ex.say||ex.show)}</span></div>`; }
+        coach=(p.whyItMatters?`<div class="pvfield"><b>Why it matters</b> ${esc(p.whyItMatters)}</div>`:"")
+             +(p.watchFor&&p.watchFor[0]?`<div class="pvfield"><b>Watch for</b> ${esc(p.watchFor[0])}</div>`:"");
+      }
+      const badge=c?`<span class="pvbadge ok">Full lesson</span>`:(fetched?`<span class="pvbadge">Basics</span>`:"");
+      return `<div class="pvtopic"><div class="pvtop"><b style="color:${st.c}">${esc(glossName(t.name))}</b> <span class="faint">· ${esc(t.subject)}</span> ${badge}</div>${desc}${obj}${example}${coach}</div>`;
+    }).join("");
+    if(loading) body.insertAdjacentHTML("beforeend",`<p class="pvhint">Loading richer detail…</p>`);
+  }
+  toggle.onclick=async()=>{
+    open=!open; body.style.display=open?"block":"none"; toggle.classList.toggle("on",open);
+    toggle.querySelector(".pvcaret").textContent=open?"▾":"▸";
+    if(open){
+      if(!fetched && !loading){ loading=true; render();
+        try{ CONTENT=Object.assign(CONTENT, await fetchContent(cards.map(c=>c.topic.id))); }catch{}
+        fetched=true; loading=false;
+      }
+      render();
+    }
+  };
+  wrap.appendChild(toggle); wrap.appendChild(body);
+  return wrap;
+}
+
+function renderHome(){
+  const kid=CURRENT.kid;
+  document.getElementById("homeName").textContent = `${kid.first_name}'s learning`;
+  const q=queue(), act=active();
+  document.getElementById("homeFocus").textContent =
+    `${q.length} session${q.length===1?"":"s"} queued · ${MASTERED.size} topic${MASTERED.size===1?"":"s"} mastered`;
+  document.getElementById("homeCounts").innerHTML="";
+  document.getElementById("homeActions").innerHTML="";
   const wrap=document.getElementById("cards"); wrap.innerHTML="";
-  for(const {topic:t, lane} of cards){
-    const st=SUBJ[t.subject]||{c:"var(--soft)",bg:"var(--card2)",e:"•"};
-    const crit=(Array.isArray(t.evidence)?t.evidence:[]).map(x=>`<li>${esc(x)}</li>`).join("");
-    const probs=lane==="practice"?sampleProblems(t):null;
-    const laneBody = lane==="practice"
-      ? (probs ? `<div><div class="h">Sample practice (fresh every session)</div><div class="prob">${probs.map(p=>`<span>${p}</span>`).join("")}</div></div>`
-               : `<div class="prov">⚙️ <span>Unlimited practice items generated by code — correct by construction, never repeats.</span></div>`)
-      : (getContent(t.id)
-        ? `<div class="prov">✅ <span>Full grounded lesson ready — verified against reputable sources. Tap “Start &amp; print materials.”</span></div>`
-        : `<div class="prov">📚 <span>Grounded lesson for this topic hasn\u2019t been generated yet — run the content pipeline for it.</span></div>`);
-    const d=document.createElement("details"); d.className="card";
-    d.innerHTML=`
-      <summary>
-        <div class="tag" style="background:${st.bg}">${st.e}</div>
-        <div class="meta">
-          <div class="sj" style="color:${st.c}">${esc(t.subject)}</div>
-          <div class="nm">${esc(t.name)}</div>
-          <div class="dm">${esc(t.domain||"")} · ages ${t.age_range_start}–${t.age_range_end}</div>
-        </div>
-        <div class="lane ${lane}">${lane}</div>
-      </summary>
-      <div class="detail">
-        <div><div class="h">What ${esc(kid.first_name)} will learn</div><p>${esc(t.description||"")}</p></div>
-        ${crit?`<div><div class="h">You'll know they've got it when…</div><ul class="crit">${crit}</ul></div>`:""}
-        ${laneBody}
-        <div class="cardprint"><button type="button">🖨 Print this card's material</button></div>
-      </div>`;
-    const card={topic:t,lane};
-    d.querySelector(".cardprint button").onclick=(e)=>{ e.preventDefault(); openPrint(`${kid.first_name} — ${t.name}`, buildPacket(kid,[card])); };
-    wrap.appendChild(d);
+
+  // A) In progress — Cancel here un-starts it back into the queue (nothing lost).
+  for(const s of act){
+    wrap.appendChild(sectionLabel("In progress"));
+    wrap.appendChild(sessionCard(s,"Session",[ mkBtn("primary","Done teaching · Assess",()=>openAssess(s)), ...printButtons(s), mkBtn("ghost","Cancel",()=>cancelStarted(s)) ]));
   }
-  renderActions(kid);
+
+  // B) Up next (the queue)
+  wrap.appendChild(sectionLabel("Up next"));
+  if(q.length){
+    const bar=document.createElement("div"); bar.className="prow"; bar.style.marginBottom="2px";
+    bar.appendChild(mkBtn("ghost",`🖨 Print all ${q.length}`,()=>printQueue()));
+    if(q.length>1) bar.appendChild(mkBtn("ghost","Clear queue",()=>clearQueue()));
+    wrap.appendChild(bar);
+    q.forEach((s,i)=>{
+      const title=i===0?"Next session":`Session ${i+1}`;
+      wrap.appendChild(sessionCard(s,title,[ mkBtn("primary","Start",()=>startSession(s)), ...printButtons(s), mkBtn("ghost","Cancel",()=>cancelPlanned(s)) ], true));
+    });
+  } else {
+    // Empty queue → a live look-ahead of the next few sessions. Start any of them,
+    // or Shuffle to reroll the lineup. (Prepare-ahead below locks them in for print.)
+    const list=previewList(3);
+    if(!list.length){
+      const n=document.createElement("div"); n.className="note";
+      n.textContent = MASTERED.size ? `All of ${kid.first_name}'s ready topics are done for now — wonderful progress!` : `The Marble curriculum starts at about age 4. When ${kid.first_name} is ready, sessions appear here.`;
+      wrap.appendChild(n);
+    } else {
+      const bar=document.createElement("div"); bar.className="prow"; bar.style.marginBottom="2px";
+      bar.appendChild(mkBtn("ghost","🔀 Shuffle",()=>{ PVSEED++; renderHome(); }));
+      wrap.appendChild(bar);
+      list.forEach((cards,i)=>{
+        if(i===1) wrap.appendChild(sectionLabel("Or pick a later one"));
+        const subj=[...new Set(cards.map(c=>c.topic.subject))];
+        const box=document.createElement("div"); box.className=i===0?"brief":"card"; if(i>0) box.style.padding="14px";
+        const eyebrow=i===0?`<p class="eyebrow" style="color:var(--gold)">Next session · preview</p>`:"";
+        box.innerHTML=`${eyebrow}
+          <h2 style="font-size:${i===0?"1.25rem":"1.05rem"};margin:0">${cards.length} topic${cards.length>1?"s":""} · ${subj.map(esc).join(", ")}</h2>
+          <ul class="crit" style="margin-top:8px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
+          <div class="prow"></div>`;
+        box.querySelector(".prow").appendChild(mkBtn("primary",i===0?"Start session":"Start this one",()=>startComposed(cards)));
+        box.appendChild(buildPreview(cards));
+        wrap.appendChild(box);
+      });
+      const hint=document.createElement("p"); hint.className="faint"; hint.style.cssText="font-size:.72rem;margin:2px 2px 0";
+      hint.textContent="Starting stamps today's date and unlocks the full materials. Prepare ahead to lock these in and print.";
+      wrap.appendChild(hint);
+    }
+  }
+
+  // C) Prepare ahead — appends sessions to the queue (dateless)
+  const prep=document.createElement("div"); prep.className="prep";
+  prep.innerHTML=`<span class="preplabel">🧳 Prepare sessions ahead</span>
+    <span class="prepbtns"><input class="prepdays" type="number" min="1" max="60" step="1" value="${PREPN}" aria-label="Number of sessions" inputmode="numeric">
+    <span class="prepunit">sessions</span></span>`;
+  const inp=prep.querySelector(".prepdays");
+  const clamp=()=>{ let v=Math.round(Number(inp.value)); if(!Number.isFinite(v)||v<1)v=1; if(v>60)v=60; PREPN=v; inp.value=v; };
+  inp.onchange=clamp;
+  prep.querySelector(".prepbtns").appendChild(mkBtn("primary","Add to queue",()=>{ clamp(); prepareSessions(PREPN); }));
+  wrap.appendChild(prep);
+
+  // D) History (past-sessions calendar)
+  renderHistory(wrap);
 }
 
-// ---- session actions: the teach/practice verb ----
-const sessCount=(kid)=>Number(localStorage.getItem("sessions:"+kid.id)||0);
-function renderActions(kid){
-  const a=document.getElementById("homeActions"); a.innerHTML="";
-  const print=document.createElement("button"); print.className="btn primary";
-  print.innerHTML="🖨 Start &amp; print materials";
-  print.onclick=()=>openPrint(kid.first_name+"'s learning materials", buildPacket(kid, CURRENT.cards));
-  const done=document.createElement("button"); done.className="btn ghost";
-  done.textContent="✓ Mark session complete";
-  done.onclick=()=>{ localStorage.setItem("sessions:"+kid.id, sessCount(kid)+1); renderActions(kid);
-    const t=document.createElement("div"); t.className="toast";
-    t.textContent="Session logged. In the full build this is the trigger that sends the exam to "+kid.first_name+"'s app.";
-    a.appendChild(t); setTimeout(()=>t.remove(), 4200); };
-  const pill=document.createElement("span"); pill.className="sess"; pill.textContent="🌱 "+sessCount(kid)+" sessions";
-  a.append(print, done, pill);
+// ---- start / compose / queue ops ----
+// The next few PROSPECTIVE sessions (composed on the fly, non-overlapping) so the
+// parent can look ahead and start whichever they like — without formally queueing.
+function previewList(n){
+  const excl=new Set([...MASTERED, ...reservedTopics()]); const out=[];
+  for(let i=0;i<n;i++){
+    const cards=composeSession(TOPICS, HARD, CURRENT.age, excl, CURRENT.kid.id, persub(CURRENT.kid.id), (seedFor(todayStr())+PVSEED+i)%7);
+    if(!cards.length) break; out.push(cards); for(const c of cards) excl.add(c.topic.id);
+  }
+  return out;
+}
+
+async function persistSession(row){
+  const saved=await sb(`/rest/v1/sessions`,{method:"POST",body:row,prefer:"return=representation"});
+  const r=Array.isArray(saved)?saved[0]:saved; if(r){ if(typeof r.topics==="string"){try{r.topics=JSON.parse(r.topics);}catch{}} SESSIONS.push(r); }
+  return r;
+}
+// Start a queued session: stamp today's date, flip to started.
+async function startSession(s){
+  try{
+    await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"started", for_date:todayStr(), started_at:new Date().toISOString()}});
+    s.status="started"; s.for_date=todayStr(); s.started_at=new Date().toISOString();
+    CONTENT=Object.assign(CONTENT, await fetchContent((s.topics||[]).map(t=>t.topicId)));
+    renderHome();
+  }catch(e){ alert("Couldn't start session: "+e.message); }
+}
+// Compose a brand-new session and start it immediately (empty-queue path).
+async function startComposed(cards){
+  try{
+    const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
+    await persistSession({child_id:CURRENT.kid.id, topics, status:"started", for_date:todayStr(), started_at:new Date().toISOString()});
+    CONTENT=Object.assign(CONTENT, await fetchContent(topics.map(t=>t.topicId)));
+    renderHome();
+  }catch(e){ alert("Couldn't start session: "+e.message); }
+}
+// Cancel a queued (planned) session — drop it from the plan. Its topics were only
+// reserved, so they return to the pool and can be planned again later.
+async function cancelPlanned(s){
+  try{ await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"DELETE"});
+    SESSIONS=SESSIONS.filter(x=>x.id!==s.id); renderHome();
+  }catch(e){ alert(e.message); }
+}
+// Clear the whole remaining plan in one go (e.g. after a trip you didn't finish).
+async function clearQueue(){
+  const q=queue(); if(!q.length) return;
+  if(!confirm(`Clear all ${q.length} queued sessions? Their topics return to the pool — nothing is lost, and you can prepare again any time.`)) return;
+  try{ await sb(`/rest/v1/sessions?child_id=eq.${CURRENT.kid.id}&status=eq.planned`,{method:"DELETE"});
+    SESSIONS=SESSIONS.filter(x=>x.status!=="planned"); renderHome();
+  }catch(e){ alert(e.message); }
+}
+// Cancel an in-progress session — un-start it back to the front of the queue (no
+// date, no assessment recorded). Use when you Started but didn't actually teach it.
+async function cancelStarted(s){
+  try{
+    const minPos=queue().reduce((m,x)=>Math.min(m,x.queue_pos),1);
+    await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"planned", for_date:null, started_at:null, queue_pos:minPos-1}});
+    s.status="planned"; s.for_date=null; s.started_at=null; s.queue_pos=minPos-1; renderHome();
+  }catch(e){ alert(e.message); }
+}
+// Prepare N sessions and append them to the queue (no dates, non-overlapping topics).
+async function prepareSessions(n){
+  const kid=CURRENT.kid; const excl=new Set([...MASTERED, ...reservedTopics()]);
+  let pos=queue().reduce((m,s)=>Math.max(m,s.queue_pos),0); let made=0;
+  const pbtn=document.querySelector(".prep .btn.primary"); if(pbtn){ pbtn.textContent="Preparing…"; pbtn.disabled=true; }
+  try{
+    for(let i=0;i<n;i++){
+      const cards=composeSession(TOPICS, HARD, CURRENT.age, excl, kid.id, persub(kid.id), (pos+1)%7);
+      if(!cards.length) break;
+      const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
+      pos+=1;
+      const s=await persistSession({child_id:kid.id, topics, status:"planned", queue_pos:pos});
+      if(s){ made++; for(const t of topics) excl.add(t.topicId); }
+    }
+    if(!made) alert("Nothing to prepare — every ready topic is already queued or mastered.");
+  }catch(e){ alert("Couldn't prepare: "+e.message); }
+  finally{ renderHome(); }
+}
+async function printQueue(){
+  const q=queue(); if(!q.length) return;
+  const allCards=q.flatMap(s=>sessionCardsFrom(s));
+  CONTENT=Object.assign(CONTENT, await fetchContent(allCards.map(c=>c.topic.id)));
+  const bank=await fetchPractice(allCards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+  openPrint(`${CURRENT.kid.first_name} — ${q.length} prepared sessions`, buildQueuePacket(CURRENT.kid, q, bank));
+}
+
+// ---- history: the past-sessions calendar (a true record of what was taught) ----
+function renderHistory(wrap){
+  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
+  wrap.appendChild(sectionLabel("History"));
+  if(!taught.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent="No sessions completed yet. Finish one above and it'll be logged here to reprint any time."; wrap.appendChild(n); return; }
+  const byDate={}; for(const s of taught){ (byDate[s.for_date] ||= []).push(s); }
+
+  const [Y,M]=HISTMON.split("-").map(Number);
+  const first=new Date(Y, M-1, 1);
+  const start=new Date(first); start.setDate(1-((first.getDay()+6)%7)); // Monday-lead grid
+  const monName=first.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+  const dows=["Mo","Tu","We","Th","Fr","Sa","Su"];
+  let grid="";
+  for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const x=ymd(d);
+    const inMon=d.getMonth()===M-1; const has=byDate[x];
+    grid+=`<button class="hd ${inMon?"":"off"} ${x===HISTSEL?"sel":""} ${x===todayStr()?"tod":""}" data-d="${x}" ${has?"":"disabled"}>
+      <span>${d.getDate()}</span>${has?`<span class="hdot done"></span>`:""}</button>`;
+  }
+  const cal=document.createElement("div"); cal.className="histcal";
+  cal.innerHTML=`<div class="histnav"><button class="hnav" data-k="-1" aria-label="Previous month">‹</button><b>${esc(monName)}</b><button class="hnav" data-k="1" aria-label="Next month">›</button></div>
+    <div class="histdow">${dows.map(d=>`<span>${d}</span>`).join("")}</div>
+    <div class="histgrid">${grid}</div>`;
+  cal.querySelectorAll(".hnav").forEach(b=>b.onclick=()=>{ const k=+b.dataset.k; let m=M-1+k, y=Y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} HISTMON=`${y}-${String(m+1).padStart(2,"0")}`; renderHome(); });
+  cal.querySelectorAll(".hd:not([disabled])").forEach(b=>b.onclick=()=>{ HISTSEL=(HISTSEL===b.dataset.d?null:b.dataset.d); renderHome(); });
+  wrap.appendChild(cal);
+
+  if(HISTSEL && byDate[HISTSEL]){
+    const h=document.createElement("div"); h.className="dayhead";
+    h.innerHTML=`<h3>${dLabel(HISTSEL)}</h3><div class="faint" style="font-size:.76rem">${byDate[HISTSEL].length} session${byDate[HISTSEL].length>1?"s":""}</div>`;
+    wrap.appendChild(h);
+    byDate[HISTSEL].forEach((s,i)=>wrap.appendChild(sessionCard(s,`Session ${i+1}`,printButtons(s))));
+  }
+}
+
+// One binder-ready document for a prepared queue: cover, a divider page per session
+// (Session 1, 2, 3…), each topic's full materials, and a single answer key.
+function buildQueuePacket(kid, list, bank){
+  bank=bank||{};
+  const N=esc(kid.first_name);
+  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
+  const keys=[];
+  const allSub=[...new Set(list.flatMap(s=>(s.topics||[]).map(t=>t.subject)))];
+  const totalTopics=list.reduce((n,s)=>n+(s.topics||[]).length,0);
+  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s learning plan</h1>
+    <div class="day">${list.length} session${list.length>1?"s":""} · ${totalTopics} topics · work through at your own pace</div>
+    <div class="subs">${allSub.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
+  const body=list.map((s,di)=>{
+    const cards=sessionCardsFrom(s); const subs=[...new Set(cards.map(c=>c.topic.subject))];
+    const band=`<section class="dayband"><div class="dbnum">Session ${di+1}</div><h2>${cards.length} topic${cards.length>1?"s":""}</h2>
+      <div class="dbsubs">${subs.map(esc).join(" · ")}</div></section>`;
+    return band+cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,"full",bank)).join("");
+  }).join("");
+  let keySec="";
+  if(keys.length) keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
+    keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
+  const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
+  return cover+body+keySec+foot;
+}
+// Done teaching -> interactive assessment. The parent works the rubric (the
+// "Show what you know" items we already generate); checking all criteria for a
+// topic auto-sets it mastered, otherwise "keep practicing" — and the parent can
+// override either way. Submitting records mastery and completes the session.
+function openAssess(s){
+  const kid=CURRENT.kid; const cards=sessionCardsFrom(s);
+  fetchContent(cards.map(c=>c.topic.id)).then(m=>{ CONTENT=Object.assign(CONTENT,m); render(); });
+  function render(){
+    const state=cards.map(c=>({topic:c.topic, checks:{}, result:null, auto:null}));
+    const totals=state.map(st=>{ const c=getContent(st.topic.id); const items=(c&&c.assessment&&c.assessment.items)||[]; return items.reduce((n,it)=>n+((it.rubric||[]).length),0); });
+    const ov=document.createElement("div"); ov.className="modal";
+    ov.innerHTML=`<div class="sheet">
+      <div class="mhead"><b class="disp">Assess · ${esc(kid.first_name)}</b><button class="mx" aria-label="close">✕</button></div>
+      <div class="mbody"></div>
+      <div class="mfoot"><button class="btn ghost mcancel">Cancel</button><button class="btn primary msave">Record &amp; complete</button></div></div>`;
+    const body=ov.querySelector(".mbody");
+    state.forEach((st,ti)=>{
+      const c=getContent(st.topic.id); const items=(c&&c.assessment&&c.assessment.items)||[];
+      const block=document.createElement("div"); block.className="ablock";
+      let inner=`<div class="atop"><b>${esc(glossName(st.topic.name))}</b> <span class="faint">· ${esc(st.topic.subject)}</span></div>`;
+      if(items.length){
+        inner+=items.map((it,ii)=>{
+          const rub=(it.rubric||[]).map((r,ri)=>`<label class="rc"><input type="checkbox" data-t="${ti}" data-k="${ii}_${ri}"> <span>${esc(r)}</span></label>`).join("");
+          return `<div class="aitem"><div class="ap">${esc(it.prompt)}</div>${rub}</div>`;
+        }).join("");
+      } else {
+        inner+=`<div class="faint" style="font-size:.82rem;margin:6px 0">No rubric for this topic — just mark whether ${esc(kid.first_name)} has it.</div>`;
+      }
+      inner+=`<div class="aresult">Result: <button class="rbtn" data-t="${ti}" data-v="mastered">Mastered</button><button class="rbtn" data-t="${ti}" data-v="learning">Keep practicing</button><span class="rauto" data-t="${ti}"></span></div>`;
+      block.innerHTML=inner; body.appendChild(block);
+    });
+    function recompute(ti){
+      const st=state[ti], total=totals[ti];
+      const checked=Object.values(st.checks).filter(Boolean).length;
+      st.auto = total>0 ? (checked===total?"mastered":"learning") : null;
+      const autoEl=ov.querySelector(`.rauto[data-t="${ti}"]`);
+      if(autoEl) autoEl.textContent = total ? `${checked}/${total} checked` : "";
+      const eff = st.result || st.auto || "learning";
+      ov.querySelectorAll(`.rbtn[data-t="${ti}"]`).forEach(b=>b.classList.toggle("on", b.dataset.v===eff));
+    }
+    body.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.onchange=()=>{ const ti=+cb.dataset.t; state[ti].checks[cb.dataset.k]=cb.checked; if(state[ti].result) state[ti].result=null; recompute(ti); });
+    body.querySelectorAll(".rbtn").forEach(b=>b.onclick=()=>{ const ti=+b.dataset.t; state[ti].result=b.dataset.v; recompute(ti); });
+    state.forEach((_,ti)=>recompute(ti));
+    const close=()=>ov.remove();
+    ov.querySelector(".mx").onclick=close; ov.querySelector(".mcancel").onclick=close;
+    ov.onclick=(e)=>{ if(e.target===ov) close(); };
+    ov.querySelector(".msave").onclick=async()=>{
+      const rows=state.map(st=>({child_id:kid.id, topic_id:st.topic.id, status:(st.result||st.auto||"learning"), last_reviewed_at:new Date().toISOString()}));
+      try{
+        await fetch(`${SUPABASE_URL}/rest/v1/mastery?on_conflict=child_id,topic_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)});
+        await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"completed", completed_at:new Date().toISOString()}});
+        await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
+        close(); renderHome();
+      }catch(e){ alert("Couldn't save: "+e.message); }
+    };
+    document.body.appendChild(ov);
+  }
+}
+
+async function printSession(s, mode){
+  const cards=sessionCardsFrom(s);
+  CONTENT=Object.assign(CONTENT, await fetchContent(cards.map(c=>c.topic.id)));
+  let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+  const suffix=mode==="worksheets"?" · worksheets":mode==="materials"?" · materials":"";
+  openPrint(`${CURRENT.kid.first_name} — ${dLabel(s.for_date)}${suffix}`, buildPacket(CURRENT.kid, cards, mode, bank));
+}
+async function fetchPractice(ids){
+  const out={}; if(!ids.length) return out;
+  try{
+    const inList=ids.map(encodeURIComponent).join(",");
+    const rows=await sb(`/rest/v1/practice_items?select=topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&limit=2000`);
+    for(const r of rows){ (out[r.topic_id] ||= []).push(r); }
+  }catch{}
+  return out;
+}
+const seenKey=(kid,tid)=>`seen:${kid}:${tid}`;
+function sampleBank(kid, tid, items, n=6){
+  if(!items||!items.length) return null;
+  const seen=new Set(JSON.parse(localStorage.getItem(seenKey(kid,tid))||"[]"));
+  const fresh=items.filter(x=>!seen.has(x.prompt)); const pool=fresh.length>=n?fresh:items;
+  const pick=[...pool].sort(()=>0.5-Math.random()).slice(0,n);
+  const ns=new Set([...seen, ...pick.map(x=>x.prompt)]); localStorage.setItem(seenKey(kid,tid), JSON.stringify([...ns].slice(-200)));
+  return pick;
 }
 
 // ---- SETTINGS: the gates live here now ----
@@ -498,6 +928,11 @@ function renderSettings(){
   for(const kid of KIDS){
     const g=document.createElement("div"); g.className="setgroup";
     g.innerHTML=`<div class="gh"><div class="ava">${esc(kid.avatar||initials(kid.first_name))}</div><div class="nm">${esc(kid.first_name)}</div></div>`;
+    const sz=document.createElement("div"); sz.className="gate"; sz.style.border="0"; sz.style.borderRadius="0";
+    sz.innerHTML=`<div class="lbl"><b>New topics per subject</b><br><span class="faint" style="font-size:.76rem">Topics from each ready subject in one session. 1 keeps sittings short (age 4 → one English + one Math).</span></div>
+      <input class="prepdays" type="number" min="1" max="3" step="1" value="${persub(kid.id)}" aria-label="New topics per subject">`;
+    sz.querySelector("input").onchange=(ev)=>{ persub(kid.id, Math.round(Number(ev.target.value))||1); ev.target.value=persub(kid.id); };
+    g.appendChild(sz);
     for(const [id,info] of Object.entries(GATED)){
       const on=allow(kid.id,id);
       const el=document.createElement("div"); el.className="gate"; el.style.border="0"; el.style.borderRadius="0";
@@ -546,24 +981,51 @@ function sourcesFooter(c){
 }
 
 // ONE topic → teaching guide + lesson + worksheet (pushes its answer key)
-function topicPacket(kid, t, lane, fill, N, keys){
+// Render a worksheet (+ answer-key rows) from a list of items (lesson items OR
+// fresh bank items). Bank rows use answer_index (snake); lesson items answerIndex.
+function wsFromItems(items, fill){
+  const html=items.map((it,i)=>{
+    if(it.kind==="mcq" && Array.isArray(it.choices)){
+      const opts=it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("");
+      return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><ul class="choices">${opts}</ul></div>`;
+    }
+    return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><div class="writelines"><div class="ln"></div></div></div>`;
+  }).join("");
+  const keyRows=items.map((it,i)=>{ const ai=(typeof it.answerIndex==="number")?it.answerIndex:it.answer_index; const ans=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof ai==="number")?it.choices[ai]:(it.answer||"—"); return `${i+1}. <b>${esc(ans)}</b>`; });
+  return {html, keyRows};
+}
+
+// One topic, rendered for a print MODE: full | materials | worksheets.
+//  full       = guide + lesson + worksheet + assessment + sources (+ answer key)
+//  materials  = guide + lesson + assessment + sources  (re-teach; fixed content)
+//  worksheets = fresh practice worksheet only (+ answer key)
+function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
+  mode=mode||"full"; bank=bank||{};
   const c=getContent(t.id);
   const st=SUBJ[t.subject]||{c:"#3b4aa0"};
   const head=`<div class="kicker" style="color:${st.c}">${esc(t.subject)}${t.domain?" · "+esc(t.domain):""} · ages ${t.age_range_start}–${t.age_range_end}</div>`;
+  const isMath = lane==="practice" || (c&&c.practice&&c.practice.generator);
+  const wantGuide=mode==="full"||mode==="materials", wantLesson=mode==="full"||mode==="materials",
+        wantWork=mode==="full"||mode==="worksheets", wantAssess=mode==="full"||mode==="materials", wantSources=mode==="full"||mode==="materials";
 
-  // math (or procedural) practice → code-generated worksheet
-  const mathProbs = lane==="practice" ? genProblems(t,12) : (c&&c.practice&&c.practice.generator ? genProblems(t,12) : null);
+  function buildWorksheet(){
+    if(isMath){
+      const probs=genProblems(t,12);
+      if(probs&&probs.length) return { html:`<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`, keyRows:probs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`) };
+      return null;
+    }
+    let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
+    if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own
+    if(!items||!items.length) return null;
+    return wsFromItems(items, fill);
+  }
 
-  if(!c){ // no grounded lesson yet — teach-from-evidence fallback
-    const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
-    let ws="";
-    if(mathProbs){ ws=`<div class="wsec"><div class="eyebrow"><span class="num">✎</span> Practice</div><h2>${esc(t.name)}</h2>
-        <div class="mgrid">`+mathProbs.map((p,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${p.q} <u></u></div>`).join("")+`</div></div>`;
-      keys.push({name:t.name, rows:mathProbs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`)}); }
-    return `<section class="topic"><div class="thead">${head}<h1>${esc(t.name)}</h1></div>
-      <div class="wsec"><div class="eyebrow"><span class="num">1</span> Teach &amp; talk it through</div>
-      <p class="lead">${esc(t.description||"")}</p>${ev?`<div class="h">Check they can…</div><ul class="clean">${ev}</ul>`:""}
-      <p class="hint">A full grounded lesson for this topic hasn’t been generated yet.</p></div>${ws}</section>`;
+  if(!c){ // no grounded lesson yet — evidence fallback + (math) worksheet
+    const parts=[`<section class="topic"><div class="thead">${head}<h1>${esc(glossName(t.name))}</h1></div>`]; let n=0;
+    if(wantGuide){ const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
+      parts.push(`<div class="gsec"><div class="eyebrow"><span class="num">${++n}</span> Teach &amp; talk it through</div><p class="lead">${esc(t.description||"")}</p>${ev?`<div class="h">Check they can…</div><ul class="clean">${ev}</ul>`:""}<p class="hint">A full grounded lesson for this topic hasn't been generated yet.</p></div>`); }
+    if(wantWork){ const w=buildWorksheet(); if(w){ if(w.keyRows.length)keys.push({name:t.name,rows:w.keyRows}); parts.push(`<div class="wsec"><div class="eyebrow"><span class="num">${++n}</span> Practice worksheet</div>${w.html}</div>`); } }
+    parts.push(`</section>`); return parts.join("");
   }
 
   const p=c.parent||{}, s=c.student||{};
@@ -571,67 +1033,32 @@ function topicPacket(kid, t, lane, fill, N, keys){
   const home=(p.tryAtHome||[]).map(w=>`<li>${fill(w)}</li>`).join("");
   const paras=String(s.intro||"").split(/\n\n+/).filter(Boolean).map(x=>`<p>${fill(x)}</p>`).join("");
   const ex=(s.examples||[]).map(e=>`<div class="example"><div class="show"><span class="etag">Picture</span>${fill(e.show||"")}</div><div class="say"><span class="etag say">Say</span>${fill(e.say||"")}</div></div>`).join("");
+  const ass=((c.assessment&&c.assessment.items)||[]).map(a=>{ const rub=(a.rubric||[]).map(r=>`<li>${fill(r)}</li>`).join(""); return `<div class="crit"><span class="box"></span><div><strong>${fill(a.prompt)}</strong>${rub?`<ul class="rubric">${rub}</ul>`:""}</div></div>`; }).join("");
 
-  // worksheet + answer key from the practice items (mcq bubbles / short lines)
-  let ws="", keyRows=[];
-  if(mathProbs){
-    ws=`<div class="mgrid">`+mathProbs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`;
-    keyRows=mathProbs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`);
-  } else {
-    const items=(c.practice&&c.practice.items)||[];
-    ws=items.map((it,i)=>{
-      if(it.kind==="mcq"&&Array.isArray(it.choices)){
-        const opts=it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("");
-        return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><ul class="choices">${opts}</ul></div>`;
-      }
-      return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><div class="writelines"><div class="ln"></div></div></div>`;
-    }).join("");
-    keyRows=items.map((it,i)=>{ const a=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof it.answerIndex==="number")?it.choices[it.answerIndex]:(it.answer||"—"); return `${i+1}. <b>${esc(a)}</b>`; });
-  }
-  if(keyRows.length) keys.push({name:c.name, rows:keyRows});
-
-  // assessment (oral, rubric) → grown-up check
-  const ass=((c.assessment&&c.assessment.items)||[]).map(a=>{
-    const rub=(a.rubric||[]).map(r=>`<li>${fill(r)}</li>`).join("");
-    return `<div class="crit"><span class="box"></span><div><strong>${fill(a.prompt)}</strong>${rub?`<ul class="rubric">${rub}</ul>`:""}</div></div>`;
-  }).join("");
-
-  return `<section class="topic">
-    <div class="thead">${head}<h1>${fill(c.name)}</h1></div>
-
-    <div class="gsec"><div class="eyebrow"><span class="num">1</span> For the grown-up · Teaching guide</div>
-      ${p.whyItMatters?`<div class="why"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}
-      ${p.howToTeach?`<div class="h">How to teach it</div><p>${fill(p.howToTeach)}</p>`:""}
-      <div class="guidegrid">
-        ${watch?`<div class="gcard"><h4>Watch for these mix-ups</h4><ul class="clean">${watch}</ul></div>`:""}
-        ${home?`<div class="gcard"><h4>Try this at home</h4><ul class="clean">${home}</ul></div>`:""}
-      </div></div>
-
-    <div class="lsec"><div class="eyebrow"><span class="num">2</span> The lesson · Read together</div>
-      ${paras}${ex?`<div class="h">Picture cards to talk about</div>${ex}`:""}</div>
-
-    <div class="wsec"><div class="eyebrow"><span class="num">3</span> Practice worksheet</div>
-      <p class="hint">Read each question aloud with ${N} if they are still learning to read.</p>${ws}</div>
-
-    ${ass?`<div class="asec"><div class="eyebrow"><span class="num">4</span> Show what you know · Talk it through</div>
-      <p class="hint">Ask each question out loud. Check the box when ${N} shows they understand.</p>${ass}</div>`:""}
-
-    ${sourcesFooter(c)?`<div class="srcsec">${sourcesFooter(c)}</div>`:""}
-  </section>`;
+  const parts=[`<section class="topic"><div class="thead">${head}<h1>${fill(glossName(c.name))}</h1></div>`]; let n=0;
+  if(wantGuide) parts.push(`<div class="gsec"><div class="eyebrow"><span class="num">${++n}</span> For the grown-up · Teaching guide</div>${p.whyItMatters?`<div class="why"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}${p.howToTeach?`<div class="h">How to teach it</div><p>${fill(p.howToTeach)}</p>`:""}<div class="guidegrid">${watch?`<div class="gcard"><h4>Watch for these mix-ups</h4><ul class="clean">${watch}</ul></div>`:""}${home?`<div class="gcard"><h4>Try this at home</h4><ul class="clean">${home}</ul></div>`:""}</div></div>`);
+  if(wantLesson) parts.push(`<div class="lsec"><div class="eyebrow"><span class="num">${++n}</span> The lesson · Read together</div>${paras}${ex?`<div class="h">Picture cards to talk about</div>${ex}`:""}</div>`);
+  if(wantWork){ const w=buildWorksheet(); if(w){ if(w.keyRows.length)keys.push({name:c.name,rows:w.keyRows}); parts.push(`<div class="wsec"><div class="eyebrow"><span class="num">${++n}</span> Practice worksheet</div><p class="hint">Read each question aloud with ${N} if they are still learning to read.</p>${w.html}</div>`); } }
+  if(wantAssess && ass) parts.push(`<div class="asec"><div class="eyebrow"><span class="num">${++n}</span> Show what you know · Talk it through</div><p class="hint">Ask each question out loud. Check the box when ${N} shows they understand.</p>${ass}</div>`);
+  if(wantSources && sourcesFooter(c)) parts.push(`<div class="srcsec">${sourcesFooter(c)}</div>`);
+  parts.push(`</section>`);
+  return parts.join("");
 }
 
-function buildPacket(kid, cards){
+function buildPacket(kid, cards, mode, bank){
+  mode=mode||"full"; bank=bank||{};
   const N=esc(kid.first_name);
   const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
   const date=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   const subs=[...new Set(cards.map(c=>c.topic.subject))];
   const keys=[];
-  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}’s learning materials</h1>
+  const label = mode==="worksheets"?"practice worksheets":mode==="materials"?"teaching materials":"learning materials";
+  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s ${label}</h1>
     <div class="day">${date} · ${cards.length} topic${cards.length>1?"s":""}</div>
     <div class="subs">${subs.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
-  const topics=cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys)).join("");
+  const topics=cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,mode,bank)).join("");
   let keySec="";
-  if(keys.length) keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
+  if(keys.length && mode!=="materials") keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
     keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
   const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
   return cover+topics+keySec+foot;
@@ -658,6 +1085,12 @@ function openPrint(title, inner){
     .cover .brand{font-family:system-ui,sans-serif;font-weight:800;letter-spacing:.22em;font-size:10pt;color:var(--gold)}
     .cover h1{font-size:26pt;margin:4px 0 3px} .cover .day{color:var(--muted);font-family:system-ui,sans-serif;font-size:10pt}
     .cover .subs{margin-top:9px} .chip{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:700;border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin-right:5px;color:var(--muted)}
+
+    /* per-day divider page in a prepared range (road-trip binder) */
+    .dayband{break-before:page;border-bottom:2px solid var(--navy);padding-bottom:6mm;margin-bottom:2mm}
+    .dayband .dbnum{font-family:system-ui,sans-serif;font-weight:800;letter-spacing:.18em;text-transform:uppercase;font-size:9pt;color:var(--navy)}
+    .dayband h2{font-size:22pt;margin:3px 0 4px}
+    .dayband .dbsubs{font-family:system-ui,sans-serif;font-size:9.5pt;color:var(--muted)}
 
     /* cover alone on page 1; each topic's teaching guide starts its own page */
     .topic{break-before:page}
