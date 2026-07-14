@@ -104,17 +104,22 @@ const insertUrl = `${SB}/rest/v1/source_documents?on_conflict=source,content_has
 const prefer = 'return=minimal,resolution=ignore-duplicates';
 const seenHash = new Set();     // global dedupe across the whole run
 let buffer = [];                // passages awaiting flush
-let totalUnique = 0, stored = 0, embFail = false;
+let totalUnique = 0, stored = 0;
+
+// Retrieval is full-text only (no vector index on small compute), so ingestion
+// stores no embeddings by default — that's what kept the DB's Disk IO sane.
+// Set EMBED_CORPUS=1 (with a vector index + adequate compute) to embed again.
+const EMBED = process.env.EMBED_CORPUS === '1';
 
 async function flush() {
   if (!buffer.length) return;
   let embeddings = null;
-  if (!embFail) {
+  if (EMBED) {
     try { embeddings = await embedDocuments(buffer.map((p) => p.text)); }
-    catch (e) { console.error(`Embeddings failed (${e.message}) — continuing FTS-only.`); embFail = true; }
+    catch (e) { console.error(`Embeddings failed for this chunk (${e.message}) — stored FTS-only.`); }
   }
   const rows = buffer.map((p, i) => ({ ...p, embedding: embeddings ? '[' + embeddings[i].join(',') + ']' : null }));
-  const INSERT_BATCH = Number(process.env.INGEST_INSERT_BATCH || 50); // small: HNSW upserts are slow
+  const INSERT_BATCH = Number(process.env.INGEST_INSERT_BATCH || 100);
   for (let i = 0; i < rows.length; i += INSERT_BATCH) {
     const batch = rows.slice(i, i + INSERT_BATCH);
     const res = await fetch(insertUrl, { method: 'POST', headers: { ...sbHeaders, Prefer: prefer }, body: JSON.stringify(batch) });
@@ -125,7 +130,7 @@ async function flush() {
     }
     stored += batch.length;
   }
-  console.log(`  …stored ${stored} passage(s) so far${embeddings ? ' (with embeddings)' : ' (FTS only)'}`);
+  console.log(`  …stored ${stored} passage(s) so far${EMBED ? ' (with embeddings)' : ' (FTS)'}`);
   buffer = [];
 }
 
@@ -161,4 +166,4 @@ for (const doc of docs) {
 await flush(); // remainder
 
 if (!totalUnique) { console.error('No passages ingested.'); process.exit(1); }
-console.log(`Done: ${stored} unique passage(s) ${replace ? 'ingested (replaced)' : 'upserted'} for '${source}'${embFail ? ' (FTS only)' : ' (with embeddings)'}.`);
+console.log(`Done: ${stored} unique passage(s) ${replace ? 'ingested (replaced)' : 'upserted'} for '${source}'${EMBED ? ' (with embeddings)' : ' (FTS)'}.`);
