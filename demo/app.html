@@ -211,16 +211,33 @@ const allow = (childId, topicId, val) => {
 };
 
 // ---- Supabase REST/Auth via plain fetch ----
-let session = null;  // {access_token, user}
-async function sb(path, { method="GET", body, auth=true } = {}){
+let session = null;  // {access_token, refresh_token, user}
+async function sb(path, opts = {}){
+  const { method="GET", body, auth=true, _retry=false } = opts;
   const headers = { apikey: ANON, "Content-Type":"application/json" };
-  if (auth && session) headers.Authorization = "Bearer " + session.access_token;
-  else headers.Authorization = "Bearer " + ANON;
+  headers.Authorization = "Bearer " + ((auth && session) ? session.access_token : ANON);
   const res = await fetch(SUPABASE_URL + path, { method, headers, body: body?JSON.stringify(body):undefined });
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
-  if (!res.ok) throw new Error((data && (data.msg||data.message||data.error_description||data.error)) || ("HTTP "+res.status));
+  if (!res.ok){
+    const msg = (data && (data.msg||data.message||data.error_description||data.error)) || ("HTTP "+res.status);
+    // Access token expired → refresh once and retry; if that fails, back to sign-in.
+    if(!_retry && auth && session && session.refresh_token && (res.status===401 || /jwt|expired/i.test(msg))){
+      if(await refreshSession()) return sb(path, {...opts, _retry:true});
+      session=null; localStorage.removeItem("session"); show("auth");
+    }
+    throw new Error(msg);
+  }
   return data;
+}
+async function refreshSession(){
+  if(!(session && session.refresh_token)) return false;
+  try{
+    const tok=await sb("/auth/v1/token?grant_type=refresh_token",{method:"POST",auth:false,_retry:true,body:{refresh_token:session.refresh_token}});
+    session={access_token:tok.access_token, refresh_token:tok.refresh_token||session.refresh_token, user:tok.user||session.user};
+    localStorage.setItem("session", JSON.stringify(session));
+    return true;
+  }catch{ return false; }
 }
 
 // ---- American-English normalizer (display-time; the taxonomy is UK-authored) ----
@@ -326,7 +343,7 @@ document.getElementById("authBtn").onclick=async()=>{
       note("authNote","Account created. Signing you in…","ok");
     }
     const tok=await sb("/auth/v1/token?grant_type=password",{method:"POST",auth:false,body:{email,password}});
-    session={access_token:tok.access_token, user:tok.user};
+    session={access_token:tok.access_token, refresh_token:tok.refresh_token, user:tok.user};
     localStorage.setItem("session", JSON.stringify(session));
     await loadKids();
   }catch(e){ note("authNote", e.message.includes("Invalid")?"Wrong email or password.":e.message, "err"); }
@@ -505,132 +522,188 @@ function genProblems(t, n){
   if(!gen) return null;
   return Array.from({length:n}, gen);
 }
-// ---- render content from the DB (content_items body schema) ----
+// ---- render the printable packet from the DB (content_items body schema) ----
+// Ink-light: white pages, color only as thin accents (rules, hollow bubbles,
+// small labels). One topic = teaching guide + lesson + worksheet; answer key at
+// the end. Prints the day's session, page-broken, to grow the "living binder".
 const SRC_HOME = { wikipedia:"https://en.wikipedia.org", simplewiki:"https://simple.wikipedia.org", wikijunior:"https://en.wikibooks.org/wiki/Wikijunior", wikidata:"https://www.wikidata.org", nasa:"https://www.nasa.gov", smithsonian:"https://www.si.edu", openstax:"https://openstax.org", noaa:"https://www.noaa.gov", usgs:"https://www.usgs.gov", loc:"https://www.loc.gov", ck12:"https://www.ck12.org", coreknowledge:"https://www.coreknowledge.org" };
+const SUBJ_NAME = { coreknowledge:"Core Knowledge", simplewiki:"Simple English Wikipedia", wikipedia:"English Wikipedia", wikijunior:"Wikijunior", nasa:"NASA", smithsonian:"Smithsonian", wikidata:"Wikidata", noaa:"NOAA", usgs:"USGS", loc:"Library of Congress", openstax:"OpenStax", ck12:"CK-12" };
 function getContent(id){ return (CONTENT && CONTENT[id]) || null; }
-function provLine(c){
-  const g=(c.provenance&&c.provenance.grounding)||[];
-  const links=g.filter(x=>x.source&&x.source!=="taxonomy:description").map(x=>{ const href=x.url||SRC_HOME[x.source]||""; const nm=esc(x.title||x.source); return href?`<a href="${href}">${nm} ↗</a>`:nm; });
-  if(!links.length) return "";
-  return `<div class="prov">Facts verified${c.provenance&&c.provenance.reviewed?" ✓":""} · Sources: ${links.join(" · ")}</div>`;
+const bubbles = n => Array.from({length:n},()=>'<span class="bubble"></span>').join("");
+
+// sources footer from the citations (grounded, cited)
+function sourcesFooter(c){
+  const cites=(c.provenance&&c.provenance.citations)||[];
+  if(!cites.length) return "";
+  const seen=new Set(); const byS={};
+  for(const q of cites){ if(!q.source||/^taxonomy|^standard/.test(q.source)) continue; (byS[q.source] ||= []).push(q.span); }
+  const rows=Object.entries(byS).map(([s,spans])=>{
+    const nm=SUBJ_NAME[s]||s; const href=SRC_HOME[s]||"";
+    const quote=spans.slice(0,2).map(x=>`“${esc(x)}”`).join(" · ");
+    return `<div class="src"><b>${href?`<a href="${href}">${esc(nm)}</a>`:esc(nm)}</b> — ${quote}</div>`;
+  }).join("");
+  return `<div class="h">Where these facts come from</div><div class="sources">${rows}</div>`;
 }
-function lessonBlockDB(c, fill, N){
-  const p=c.parent||{};
+
+// ONE topic → teaching guide + lesson + worksheet (pushes its answer key)
+function topicPacket(kid, t, lane, fill, N, keys){
+  const c=getContent(t.id);
+  const st=SUBJ[t.subject]||{c:"#3b4aa0"};
+  const head=`<div class="kicker" style="color:${st.c}">${esc(t.subject)}${t.domain?" · "+esc(t.domain):""} · ages ${t.age_range_start}–${t.age_range_end}</div>`;
+
+  // math (or procedural) practice → code-generated worksheet
+  const mathProbs = lane==="practice" ? genProblems(t,12) : (c&&c.practice&&c.practice.generator ? genProblems(t,12) : null);
+
+  if(!c){ // no grounded lesson yet — teach-from-evidence fallback
+    const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
+    let ws="";
+    if(mathProbs){ ws=`<div class="wsec"><div class="eyebrow"><span class="num">✎</span> Practice</div><h2>${esc(t.name)}</h2>
+        <div class="mgrid">`+mathProbs.map((p,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${p.q} <u></u></div>`).join("")+`</div></div>`;
+      keys.push({name:t.name, rows:mathProbs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`)}); }
+    return `<section class="topic"><div class="thead">${head}<h1>${esc(t.name)}</h1></div>
+      <div class="wsec"><div class="eyebrow"><span class="num">1</span> Teach &amp; talk it through</div>
+      <p class="lead">${esc(t.description||"")}</p>${ev?`<div class="h">Check they can…</div><ul class="clean">${ev}</ul>`:""}
+      <p class="hint">A full grounded lesson for this topic hasn’t been generated yet.</p></div>${ws}</section>`;
+  }
+
+  const p=c.parent||{}, s=c.student||{};
   const watch=(p.watchFor||[]).map(w=>`<li>${fill(w)}</li>`).join("");
   const home=(p.tryAtHome||[]).map(w=>`<li>${fill(w)}</li>`).join("");
-  const crit=((c.assessment&&c.assessment.masteryCriteria)||[]).map(w=>`<li>${fill(w)}</li>`).join("");
-  return `<section class="lesson"><div class="tag">For the grown-up</div>
-    <h2>${fill(c.name)}</h2><div class="sub">${esc(c.subject||"")}${c.domain?" · "+esc(c.domain):""}</div>
-    ${p.whyItMatters?`<div class="big"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}
-    ${p.howToTeach?`<div><div class="h">How to teach it</div><p>${fill(p.howToTeach)}</p></div>`:""}
-    <div class="two"><div>${watch?`<div class="h">Watch for</div><ul>${watch}</ul>`:""}</div>
-    <div class="everyday">${home?`<div class="h">Try at home</div><ul>${home}</ul>`:""}</div></div>
-    ${crit?`<div><div class="h">You'll know they've got it when…</div><ul class="crit2">${crit}</ul></div>`:""}</section>`;
-}
-function lessonReadDB(c, fill, N){
-  const st=c.student||{};
-  const paras=String(st.intro||"").split(/\n\n+/).filter(Boolean).map(x=>`<p>${fill(x)}</p>`).join("");
-  const ex=(st.examples||[]).map(e=>`<div class="ex"><b>${fill(e.show||"")}</b><div>${fill(e.say||"")}</div></div>`).join("");
-  return `<section class="practice"><div class="tag child">For ${N} · the lesson</div><h2>${fill(c.name)}</h2>
-    ${paras}${ex?`<div class="h">Look closer</div>${ex}`:""}${provLine(c)}</section>`;
-}
-function practiceBlockDB(c, topic, fill, N){
-  const pr=c.practice||{};
-  const probs = pr.generator ? genProblems(topic,12) : null;
-  let body=`<div class="tag child">For ${N} · practice</div><h2>${fill(c.name)}</h2>`; let key=null;
-  if(probs){
-    body+=`<div class="grid">`+probs.map((p,i)=>`<div class="prob"><b>${i+1}.</b>&nbsp; ${p.q} <u></u></div>`).join("")+`</div>`;
-    key={name:c.name, key:probs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`).join(" &nbsp;·&nbsp; ")};
+  const paras=String(s.intro||"").split(/\n\n+/).filter(Boolean).map(x=>`<p>${fill(x)}</p>`).join("");
+  const ex=(s.examples||[]).map(e=>`<div class="example"><div class="show"><span class="etag">Picture</span>${fill(e.show||"")}</div><div class="say"><span class="etag say">Say</span>${fill(e.say||"")}</div></div>`).join("");
+
+  // worksheet + answer key from the practice items (mcq bubbles / short lines)
+  let ws="", keyRows=[];
+  if(mathProbs){
+    ws=`<div class="mgrid">`+mathProbs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`;
+    keyRows=mathProbs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`);
   } else {
-    const items=pr.items||[];
-    body+=items.map((it,i)=>{
+    const items=(c.practice&&c.practice.items)||[];
+    ws=items.map((it,i)=>{
       if(it.kind==="mcq"&&Array.isArray(it.choices)){
-        const opts=it.choices.map((ch,j)=>`<span class="opt">${String.fromCharCode(97+j)}) ${esc(ch)}</span>`).join(" ");
-        return `<div class="qrow"><span class="cnum">${i+1}</span> ${fill(it.prompt)}<div class="opts">${opts}</div></div>`;
+        const opts=it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("");
+        return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><ul class="choices">${opts}</ul></div>`;
       }
-      return `<div class="qrow"><span class="cnum">${i+1}</span> ${fill(it.prompt)} <u class="wide"></u></div>`;
+      return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><div class="writelines"><div class="ln"></div></div></div>`;
     }).join("");
-    key={name:c.name, key:items.map((it,i)=>{ const a=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof it.answerIndex==="number")?it.choices[it.answerIndex]:(it.answer||"—"); return `${i+1}. <b>${esc(a)}</b>`; }).join(" &nbsp;·&nbsp; ")};
+    keyRows=items.map((it,i)=>{ const a=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof it.answerIndex==="number")?it.choices[it.answerIndex]:(it.answer||"—"); return `${i+1}. <b>${esc(a)}</b>`; });
   }
-  return {html:`<section class="practice">${body}</section>`, key};
+  if(keyRows.length) keys.push({name:c.name, rows:keyRows});
+
+  // assessment (oral, rubric) → grown-up check
+  const ass=((c.assessment&&c.assessment.items)||[]).map(a=>{
+    const rub=(a.rubric||[]).map(r=>`<li>${fill(r)}</li>`).join("");
+    return `<div class="crit"><span class="box"></span><div><strong>${fill(a.prompt)}</strong>${rub?`<ul class="rubric">${rub}</ul>`:""}</div></div>`;
+  }).join("");
+
+  return `<section class="topic">
+    <div class="thead">${head}<h1>${fill(c.name)}</h1></div>
+
+    <div class="gsec"><div class="eyebrow"><span class="num">1</span> For the grown-up · Teaching guide</div>
+      ${p.whyItMatters?`<div class="why"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}
+      ${p.howToTeach?`<div class="h">How to teach it</div><p>${fill(p.howToTeach)}</p>`:""}
+      <div class="guidegrid">
+        ${watch?`<div class="gcard"><h4>Watch for these mix-ups</h4><ul class="clean">${watch}</ul></div>`:""}
+        ${home?`<div class="gcard"><h4>Try this at home</h4><ul class="clean">${home}</ul></div>`:""}
+      </div></div>
+
+    <div class="lsec"><div class="eyebrow"><span class="num">2</span> The lesson · Read together</div>
+      ${paras}${ex?`<div class="h">Picture cards to talk about</div>${ex}`:""}</div>
+
+    <div class="wsec"><div class="eyebrow"><span class="num">3</span> Practice worksheet</div>
+      <p class="hint">Read each question aloud with ${N} if they are still learning to read.</p>${ws}</div>
+
+    ${ass?`<div class="asec"><div class="eyebrow"><span class="num">4</span> Show what you know · Talk it through</div>
+      <p class="hint">Ask each question out loud. Check the box when ${N} shows they understand.</p>${ass}</div>`:""}
+
+    ${sourcesFooter(c)?`<div class="srcsec">${sourcesFooter(c)}</div>`:""}
+  </section>`;
 }
+
 function buildPacket(kid, cards){
   const N=esc(kid.first_name);
   const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
   const date=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
-  let body=`<div class="cover"><div class="brand">🌱 MARBLE</div><h1>${N}'s learning materials</h1><div class="day">${date} · ${cards.length} topics</div></div>`;
-  const grown=[], child=[], keys=[];
-  for(const {topic:t, lane} of cards){
-    const c=getContent(t.id);
-    if(c){
-      grown.push(lessonBlockDB(c,fill,N));
-      child.push(lessonReadDB(c,fill,N));
-      const pr=practiceBlockDB(c,t,fill,N); child.push(pr.html); if(pr.key)keys.push(pr.key);
-    } else {
-      const probs = lane==="practice"?genProblems(t,12):null;
-      let h=`<section class="practice"><div class="tag child">For ${N} · ${esc(t.subject)}</div><h2>${esc(t.name)}</h2><p class="intro">${esc(t.description||"")}</p>`;
-      if(probs){ h+=`<div class="grid">`+probs.map((p,i)=>`<div class="prob"><b>${i+1}.</b>&nbsp; ${p.q} <u></u></div>`).join("")+`</div>`;
-        keys.push({name:t.name, key:probs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`).join(" &nbsp;·&nbsp; ")}); }
-      else { const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
-        h+=`<div class="teach"><div class="lab">Teach it, talk it through — then check ${N} can:</div><ul>${ev}</ul>
-          <div class="hint">Full grounded lesson for this topic hasn't been generated yet — run the content pipeline for it.</div></div>`; }
-      h+=`</section>`; child.push(h);
-    }
-  }
-  let out=body+grown.join("")+child.join("");
-  if(keys.length) out+=`<section class="keys"><div class="tag child">Answer key · grown-up copy</div><h2>Answer key</h2>`+
-    keys.map(k=>`<div class="kb"><b class="name">${fill(k.name)}</b>${k.key}</div>`).join("")+`</section>`;
-  out+=`<div class="foot">Generated by Marble · facts verified against reputable sources before they reach ${N} · empowering parents, not screens</div>`;
-  return out;
+  const subs=[...new Set(cards.map(c=>c.topic.subject))];
+  const keys=[];
+  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}’s learning materials</h1>
+    <div class="day">${date} · ${cards.length} topic${cards.length>1?"s":""}</div>
+    <div class="subs">${subs.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
+  const topics=cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys)).join("");
+  let keySec="";
+  if(keys.length) keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
+    keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
+  const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
+  return cover+topics+keySec+foot;
 }
+
 function openPrint(title, inner){
   const w=window.open("","_blank");
   if(!w){ alert("Allow pop-ups for this page to print materials."); return; }
   w.document.write(`<!doctype html><html><head><meta charset=utf-8><title>${esc(title)}</title><style>
-    @page{size:letter;margin:15mm 14mm} *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    body{font:12pt/1.55 Georgia,"Times New Roman",serif;color:#22271f;margin:0}
-    .cover{text-align:center;padding:6mm 0 5mm;border-bottom:3px solid #4c7a34;margin-bottom:7mm}
-    .cover .brand{color:#4c7a34;font-family:system-ui,sans-serif;font-weight:800;letter-spacing:.03em}
-    .cover h1{font-size:24pt;margin:4px 0 2px} .cover .day{color:#777;font-family:system-ui,sans-serif}
-    h2{font-size:16pt;margin:2px 0 1px} .sub{color:#6b7160;font-family:system-ui,sans-serif;font-size:9.5pt;margin-bottom:8px}
-    .tag{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#4c7a34;background:#eaf1e0;display:inline-block;padding:3px 9px;border-radius:20px}
-    .tag.child{color:#a03a6b;background:#f7e3ec}
-    .lesson,.practice{break-inside:avoid-page;padding:6mm 0;border-bottom:1px solid #e6e8df}
-    .practice{break-before:page} .lesson + .lesson{break-before:page}
-    .big{background:#f2f6ec;border-left:4px solid #4c7a34;padding:9px 12px;border-radius:0 8px 8px 0;margin:8px 0}
-    .why{color:#3a3f33}
-    .h{font-family:system-ui,sans-serif;font-weight:800;font-size:9pt;text-transform:uppercase;letter-spacing:.06em;color:#8a9079;margin:13px 0 6px}
-    .step{display:flex;gap:11px;margin:7px 0;break-inside:avoid}
-    .step .n{flex:none;width:23px;height:23px;border-radius:50%;background:#4c7a34;color:#fff;font-family:system-ui,sans-serif;font-weight:700;font-size:10pt;display:flex;align-items:center;justify-content:center}
-    .step .say{font-weight:700;color:#2b5719} .step .do{color:#3a3f33}
-    .worked{background:#fbfaf5;border:1px solid #e6e8df;border-radius:9px;padding:10px 12px;font-style:italic;color:#40453a}
-    .two{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-top:6px} .two ul{margin:0;padding-left:18px} .two li{margin:4px 0}
-    .everyday{background:#f7f2e6;border-radius:9px;padding:4px 12px 10px}
-    .intro{font-family:system-ui,sans-serif;font-size:10pt;color:#555;background:#f7f7f3;padding:8px 11px;border-radius:8px}
-    .prompt{border:1px solid #e6e8df;border-radius:9px;padding:10px 12px;margin:8px 0}
-    .stems{margin-top:12px;font-family:system-ui,sans-serif;font-size:10pt} .stems span{display:inline-block;background:#eef1e8;border-radius:6px;padding:3px 8px;margin:3px 4px 0 0}
-    .cmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-top:12px}
-    .cmp{border:1.5px solid #dfe2d8;border-radius:11px;padding:12px;break-inside:avoid} .cmp .cnum{font-family:system-ui,sans-serif;font-weight:800;color:#8a9079;font-size:9pt}
-    .pair{display:flex;align-items:center;gap:8px;margin-top:8px}
-    .grp{flex:1;display:flex;flex-wrap:wrap;gap:5px;min-height:34px;align-content:center;border:1.5px dashed #cdd2c4;border-radius:9px;padding:8px}
-    .dot{width:15px;height:15px;border-radius:50%;background:#4c7a34;display:inline-block} .dot.alt{background:#c07542}
-    .vs{font-family:system-ui,sans-serif;font-weight:800;color:#a03a6b;font-size:9pt}
-    .rrow,.mrow{padding:9px 2px;border-bottom:1px dashed #e0e2d9;break-inside:avoid}
-    .cnum{font-family:system-ui,sans-serif;font-weight:800;color:#8a9079;margin-right:6px}
-    .opt{display:inline-block;border:1.5px solid #cdd2c4;border-radius:20px;padding:4px 14px;margin:0 5px;font-weight:600}
-    .more{color:#9a9f8c;font-size:9.5pt;font-style:italic;margin-left:6px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin-top:8px} .prob{font-size:1.05rem;font-variant-numeric:tabular-nums} .prob u{display:inline-block;min-width:64px;border-bottom:1.5px solid #bbb;text-decoration:none}
-    .teach .lab{font-weight:700;margin-bottom:5px} .teach ul{margin:0 0 8px 18px;padding:0} .teach li{margin:3px 0} .hint{font-size:.8rem;color:#999;font-style:italic}
-    .keys{break-before:page;padding-top:6mm} .keys h2{color:#a03a6b} .kb{margin:12px 0} .kb b.name{display:block;font-family:system-ui,sans-serif}
-    .foot{margin-top:6mm;color:#9a9f8c;font-family:system-ui,sans-serif;font-size:8.5pt;text-align:center}
-    .ex{border:1px solid #e6e8df;border-radius:9px;padding:8px 11px;margin:7px 0;break-inside:avoid} .ex b{color:#2b5719}
-    .qrow{padding:9px 2px;border-bottom:1px dashed #e0e2d9;break-inside:avoid} .qrow .opts{margin-top:5px}
-    u.wide{min-width:150px} .prov{margin-top:10px;font-size:9pt;color:#6b7160} .prov a{color:#2b8a8f;text-decoration:none}
-    .crit2{margin:0;padding-left:18px} .crit2 li{margin:3px 0}
-    @media print{ .bar{display:none} html,body,*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important} }
-    .bar{position:fixed;top:10px;right:12px} .bar button{font:inherit;font-weight:700;background:#4c7a34;color:#fff;border:0;border-radius:9px;padding:9px 14px;cursor:pointer}
-  </style></head><body><div class="bar"><button onclick="print()">🖨 Print</button></div>${inner}
-  <script>window.onload=function(){setTimeout(function(){window.print()},400)}<\/script></body></html>`);
+    @page{size:letter;margin:16mm 15mm}
+    *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    :root{--ink:#23262e;--muted:#5c6472;--rule:#d7d2c6;--line:#e4e0d6;--navy:#232c52;--gold:#b07d1e;--teal:#1f8f82;--accent:#3b4aa0}
+    body{font:11.5pt/1.5 Georgia,"Iowan Old Style","Times New Roman",serif;color:var(--ink);margin:0}
+    .sans{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+    h1,h2{font-family:Georgia,serif;margin:0}
+    .eyebrow{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;margin:0 0 8px}
+    .eyebrow .num{width:18px;height:18px;border-radius:5px;background:var(--navy);color:#f4e6c8;display:inline-flex;align-items:center;justify-content:center;font-size:8pt;letter-spacing:0}
+    .h{font-family:system-ui,sans-serif;font-weight:800;font-size:8.5pt;text-transform:uppercase;letter-spacing:.07em;color:var(--teal);margin:13px 0 5px}
+    p{margin:0 0 8px} .lead{font-size:12pt} .hint{font-size:9.5pt;color:var(--muted);font-style:italic;margin:2px 0 8px}
+    .clean{margin:0;padding-left:16px} .clean li{margin:0 0 5px}
+
+    /* cover — the only place with a color bar */
+    .cover{border-bottom:2.5px solid var(--gold);padding-bottom:7mm;margin-bottom:8mm}
+    .cover .brand{font-family:system-ui,sans-serif;font-weight:800;letter-spacing:.22em;font-size:10pt;color:var(--gold)}
+    .cover h1{font-size:26pt;margin:4px 0 3px} .cover .day{color:var(--muted);font-family:system-ui,sans-serif;font-size:10pt}
+    .cover .subs{margin-top:9px} .chip{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:700;border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin-right:5px;color:var(--muted)}
+
+    /* cover alone on page 1; each topic's teaching guide starts its own page */
+    .topic{break-before:page}
+    .thead .kicker{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    .thead h1{font-size:21pt;margin:2px 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+    .gsec,.lsec,.wsec,.asec,.srcsec{margin:0 0 9mm}   /* big sections may flow across pages */
+    .lsec,.wsec,.asec{break-before:page}               /* content, practice, assessment each start fresh */
+
+    /* teaching guide */
+    .why{border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:9px 12px;margin:0 0 10px;background:#faf6ee}
+    .guidegrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+    .gcard{border:1px solid var(--line);border-radius:9px;padding:11px 13px;break-inside:avoid}
+    .gcard h4{margin:0 0 7px;font-family:system-ui,sans-serif;font-size:8.5pt;letter-spacing:.05em;text-transform:uppercase;color:var(--teal)}
+
+    /* lesson examples — thin dashed image slot (real images arrive later) */
+    .example{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:9px 0;border-bottom:1px dashed var(--rule);break-inside:avoid}
+    .example:last-child{border-bottom:0}
+    .show{border:1px dashed var(--teal);border-radius:8px;min-height:74px;padding:8px;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:9pt;color:var(--muted)}
+    .etag{font-family:system-ui,sans-serif;font-size:7pt;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:800;margin-bottom:4px}
+    .say .etag{display:inline-block;margin:0 7px 0 0;vertical-align:1px} /* gap so "Say" isn't glued to the text */
+    .etag.say{color:var(--gold)} .say{font-size:11pt}
+
+    /* worksheet */
+    .q{padding:9px 0;border-bottom:1px solid var(--line);break-inside:avoid} .q:last-child{border-bottom:0}
+    .qtext{font-weight:700;font-size:11pt} .qnum{color:var(--accent);font-weight:800;margin-right:5px}
+    .choices{list-style:none;margin:7px 0 0;padding:0} .choices li{display:flex;align-items:center;gap:9px;margin:5px 0}
+    .bubble{flex:0 0 auto;width:15px;height:15px;border:1.6px solid var(--muted);border-radius:50%}
+    .writelines .ln{border-bottom:1.5px solid var(--rule);margin:18px 0}
+    .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-top:6px}
+    .mprob{font-size:12pt;font-variant-numeric:tabular-nums} .mprob u{display:inline-block;min-width:62px;border-bottom:1.5px solid var(--rule);text-decoration:none}
+
+    /* assessment */
+    .crit{display:flex;gap:9px;align-items:flex-start;margin:7px 0;break-inside:avoid}
+    .crit .box{flex:0 0 auto;width:15px;height:15px;border:1.6px solid var(--teal);border-radius:4px;margin-top:3px}
+    .rubric{font-size:9pt;color:var(--muted);margin:4px 0 0;padding-left:15px} .rubric li{margin:1px 0}
+
+    /* sources + answer key (no dark blocks — ink-light) */
+    .sources{font-size:9pt;color:var(--muted)} .src{margin:5px 0;padding-left:11px;border-left:2px solid var(--line)} .src a{color:var(--teal);text-decoration:none}
+    .keysec{break-before:page} .keysec .kname{display:block;font-family:system-ui,sans-serif;font-size:10pt;margin-top:11px} .krows{font-size:10pt;color:#333}
+    .pfoot{margin-top:8mm;color:var(--muted);font-family:system-ui,sans-serif;font-size:8pt;text-align:center;border-top:1px solid var(--line);padding-top:5mm}
+
+    .bar{position:fixed;top:10px;right:12px}
+    .bar button{font:inherit;font-family:system-ui,sans-serif;font-weight:700;background:var(--navy);color:#fff;border:0;border-radius:9px;padding:9px 15px;cursor:pointer}
+    @media print{ .bar{display:none} }
+  </style></head><body><div class="bar"><button onclick="print()">🖨 Print / Save PDF</button></div>${inner}
+  <script>window.onload=function(){setTimeout(function(){window.print()},450)}<\/script></body></html>`);
   w.document.close();
 }
 
