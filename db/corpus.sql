@@ -51,7 +51,7 @@ language sql stable as $$
     where d.source = src
       and query_text is not null
       and d.fts @@ websearch_to_tsquery('english', query_text)
-    limit 40
+    limit 120
   ),
   vec as (
     select d.id, row_number() over (order by d.embedding <=> query_embedding) as r
@@ -60,7 +60,7 @@ language sql stable as $$
       and query_embedding is not null
       and d.embedding is not null
     order by d.embedding <=> query_embedding
-    limit 40
+    limit 120
   )
   select d.id, d.text, d.title, d.url, d.grade,
          (coalesce(1.0/(60 + fts.r), 0) + coalesce(1.0/(60 + vec.r), 0))::real as score
