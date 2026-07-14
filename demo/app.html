@@ -158,19 +158,19 @@
   .prepdays:focus{outline:2px solid var(--navy);outline-offset:1px}
   .prepunit{font-size:.82rem;font-weight:700;color:var(--soft)}
   .seclabel{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:6px 0 -3px}
-  /* session preview (inline expander) */
-  .pvwrap{margin:-2px 0 10px;text-align:right}
-  .pvlink{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:2px 0;font:inherit;font-size:.74rem;font-weight:700;color:var(--navy);cursor:pointer;opacity:.85}
-  .pvlink:hover{opacity:1;text-decoration:underline}
-  .pvcaret{font-size:.62rem}
-  .pvbody{margin-top:4px;text-align:left;border-top:1px solid var(--line2);padding-top:2px}
-  .pvtopic{border-top:1px solid var(--line2);padding:9px 0} .pvtopic:first-child{border-top:0;padding-top:2px}
-  .pvtop{font-size:.9rem;margin-bottom:2px}
+  /* session preview (inline expander, sits at the bottom of the card) */
+  .pvwrap{margin:11px 0 0;border-top:1px solid var(--line2);padding-top:9px}
+  .pvlink{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;font-size:.74rem;font-weight:700;color:var(--faint);cursor:pointer}
+  .pvlink:hover{color:var(--navy)}
+  .pvcaret{font-size:.6rem;width:8px;display:inline-block}
+  .pvbody{margin-top:9px}
+  .pvtopic{border-top:1px solid var(--line2);padding:10px 0} .pvtopic:first-child{border-top:0;padding-top:2px}
+  .pvtop{font-size:.9rem;margin-bottom:2px;display:flex;flex-wrap:wrap;align-items:baseline;gap:5px}
   .pvdesc{font-size:.82rem;color:var(--soft);margin:2px 0 5px}
   .pvfield{font-size:.8rem;color:var(--soft);margin:5px 0} .pvfield b{color:var(--ink);font-weight:700;display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;margin-bottom:1px}
   .pvul{margin:2px 0 0;padding-left:16px} .pvul li{margin:2px 0}
   .pvex{color:var(--ink);font-family:var(--disp);text-transform:none;letter-spacing:0}
-  .pvbadge{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--line);color:var(--faint);border-radius:20px;padding:1px 7px;margin-left:4px;vertical-align:1px}
+  .pvbadge{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;border:1px solid var(--line);color:var(--faint);border-radius:20px;padding:1px 7px}
   .pvbadge.ok{color:var(--teal);border-color:var(--teal)}
   .pvhint{font-size:.74rem;color:var(--faint);font-style:italic;margin:6px 0 0}
   /* history calendar */
@@ -570,7 +570,7 @@ function sessionCard(s, title, buttons, preview){
     <ul class="crit" style="margin-bottom:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
     <div class="prow"></div></div>`;
   const prow=box.querySelector(".prow"); (buttons||[]).forEach(b=>prow.appendChild(b));
-  if(preview) prow.before(buildPreview(cards));
+  if(preview) prow.after(buildPreview(cards));
   return box;
 }
 function printButtons(s){ return [ mkBtn("ghost","Full packet",()=>printSession(s,"full")), mkBtn("ghost","Materials",()=>printSession(s,"materials")), mkBtn("ghost","New worksheets",()=>printSession(s,"worksheets")) ]; }
@@ -581,7 +581,7 @@ function printButtons(s){ return [ mkBtn("ghost","Full packet",()=>printSession(
 function buildPreview(cards){
   const wrap=document.createElement("div"); wrap.className="pvwrap";
   const toggle=document.createElement("button"); toggle.className="pvlink";
-  toggle.innerHTML=`<span>Preview</span><span class="pvcaret">▸</span>`;
+  toggle.innerHTML=`<span class="pvcaret">▸</span><span>Preview this session</span>`;
   const body=document.createElement("div"); body.className="pvbody"; body.style.display="none";
   let open=false, fetched=false, loading=false;
   const N=()=>esc(CURRENT.kid.first_name);
@@ -668,8 +668,8 @@ function renderHome(){
           <h2 style="font-size:${i===0?"1.25rem":"1.05rem"};margin:0">${cards.length} topic${cards.length>1?"s":""} · ${subj.map(esc).join(", ")}</h2>
           <ul class="crit" style="margin-top:8px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
           <div class="prow"></div>`;
-        box.querySelector(".prow").before(buildPreview(cards));
         box.querySelector(".prow").appendChild(mkBtn("primary",i===0?"Start session":"Start this one",()=>startComposed(cards)));
+        box.appendChild(buildPreview(cards));
         wrap.appendChild(box);
       });
       const hint=document.createElement("p"); hint.className="faint"; hint.style.cssText="font-size:.72rem;margin:2px 2px 0";
