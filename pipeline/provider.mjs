@@ -51,22 +51,25 @@ const LESSON_SCHEMA = {
   type: 'object', additionalProperties: false,
   required: ['student', 'parent', 'practice', 'assessment', 'citations'],
   properties: {
+    // NOTE: Anthropic structured output supports minItems only 0 or 1 (not higher),
+    // so we forbid EMPTY sections with minItems:1. The system prompt asks for depth;
+    // the verify gate still holds anything thin for human review.
     student: { type: 'object', additionalProperties: false, required: ['intro', 'examples'],
       properties: { intro: { type: 'string', minLength: 200 },
-        examples: { type: 'array', minItems: 3, items: { type: 'object', additionalProperties: false, required: ['show', 'say'], properties: { show: { type: 'string' }, say: { type: 'string' } } } } } },
+        examples: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false, required: ['show', 'say'], properties: { show: { type: 'string' }, say: { type: 'string' } } } } } },
     parent: { type: 'object', additionalProperties: false, required: ['whyItMatters', 'howToTeach', 'watchFor', 'tryAtHome'],
       properties: { whyItMatters: { type: 'string', minLength: 40 }, howToTeach: { type: 'string', minLength: 40 },
-        watchFor: { type: 'array', minItems: 2, items: { type: 'string' } }, tryAtHome: { type: 'array', minItems: 2, items: { type: 'string' } } } },
-    practice: { type: 'array', minItems: 3, items: { type: 'object', additionalProperties: false,
+        watchFor: { type: 'array', minItems: 1, items: { type: 'string' } }, tryAtHome: { type: 'array', minItems: 1, items: { type: 'string' } } } },
+    practice: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false,
       required: ['kind', 'prompt'],
       properties: { kind: { type: 'string' }, prompt: { type: 'string' },
         choices: { type: 'array', items: { type: 'string' } },
         answerIndex: { type: 'integer' }, answer: { type: 'string' } } } },
-    assessment: { type: 'array', minItems: 2, items: { type: 'object', additionalProperties: false,
+    assessment: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false,
       required: ['id', 'kind', 'prompt', 'evidenceRef'],
       properties: { id: { type: 'string' }, kind: { type: 'string' }, prompt: { type: 'string' },
         rubric: { type: 'array', items: { type: 'string' } }, evidenceRef: { type: 'integer' } } } },
-    citations: { type: 'array', minItems: 2, items: { type: 'object', additionalProperties: false, required: ['source', 'span'], properties: { source: { type: 'string' }, span: { type: 'string' } } } },
+    citations: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false, required: ['source', 'span'], properties: { source: { type: 'string' }, span: { type: 'string' } } } },
   },
 };
 
