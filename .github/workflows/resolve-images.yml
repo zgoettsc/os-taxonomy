@@ -1,0 +1,47 @@
+name: Resolve images (picture cards for a topic)
+
+# Resolves ONE image per picture-card of a topic's lesson — a real licensed photo
+# for named real things, an AI illustration (locked house style) otherwise — and
+# stores them (review-gated) in lesson_images, mirrored to the 'lesson-images'
+# Storage bucket.
+#
+# Prereqs: db/images.sql applied; the topic already has a generated lesson.
+# Secrets: ANTHROPIC_API_KEY, OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+# Set repo variable AI_IMAGES=off (or tick "Skip AI") to use real photos only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Taxonomy topic id (mt_...) — must already have a lesson'
+        required: true
+        type: string
+      skip_ai:
+        description: 'Real photos only (no AI illustrations)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the Anthropic SDK
+        run: npm install @anthropic-ai/sdk
+      - name: Resolve + store images
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          AI_IMAGES: ${{ vars.AI_IMAGES }}
+        run: |
+          node pipeline/resolve-images.mjs \
+            --topic "${{ inputs.topic }}" \
+            --provider claude \
+            ${{ inputs.skip_ai && '--no-ai' || '' }} \
+            --store
