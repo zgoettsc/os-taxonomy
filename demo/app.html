@@ -563,10 +563,10 @@ function renderHome(){
   document.getElementById("homeActions").innerHTML="";
   const wrap=document.getElementById("cards"); wrap.innerHTML="";
 
-  // A) In progress
+  // A) In progress — Cancel here un-starts it back into the queue (nothing lost).
   for(const s of act){
     wrap.appendChild(sectionLabel("In progress"));
-    wrap.appendChild(sessionCard(s,"Session",[ mkBtn("primary","Done teaching · Assess",()=>openAssess(s)), ...printButtons(s) ]));
+    wrap.appendChild(sessionCard(s,"Session",[ mkBtn("primary","Done teaching · Assess",()=>openAssess(s)), ...printButtons(s), mkBtn("ghost","Cancel",()=>cancelStarted(s)) ]));
   }
 
   // B) Up next (the queue)
@@ -574,10 +574,11 @@ function renderHome(){
   if(q.length){
     const bar=document.createElement("div"); bar.className="prow"; bar.style.marginBottom="2px";
     bar.appendChild(mkBtn("ghost",`🖨 Print all ${q.length}`,()=>printQueue()));
+    if(q.length>1) bar.appendChild(mkBtn("ghost","Clear queue",()=>clearQueue()));
     wrap.appendChild(bar);
     q.forEach((s,i)=>{
       const title=i===0?"Next session":`Session ${i+1}`;
-      wrap.appendChild(sessionCard(s,title,[ mkBtn("primary","Start",()=>startSession(s)), ...printButtons(s), mkBtn("ghost","Remove",()=>removeSession(s)) ]));
+      wrap.appendChild(sessionCard(s,title,[ mkBtn("primary","Start",()=>startSession(s)), ...printButtons(s), mkBtn("ghost","Cancel",()=>cancelPlanned(s)) ]));
     });
   } else {
     const cards=composeNext();
@@ -640,9 +641,28 @@ async function startComposed(cards){
     renderHome();
   }catch(e){ alert("Couldn't start session: "+e.message); }
 }
-async function removeSession(s){
+// Cancel a queued (planned) session — drop it from the plan. Its topics were only
+// reserved, so they return to the pool and can be planned again later.
+async function cancelPlanned(s){
   try{ await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"DELETE"});
     SESSIONS=SESSIONS.filter(x=>x.id!==s.id); renderHome();
+  }catch(e){ alert(e.message); }
+}
+// Clear the whole remaining plan in one go (e.g. after a trip you didn't finish).
+async function clearQueue(){
+  const q=queue(); if(!q.length) return;
+  if(!confirm(`Clear all ${q.length} queued sessions? Their topics return to the pool — nothing is lost, and you can prepare again any time.`)) return;
+  try{ await sb(`/rest/v1/sessions?child_id=eq.${CURRENT.kid.id}&status=eq.planned`,{method:"DELETE"});
+    SESSIONS=SESSIONS.filter(x=>x.status!=="planned"); renderHome();
+  }catch(e){ alert(e.message); }
+}
+// Cancel an in-progress session — un-start it back to the front of the queue (no
+// date, no assessment recorded). Use when you Started but didn't actually teach it.
+async function cancelStarted(s){
+  try{
+    const minPos=queue().reduce((m,x)=>Math.min(m,x.queue_pos),1);
+    await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"planned", for_date:null, started_at:null, queue_pos:minPos-1}});
+    s.status="planned"; s.for_date=null; s.started_at=null; s.queue_pos=minPos-1; renderHome();
   }catch(e){ alert(e.message); }
 }
 // Prepare N sessions and append them to the queue (no dates, non-overlapping topics).
