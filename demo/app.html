@@ -211,16 +211,33 @@ const allow = (childId, topicId, val) => {
 };
 
 // ---- Supabase REST/Auth via plain fetch ----
-let session = null;  // {access_token, user}
-async function sb(path, { method="GET", body, auth=true } = {}){
+let session = null;  // {access_token, refresh_token, user}
+async function sb(path, opts = {}){
+  const { method="GET", body, auth=true, _retry=false } = opts;
   const headers = { apikey: ANON, "Content-Type":"application/json" };
-  if (auth && session) headers.Authorization = "Bearer " + session.access_token;
-  else headers.Authorization = "Bearer " + ANON;
+  headers.Authorization = "Bearer " + ((auth && session) ? session.access_token : ANON);
   const res = await fetch(SUPABASE_URL + path, { method, headers, body: body?JSON.stringify(body):undefined });
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
-  if (!res.ok) throw new Error((data && (data.msg||data.message||data.error_description||data.error)) || ("HTTP "+res.status));
+  if (!res.ok){
+    const msg = (data && (data.msg||data.message||data.error_description||data.error)) || ("HTTP "+res.status);
+    // Access token expired → refresh once and retry; if that fails, back to sign-in.
+    if(!_retry && auth && session && session.refresh_token && (res.status===401 || /jwt|expired/i.test(msg))){
+      if(await refreshSession()) return sb(path, {...opts, _retry:true});
+      session=null; localStorage.removeItem("session"); show("auth");
+    }
+    throw new Error(msg);
+  }
   return data;
+}
+async function refreshSession(){
+  if(!(session && session.refresh_token)) return false;
+  try{
+    const tok=await sb("/auth/v1/token?grant_type=refresh_token",{method:"POST",auth:false,_retry:true,body:{refresh_token:session.refresh_token}});
+    session={access_token:tok.access_token, refresh_token:tok.refresh_token||session.refresh_token, user:tok.user||session.user};
+    localStorage.setItem("session", JSON.stringify(session));
+    return true;
+  }catch{ return false; }
 }
 
 // ---- American-English normalizer (display-time; the taxonomy is UK-authored) ----
@@ -326,7 +343,7 @@ document.getElementById("authBtn").onclick=async()=>{
       note("authNote","Account created. Signing you in…","ok");
     }
     const tok=await sb("/auth/v1/token?grant_type=password",{method:"POST",auth:false,body:{email,password}});
-    session={access_token:tok.access_token, user:tok.user};
+    session={access_token:tok.access_token, refresh_token:tok.refresh_token, user:tok.user};
     localStorage.setItem("session", JSON.stringify(session));
     await loadKids();
   }catch(e){ note("authNote", e.message.includes("Invalid")?"Wrong email or password.":e.message, "err"); }
@@ -642,11 +659,12 @@ function openPrint(title, inner){
     .cover h1{font-size:26pt;margin:4px 0 3px} .cover .day{color:var(--muted);font-family:system-ui,sans-serif;font-size:10pt}
     .cover .subs{margin-top:9px} .chip{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:700;border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin-right:5px;color:var(--muted)}
 
-    .topic{break-before:page} .topic:first-of-type{break-before:auto}
+    /* cover alone on page 1; each topic's teaching guide starts its own page */
+    .topic{break-before:page}
     .thead .kicker{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
     .thead h1{font-size:21pt;margin:2px 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
-    .gsec,.lsec,.wsec,.asec,.srcsec{margin:0 0 9mm;break-inside:avoid}
-    .lsec,.wsec,.asec{break-before:page}
+    .gsec,.lsec,.wsec,.asec,.srcsec{margin:0 0 9mm}   /* big sections may flow across pages */
+    .lsec,.wsec,.asec{break-before:page}               /* content, practice, assessment each start fresh */
 
     /* teaching guide */
     .why{border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:9px 12px;margin:0 0 10px;background:#faf6ee}
@@ -659,6 +677,7 @@ function openPrint(title, inner){
     .example:last-child{border-bottom:0}
     .show{border:1px dashed var(--teal);border-radius:8px;min-height:74px;padding:8px;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:9pt;color:var(--muted)}
     .etag{font-family:system-ui,sans-serif;font-size:7pt;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:800;margin-bottom:4px}
+    .say .etag{display:inline-block;margin:0 7px 0 0;vertical-align:1px} /* gap so "Say" isn't glued to the text */
     .etag.say{color:var(--gold)} .say{font-size:11pt}
 
     /* worksheet */
