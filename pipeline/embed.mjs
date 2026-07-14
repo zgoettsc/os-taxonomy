@@ -66,7 +66,9 @@ export async function embedDocuments(texts) {
   return out;
 }
 
-// Embed one search query (input_type=query).
+// Embed one search query (input_type=query). Fails fast: at generation time we
+// want to fall straight through to FTS-only retrieval if Voyage is throttled,
+// not block for minutes retrying (that's only worth it for the ingest batch).
 export async function embedQuery(text) {
-  return (await voyage([text], 'query'))[0];
+  return (await voyage([text], 'query', { retries: 0 }))[0];
 }
