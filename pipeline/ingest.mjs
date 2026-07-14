@@ -135,7 +135,11 @@ let inserted = 0;
 for (let i = 0; i < rows.length; i += 200) {
   const batch = rows.slice(i, i + 200);
   const res = await fetch(insertUrl, { method: 'POST', headers: { ...sbHeaders, Prefer: prefer }, body: JSON.stringify(batch) });
-  if (!res.ok) { console.error(`insert failed HTTP ${res.status}: ${await res.text()}`); process.exit(1); }
+  if (!res.ok) {
+    const body = await res.text();
+    if (body.includes('42P10')) console.error('\n>>> The (source, content_hash) unique index is missing. Apply db/corpus.sql in the Supabase SQL editor, or re-run with replace=true.\n');
+    console.error(`insert failed HTTP ${res.status}: ${body}`); process.exit(1);
+  }
   inserted += batch.length;
   console.log(`  ${replace ? 'inserted' : 'upserted'} ${inserted}/${rows.length}`);
 }
