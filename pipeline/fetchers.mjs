@@ -111,10 +111,12 @@ const ADAPTERS = {
   nasa: fetchNasa,
   loc: fetchLoc,
   smithsonian: fetchSmithsonian,
-  // corpus sources: retrieved from our ingested source_documents (hybrid FTS+vector)
-  coreknowledge: (t) => corpusRetrieve('coreknowledge', t),
-  ck12: (t) => corpusRetrieve('ck12', t),
-  openstax: (t) => corpusRetrieve('openstax', t),
+  // corpus sources: retrieved from our ingested source_documents (hybrid FTS+vector).
+  // k=8 (vs the default 3): these are deep multi-page units — pull a fuller slice
+  // of the real curriculum into grounding, not just the top few chunks.
+  coreknowledge: (t) => corpusRetrieve('coreknowledge', t, { k: 8 }),
+  ck12: (t) => corpusRetrieve('ck12', t, { k: 8 }),
+  openstax: (t) => corpusRetrieve('openstax', t, { k: 8 }),
 };
 
 // Honest per-source status, so the grounding dump shows exactly what each source
