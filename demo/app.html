@@ -158,6 +158,20 @@
   .prepdays:focus{outline:2px solid var(--navy);outline-offset:1px}
   .prepunit{font-size:.82rem;font-weight:700;color:var(--soft)}
   .seclabel{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:6px 0 -3px}
+  /* session preview (inline expander) */
+  .pvwrap{margin:0 0 10px}
+  .pvtoggle{display:flex;align-items:center;gap:7px;width:100%;justify-content:flex-start;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font:inherit;font-size:.78rem;font-weight:700;color:var(--navy);cursor:pointer}
+  .pvcaret{font-size:.7rem;width:9px;display:inline-block}
+  .pvbody{margin-top:8px}
+  .pvtopic{border-top:1px solid var(--line2);padding:9px 0} .pvtopic:first-child{border-top:0;padding-top:2px}
+  .pvtop{font-size:.9rem;margin-bottom:2px}
+  .pvdesc{font-size:.82rem;color:var(--soft);margin:2px 0 5px}
+  .pvfield{font-size:.8rem;color:var(--soft);margin:5px 0} .pvfield b{color:var(--ink);font-weight:700;display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;margin-bottom:1px}
+  .pvul{margin:2px 0 0;padding-left:16px} .pvul li{margin:2px 0}
+  .pvex{color:var(--ink);font-family:var(--disp);text-transform:none;letter-spacing:0}
+  .pvbadge{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--line);color:var(--faint);border-radius:20px;padding:1px 7px;margin-left:4px;vertical-align:1px}
+  .pvbadge.ok{color:var(--teal);border-color:var(--teal)}
+  .pvhint{font-size:.74rem;color:var(--faint);font-style:italic;margin:6px 0 0}
   /* history calendar */
   .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
   .histnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -545,8 +559,8 @@ function sessionCardsFrom(s){ return (s.topics||[]).map(t=>({ topic: TBYID.get(t
 function mkBtn(kind,label,fn){ const b=document.createElement("button"); b.className="btn "+kind; b.style.flex="0 0 auto"; b.style.fontSize=".8rem"; b.style.padding="8px 12px"; b.textContent=label; b.onclick=fn; return b; }
 function sectionLabel(text){ const d=document.createElement("div"); d.className="seclabel"; d.textContent=text; return d; }
 
-// One session rendered as a compact card (topics + a row of action buttons).
-function sessionCard(s, title, buttons){
+// One session rendered as a compact card (topics + optional preview + buttons).
+function sessionCard(s, title, buttons, preview){
   const cards=sessionCardsFrom(s); const subj=[...new Set(cards.map(c=>c.topic.subject))];
   const box=document.createElement("div"); box.className="card"; box.style.padding="14px";
   box.innerHTML=`<div style="width:100%">
@@ -555,9 +569,55 @@ function sessionCard(s, title, buttons){
     <ul class="crit" style="margin-bottom:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
     <div class="prow"></div></div>`;
   const prow=box.querySelector(".prow"); (buttons||[]).forEach(b=>prow.appendChild(b));
+  if(preview) prow.before(buildPreview(cards));
   return box;
 }
 function printButtons(s){ return [ mkBtn("ghost","Full packet",()=>printSession(s,"full")), mkBtn("ghost","Materials",()=>printSession(s,"materials")), mkBtn("ghost","New worksheets",()=>printSession(s,"worksheets")) ]; }
+
+// Collapsible "what's in this session" brief. Objectives + description show
+// instantly from the taxonomy; opening it lazily fetches the generated lesson to
+// fill in why-it-matters / watch-for / examples where we have them.
+function buildPreview(cards){
+  const wrap=document.createElement("div"); wrap.className="pvwrap";
+  const toggle=document.createElement("button"); toggle.className="pvtoggle";
+  toggle.innerHTML=`<span class="pvcaret">▸</span><span>Preview this session</span>`;
+  const body=document.createElement("div"); body.className="pvbody"; body.style.display="none";
+  let open=false, fetched=false, loading=false;
+  const N=()=>esc(CURRENT.kid.first_name);
+  function render(){
+    body.innerHTML=cards.map(({topic:t})=>{
+      const c=getContent(t.id); const st=SUBJ[t.subject]||{c:"var(--navy)"};
+      const desc=t.description?`<p class="pvdesc">${esc(t.description)}</p>`:"";
+      const ev=(Array.isArray(t.evidence)?t.evidence:[]).slice(0,3).map(e=>`<li>${esc(e)}</li>`).join("");
+      const obj=ev?`<div class="pvfield"><b>By the end, ${N()} can…</b><ul class="pvul">${ev}</ul></div>`:"";
+      let example=""; const math=sampleProblems(t);
+      if(math&&math.length) example=`<div class="pvfield"><b>Examples</b> <span class="pvex">${math.slice(0,3).map(esc).join(" · ")}</span></div>`;
+      let coach="";
+      if(c){
+        const p=c.parent||{};
+        if(!example){ const ex=c.student&&c.student.examples&&c.student.examples[0]; if(ex&&(ex.say||ex.show)) example=`<div class="pvfield"><b>Example</b> <span class="pvex">${esc(ex.say||ex.show)}</span></div>`; }
+        coach=(p.whyItMatters?`<div class="pvfield"><b>Why it matters</b> ${esc(p.whyItMatters)}</div>`:"")
+             +(p.watchFor&&p.watchFor[0]?`<div class="pvfield"><b>Watch for</b> ${esc(p.watchFor[0])}</div>`:"");
+      }
+      const badge=c?`<span class="pvbadge ok">Full lesson</span>`:(fetched?`<span class="pvbadge">Basics</span>`:"");
+      return `<div class="pvtopic"><div class="pvtop"><b style="color:${st.c}">${esc(glossName(t.name))}</b> <span class="faint">· ${esc(t.subject)}</span> ${badge}</div>${desc}${obj}${example}${coach}</div>`;
+    }).join("");
+    if(loading) body.insertAdjacentHTML("beforeend",`<p class="pvhint">Loading richer detail…</p>`);
+  }
+  toggle.onclick=async()=>{
+    open=!open; body.style.display=open?"block":"none"; toggle.classList.toggle("on",open);
+    toggle.querySelector(".pvcaret").textContent=open?"▾":"▸";
+    if(open){
+      if(!fetched && !loading){ loading=true; render();
+        try{ CONTENT=Object.assign(CONTENT, await fetchContent(cards.map(c=>c.topic.id))); }catch{}
+        fetched=true; loading=false;
+      }
+      render();
+    }
+  };
+  wrap.appendChild(toggle); wrap.appendChild(body);
+  return wrap;
+}
 
 function renderHome(){
   const kid=CURRENT.kid;
@@ -584,7 +644,7 @@ function renderHome(){
     wrap.appendChild(bar);
     q.forEach((s,i)=>{
       const title=i===0?"Next session":`Session ${i+1}`;
-      wrap.appendChild(sessionCard(s,title,[ mkBtn("primary","Start",()=>startSession(s)), ...printButtons(s), mkBtn("ghost","Cancel",()=>cancelPlanned(s)) ]));
+      wrap.appendChild(sessionCard(s,title,[ mkBtn("primary","Start",()=>startSession(s)), ...printButtons(s), mkBtn("ghost","Cancel",()=>cancelPlanned(s)) ], true));
     });
   } else {
     // Empty queue → a live look-ahead of the next few sessions. Start any of them,
@@ -607,6 +667,7 @@ function renderHome(){
           <h2 style="font-size:${i===0?"1.25rem":"1.05rem"};margin:0">${cards.length} topic${cards.length>1?"s":""} · ${subj.map(esc).join(", ")}</h2>
           <ul class="crit" style="margin-top:8px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
           <div class="prow"></div>`;
+        box.querySelector(".prow").before(buildPreview(cards));
         box.querySelector(".prow").appendChild(mkBtn("primary",i===0?"Start session":"Start this one",()=>startComposed(cards)));
         wrap.appendChild(box);
       });
