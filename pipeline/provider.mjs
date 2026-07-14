@@ -131,6 +131,60 @@ export async function claudeProvider() {
   };
 }
 
+// ---- practice generation: auto-checkable items grounded in a topic's facts ----
+const PRACTICE_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['items'],
+  properties: {
+    items: { type: 'array', minItems: 1, items: {
+      type: 'object', additionalProperties: false, required: ['kind', 'prompt'],
+      properties: {
+        kind: { type: 'string' },            // 'mcq' | 'short'
+        prompt: { type: 'string' },
+        choices: { type: 'array', items: { type: 'string' } }, // mcq
+        answerIndex: { type: 'integer' },                       // mcq
+        answer: { type: 'string' },                             // short
+      },
+    } },
+  },
+};
+
+// A provider that can make more practice on demand, grounded in `facts` (the
+// topic's already-stored cited spans). Returns [{kind,prompt,choices?,answerIndex?,answer?}].
+export async function practiceProvider(name) {
+  if (name !== 'claude') {
+    return { name: 'mock', async generatePractice({ topic, count = 6 }) {
+      return Array.from({ length: count }, (_, i) => ({ kind: 'short', prompt: `About ${topic.name}: sample question ${i + 1}?`, answer: 'sample' }));
+    } };
+  }
+  let Anthropic;
+  try { ({ default: Anthropic } = await import('@anthropic-ai/sdk')); }
+  catch { throw new Error('claude practice provider needs @anthropic-ai/sdk installed'); }
+  const client = new Anthropic();
+  return {
+    name: 'claude',
+    async generatePractice({ topic, facts, count = 8, avoid = [] }) {
+      const system =
+        'You write short, AUTO-CHECKABLE practice questions for a child, GROUNDED ONLY in the provided facts.\n'
+        + 'Each item is either multiple-choice (kind "mcq" with exactly 3 choices and an answerIndex 0-2) '
+        + 'or exact fill-in (kind "short" with a concise, unambiguous answer).\n'
+        + 'Rules: (1) every question AND its answer must be directly supported by the facts — never invent. '
+        + '(2) Keep wording at the child\'s age. (3) For mcq, make the wrong choices plausible but clearly wrong. '
+        + '(4) Do NOT reuse any prompt in the avoid list; vary what you ask across the different facts.';
+      const user =
+        `TOPIC: ${topic.name}\nAGE: ${topic.ageRangeStart}-${topic.ageRangeEnd}\nMAKE: ${count} fresh items\n\n`
+        + `FACTS (write only from these):\n${(facts || []).map((f) => '- ' + f).join('\n')}\n\n`
+        + `AVOID repeating these prompts:\n${(avoid || []).slice(0, 80).map((a) => '- ' + a).join('\n') || '(none yet)'}`;
+      const res = await client.messages.create({
+        model: 'claude-opus-4-8', max_tokens: 6000, system,
+        messages: [{ role: 'user', content: user }],
+        output_config: { format: { type: 'json_schema', schema: PRACTICE_SCHEMA } },
+      });
+      const text = res.content.find((b) => b.type === 'text')?.text || '{}';
+      return JSON.parse(text).items || [];
+    },
+  };
+}
+
 export async function getProvider(name) {
   if (name === 'claude') return claudeProvider();
   return mockProvider();
