@@ -276,6 +276,12 @@ const allow = (childId, topicId, val) => {
   val ? s.add(topicId) : s.delete(topicId);
   localStorage.setItem(k, JSON.stringify([...s]));
 };
+// New topics per subject in each session (1–3), parent-set, stored per child.
+const persub = (childId, val) => {
+  const k = "persub:"+childId;
+  if (val===undefined){ const v=Number(localStorage.getItem(k)); return (v>=1&&v<=3)?v:1; }
+  localStorage.setItem(k, String(Math.max(1, Math.min(3, val))));
+};
 
 // ---- Supabase REST/Auth via plain fetch ----
 let session = null;  // {access_token, refresh_token, user}
@@ -342,22 +348,21 @@ function readyBySubject(topics, hardPrereqs, age, mastered, childId){
   ready.sort((a,b)=>(b.centrality||0)-(a.centrality||0) || a.age_range_start-b.age_range_start);
   const bySub={}; for(const t of ready)(bySub[t.subject] ||= []).push(t); return bySub;
 }
-function composeSession(topics, hardPrereqs, age, mastered, childId, size=6, seed=0){
+// A session = `perSubject` NEW topics from each ready subject, interleaved
+// (breadth-first). Per the learning-science plan a sitting is a small dose of new
+// material — default 1 per subject (age 4 → one English + one Math). Reviews layer
+// on later once the spaced-repetition scheduler is built.
+function composeSession(topics, hardPrereqs, age, mastered, childId, perSubject=1, seed=0){
   const bySub = readyBySubject(topics, hardPrereqs, age, mastered, childId);
   // Subjects that actually have something ready, in CORE-first order.
   const order = [...CORE, ...ROTATE].filter(s=>bySub[s] && bySub[s].length);
-  // Each subject gets a queue of its distinct ready topics, rotated by the day seed.
+  // Each subject gets a queue of its distinct ready topics, rotated by the seed.
   const q={};
   for(const s of order){ const l=bySub[s], off=l.length?seed%l.length:0; q[s]=l.slice(off).concat(l.slice(0,off)); }
-  // Round-robin: take one per subject each pass → breadth first, repeat a subject
-  // only once every other subject has been exhausted.
-  const cards=[]; let progressed=true;
-  while(cards.length<size && progressed){
-    progressed=false;
-    for(const s of order){
-      if(cards.length>=size) break;
-      if(q[s].length){ cards.push(q[s].shift()); progressed=true; }
-    }
+  // `perSubject` breadth-first passes: one per subject each pass, up to perSubject each.
+  const cards=[];
+  for(let pass=0; pass<perSubject; pass++){
+    for(const s of order){ if(q[s].length) cards.push(q[s].shift()); }
   }
   return cards.map(t=>({topic:t, ...laneOf(t)}));
 }
@@ -493,6 +498,7 @@ async function loadTaxonomy(age){
 let MASTERED=new Set();     // topic ids the child has mastered (excluded from new work)
 let SESSIONS=[];            // every persisted session for the open child
 let PREPN=3;                // how many sessions "prepare ahead" adds to the queue
+let PVSEED=0;               // shuffle offset for the look-ahead preview
 let HISTMON=null;           // yyyy-mm shown in the history calendar
 let HISTSEL=null;           // yyyy-mm-dd selected in the history calendar
 const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
@@ -581,22 +587,31 @@ function renderHome(){
       wrap.appendChild(sessionCard(s,title,[ mkBtn("primary","Start",()=>startSession(s)), ...printButtons(s), mkBtn("ghost","Cancel",()=>cancelPlanned(s)) ]));
     });
   } else {
-    const cards=composeNext();
-    if(!cards.length){
+    // Empty queue → a live look-ahead of the next few sessions. Start any of them,
+    // or Shuffle to reroll the lineup. (Prepare-ahead below locks them in for print.)
+    const list=previewList(3);
+    if(!list.length){
       const n=document.createElement("div"); n.className="note";
       n.textContent = MASTERED.size ? `All of ${kid.first_name}'s ready topics are done for now — wonderful progress!` : `The Marble curriculum starts at about age 4. When ${kid.first_name} is ready, sessions appear here.`;
       wrap.appendChild(n);
     } else {
-      const subj=[...new Set(cards.map(c=>c.topic.subject))];
-      const pv=document.createElement("div"); pv.className="brief";
-      pv.innerHTML=`<p class="eyebrow" style="color:var(--gold)">Next session · preview</p>
-        <h2>${cards.length} things across ${subj.length} subject${subj.length>1?"s":""}</h2>
-        <div class="counts">${subj.map(x=>`<span class="pill">${SUBJ[x]?.e||""} ${esc(x)}</span>`).join("")}</div>
-        <ul class="crit" style="margin-top:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
-        <div class="actions"><button class="btn primary">Start session</button></div>
-        <p class="faint" style="font-size:.72rem;margin:8px 0 0">Starting stamps today's date and unlocks the full materials.</p>`;
-      pv.querySelector(".btn").onclick=()=>startComposed(cards);
-      wrap.appendChild(pv);
+      const bar=document.createElement("div"); bar.className="prow"; bar.style.marginBottom="2px";
+      bar.appendChild(mkBtn("ghost","🔀 Shuffle",()=>{ PVSEED++; renderHome(); }));
+      wrap.appendChild(bar);
+      list.forEach((cards,i)=>{
+        const subj=[...new Set(cards.map(c=>c.topic.subject))];
+        const box=document.createElement("div"); box.className=i===0?"brief":"card";
+        const eyebrow=i===0?`<p class="eyebrow" style="color:var(--gold)">Next session · preview</p>`:`<div class="seclabel" style="margin:0 0 6px">Then</div>`;
+        box.innerHTML=`${eyebrow}
+          <h2 style="font-size:${i===0?"1.25rem":"1.05rem"}">${cards.length} topic${cards.length>1?"s":""} · ${subj.map(esc).join(", ")}</h2>
+          <ul class="crit" style="margin-top:8px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
+          <div class="prow"></div>`;
+        box.querySelector(".prow").appendChild(mkBtn("primary",i===0?"Start session":"Start this one",()=>startComposed(cards)));
+        wrap.appendChild(box);
+      });
+      const hint=document.createElement("p"); hint.className="faint"; hint.style.cssText="font-size:.72rem;margin:2px 2px 0";
+      hint.textContent="Starting stamps today's date and unlocks the full materials. Prepare ahead to lock these in and print.";
+      wrap.appendChild(hint);
     }
   }
 
@@ -616,7 +631,16 @@ function renderHome(){
 }
 
 // ---- start / compose / queue ops ----
-function composeNext(extra){ const excl=new Set([...MASTERED, ...reservedTopics(), ...(extra||[])]); return composeSession(TOPICS, HARD, CURRENT.age, excl, CURRENT.kid.id, 6, seedFor(todayStr())); }
+// The next few PROSPECTIVE sessions (composed on the fly, non-overlapping) so the
+// parent can look ahead and start whichever they like — without formally queueing.
+function previewList(n){
+  const excl=new Set([...MASTERED, ...reservedTopics()]); const out=[];
+  for(let i=0;i<n;i++){
+    const cards=composeSession(TOPICS, HARD, CURRENT.age, excl, CURRENT.kid.id, persub(CURRENT.kid.id), (seedFor(todayStr())+PVSEED+i)%7);
+    if(!cards.length) break; out.push(cards); for(const c of cards) excl.add(c.topic.id);
+  }
+  return out;
+}
 
 async function persistSession(row){
   const saved=await sb(`/rest/v1/sessions`,{method:"POST",body:row,prefer:"return=representation"});
@@ -672,7 +696,7 @@ async function prepareSessions(n){
   const pbtn=document.querySelector(".prep .btn.primary"); if(pbtn){ pbtn.textContent="Preparing…"; pbtn.disabled=true; }
   try{
     for(let i=0;i<n;i++){
-      const cards=composeSession(TOPICS, HARD, CURRENT.age, excl, kid.id, 6, (pos+1)%7);
+      const cards=composeSession(TOPICS, HARD, CURRENT.age, excl, kid.id, persub(kid.id), (pos+1)%7);
       if(!cards.length) break;
       const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
       pos+=1;
@@ -841,6 +865,11 @@ function renderSettings(){
   for(const kid of KIDS){
     const g=document.createElement("div"); g.className="setgroup";
     g.innerHTML=`<div class="gh"><div class="ava">${esc(kid.avatar||initials(kid.first_name))}</div><div class="nm">${esc(kid.first_name)}</div></div>`;
+    const sz=document.createElement("div"); sz.className="gate"; sz.style.border="0"; sz.style.borderRadius="0";
+    sz.innerHTML=`<div class="lbl"><b>New topics per subject</b><br><span class="faint" style="font-size:.76rem">Topics from each ready subject in one session. 1 keeps sittings short (age 4 → one English + one Math).</span></div>
+      <input class="prepdays" type="number" min="1" max="3" step="1" value="${persub(kid.id)}" aria-label="New topics per subject">`;
+    sz.querySelector("input").onchange=(ev)=>{ persub(kid.id, Math.round(Number(ev.target.value))||1); ev.target.value=persub(kid.id); };
+    g.appendChild(sz);
     for(const [id,info] of Object.entries(GATED)){
       const on=allow(kid.id,id);
       const el=document.createElement("div"); el.className="gate"; el.style.border="0"; el.style.borderRadius="0";
