@@ -106,6 +106,18 @@ for (const doc of docs) {
 console.log(`Total passages: ${passages.length}`);
 if (!passages.length) process.exit(1);
 
+// Drop duplicate passages: a unit's PDFs repeat boilerplate (standards text,
+// headers, answer keys), so identical chunks recur. Dedupe by content_hash so we
+// never embed or insert the same passage twice (which also collides on the
+// (source, content_hash) unique index).
+{
+  const seen = new Set();
+  const uniq = passages.filter((p) => (seen.has(p.content_hash) ? false : (seen.add(p.content_hash), true)));
+  const dropped = passages.length - uniq.length;
+  if (dropped) console.log(`Deduped ${dropped} duplicate passage(s) -> ${uniq.length} unique.`);
+  passages.length = 0; passages.push(...uniq);
+}
+
 // --- embed (optional) ---
 let embeddings = null;
 try {
