@@ -150,6 +150,33 @@
   .dayhead h3{font-size:1.05rem}
   .schip{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border:1px solid;border-radius:20px;padding:2px 8px}
   .prow{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  /* prepare-ahead (road trip) */
+  .prep{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:9px 12px}
+  .preplabel{font-size:.82rem;font-weight:700;color:var(--soft)}
+  .prepbtns{display:flex;gap:6px;margin-left:auto}
+  /* assessment modal */
+  .modal{position:fixed;inset:0;background:rgba(20,26,46,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+  @media(min-width:520px){.modal{align-items:center;padding:20px}}
+  .sheet{background:var(--card);width:100%;max-width:440px;max-height:92vh;display:flex;flex-direction:column;border-radius:22px 22px 0 0;overflow:hidden;box-shadow:0 -8px 40px rgba(20,26,46,.3)}
+  @media(min-width:520px){.sheet{border-radius:22px}}
+  .mhead{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line2)}
+  .mhead b{font-size:1.1rem}
+  .mx{background:none;border:0;font-size:1.1rem;color:var(--faint);cursor:pointer;line-height:1;padding:4px}
+  .mbody{padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+  .mfoot{display:flex;gap:8px;padding:13px 18px;border-top:1px solid var(--line2)}
+  .mfoot .btn{flex:1}
+  .ablock{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 13px}
+  .atop{margin-bottom:8px} .atop b{font-size:.98rem}
+  .aitem{margin:9px 0;padding-top:9px;border-top:1px solid var(--line2)}
+  .aitem:first-of-type{border-top:0;padding-top:0}
+  .ap{font-size:.86rem;font-weight:600;margin-bottom:6px}
+  .rc{display:flex;align-items:flex-start;gap:8px;margin:5px 0;font-size:.83rem;color:var(--soft);cursor:pointer;line-height:1.35}
+  .rc input{margin-top:2px;width:16px;height:16px;accent-color:var(--teal);flex:none}
+  .aresult{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:.8rem;font-weight:700;color:var(--soft)}
+  .rbtn{font:inherit;font-size:.78rem;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--soft);border-radius:20px;padding:5px 11px;cursor:pointer}
+  .rbtn.on[data-v="mastered"]{background:var(--teal);border-color:var(--teal);color:#fff}
+  .rbtn.on[data-v="learning"]{background:var(--gold);border-color:var(--gold);color:#fff}
+  .rauto{color:var(--faint);font-weight:600;margin-left:auto}
 </style>
 </head>
 <body>
@@ -447,6 +474,7 @@ const todayStr=()=>ymd(new Date());
 const dayNum=(x)=>Math.floor(new Date(x+"T00:00:00").getTime()/864e5);
 const seedFor=(x)=>((dayNum(x)%7)+7)%7;
 const dLabel=(x)=>{ const d=new Date(x+"T00:00:00"); return d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}); };
+const addDays=(x,k)=>{ const d=new Date(x+"T00:00:00"); d.setDate(d.getDate()+k); return ymd(d); };
 
 async function loadMastery(childId){
   try{ const rows=await sb(`/rest/v1/mastery?select=topic_id,status&child_id=eq.${childId}&status=eq.mastered&limit=5000`);
@@ -493,7 +521,10 @@ function renderCalendar(){
     `<div class="week">`+strip.map(x=>`<button class="cday ${x===SELDATE?"on":""} ${x===t0?"today":""}" data-d="${x}">
         <span class="cdow">${dow(x)}</span><span class="cn">${dnum(x)}</span>${dotFor(x)}</button>`).join("")+`</div>`;
   document.getElementById("homeCounts").querySelectorAll(".cday").forEach(b=>b.onclick=()=>{ SELDATE=b.dataset.d; renderCalendar(); });
-  document.getElementById("homeActions").innerHTML="";
+  const pa=document.getElementById("homeActions");
+  pa.innerHTML=`<div class="prep"><span class="preplabel">🧳 Road trip? Prepare &amp; print ahead</span><span class="prepbtns"></span></div>`;
+  const pb=pa.querySelector(".prepbtns");
+  [3,5,7].forEach(n=>pb.appendChild(mkBtn("ghost",`${n} days`,()=>prepareAndPrint(n))));
   renderDay(SELDATE);
 }
 
@@ -520,7 +551,7 @@ function renderDay(date){
     const prow=box.querySelector(".prow");
     if(s.status==="planned"){ prow.appendChild(mkBtn("primary","Start session",()=>markSession(s,"started"))); }
     else {
-      if(s.status==="started"){ prow.appendChild(mkBtn("primary","Done teaching · complete",()=>completeSession(s))); }
+      if(s.status==="started"){ prow.appendChild(mkBtn("primary","Done teaching · Assess",()=>openAssess(s))); }
       prow.appendChild(mkBtn("ghost","Full packet",()=>printSession(s,"full")));
       prow.appendChild(mkBtn("ghost","Materials",()=>printSession(s,"materials")));
       prow.appendChild(mkBtn("ghost","New worksheets",()=>printSession(s,"worksheets")));
@@ -550,7 +581,7 @@ function renderDay(date){
   }
   if(!isToday && !day.length){
     const n=document.createElement("div"); n.className="note faint";
-    n.textContent = isPast ? "No session on this day." : "No session planned yet. (Prepare-ahead for road trips is coming next.)";
+    n.textContent = isPast ? "No session on this day." : "No session planned yet. Use “Prepare & print ahead” above to plan several days at once.";
     wrap.appendChild(n);
   }
 }
@@ -576,16 +607,123 @@ async function markSession(s, status){
     renderCalendar();
   }catch(e){ alert(e.message); }
 }
-async function completeSession(s){
-  if(!confirm(`Mark this session complete for ${CURRENT.kid.first_name}? This records the topics as mastered.`)) return;
-  try{
-    await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"completed", completed_at:new Date().toISOString()}});
-    const rows=(s.topics||[]).map(t=>({child_id:CURRENT.kid.id, topic_id:t.topicId, status:"mastered", last_reviewed_at:new Date().toISOString()}));
-    if(rows.length){ await fetch(`${SUPABASE_URL}/rest/v1/mastery?on_conflict=child_id,topic_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)}); }
-    await Promise.all([loadMastery(CURRENT.kid.id), loadSessions(CURRENT.kid.id)]);
-    renderCalendar();
-  }catch(e){ alert("Couldn't complete: "+e.message); }
+
+// ---- Prepare & print ahead (road trip) ----
+// Plan the next N days at once. Each empty day gets one session; topics are
+// non-overlapping ACROSS the whole range (nothing gets taught twice) and exclude
+// already-mastered work. Days that already have sessions are left as-is and folded
+// into the printout. Newly created ones are saved as 'planned' so they show on the
+// calendar; the parent still taps Start on the day to begin & assess.
+async function prepareRange(startDate, nDays){
+  const kid=CURRENT.kid; const made=[]; const exclude=new Set(); let created=0;
+  for(let i=0;i<nDays;i++){
+    const date=addDays(startDate,i); const existing=sessionsOn(date);
+    if(existing.length){ for(const s of existing){ made.push(s); for(const t of (s.topics||[])) exclude.add(t.topicId); } continue; }
+    const cards=composeSession(TOPICS, HARD, CURRENT.age, new Set([...MASTERED, ...exclude]), kid.id, 6, seedFor(date));
+    if(!cards.length) continue;
+    const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
+    const s=await persistSession({child_id:kid.id, for_date:date, seq:1, topics, status:"planned"});
+    if(s){ made.push(s); created++; for(const t of topics) exclude.add(t.topicId); }
+  }
+  made.sort((a,b)=>a.for_date<b.for_date?-1:a.for_date>b.for_date?1:a.seq-b.seq);
+  return {made, created};
 }
+async function prepareAndPrint(nDays){
+  const pa=document.getElementById("homeActions");
+  const keep=pa.innerHTML; pa.innerHTML=`<div class="prep"><span class="preplabel">Preparing ${nDays} days…</span></div>`;
+  try{
+    const {made, created}=await prepareRange(todayStr(), nDays);
+    if(!made.length){ alert("Nothing to prepare — every ready topic is already planned or mastered."); return; }
+    const allCards=made.flatMap(s=>sessionCardsFrom(s));
+    CONTENT=Object.assign(CONTENT, await fetchContent(allCards.map(c=>c.topic.id)));
+    const bank=await fetchPractice(allCards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+    openPrint(`${CURRENT.kid.first_name} — ${nDays}-day plan`, buildRangePacket(CURRENT.kid, made, bank));
+  }catch(e){ alert("Couldn't prepare: "+e.message); }
+  finally{ renderCalendar(); }
+}
+// One binder-ready document: a cover, then per-day divider pages, then each topic's
+// full materials (guide + lesson + worksheet + assessment), and a single answer key.
+function buildRangePacket(kid, made, bank){
+  bank=bank||{};
+  const N=esc(kid.first_name);
+  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
+  const keys=[];
+  const allSub=[...new Set(made.flatMap(s=>(s.topics||[]).map(t=>t.subject)))];
+  const totalTopics=made.reduce((n,s)=>n+(s.topics||[]).length,0);
+  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s learning plan</h1>
+    <div class="day">${dLabel(made[0].for_date)} → ${dLabel(made[made.length-1].for_date)} · ${made.length} day${made.length>1?"s":""} · ${totalTopics} topics</div>
+    <div class="subs">${allSub.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
+  const body=made.map((s,di)=>{
+    const cards=sessionCardsFrom(s); const subs=[...new Set(cards.map(c=>c.topic.subject))];
+    const band=`<section class="dayband"><div class="dbnum">Day ${di+1}${s.seq>1?` · session ${s.seq}`:""}</div><h2>${dLabel(s.for_date)}</h2>
+      <div class="dbsubs">${cards.length} topic${cards.length>1?"s":""} · ${subs.map(esc).join(" · ")}</div></section>`;
+    return band+cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,"full",bank)).join("");
+  }).join("");
+  let keySec="";
+  if(keys.length) keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
+    keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
+  const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
+  return cover+body+keySec+foot;
+}
+// Done teaching -> interactive assessment. The parent works the rubric (the
+// "Show what you know" items we already generate); checking all criteria for a
+// topic auto-sets it mastered, otherwise "keep practicing" — and the parent can
+// override either way. Submitting records mastery and completes the session.
+function openAssess(s){
+  const kid=CURRENT.kid; const cards=sessionCardsFrom(s);
+  fetchContent(cards.map(c=>c.topic.id)).then(m=>{ CONTENT=Object.assign(CONTENT,m); render(); });
+  function render(){
+    const state=cards.map(c=>({topic:c.topic, checks:{}, result:null, auto:null}));
+    const totals=state.map(st=>{ const c=getContent(st.topic.id); const items=(c&&c.assessment&&c.assessment.items)||[]; return items.reduce((n,it)=>n+((it.rubric||[]).length),0); });
+    const ov=document.createElement("div"); ov.className="modal";
+    ov.innerHTML=`<div class="sheet">
+      <div class="mhead"><b class="disp">Assess · ${esc(kid.first_name)}</b><button class="mx" aria-label="close">✕</button></div>
+      <div class="mbody"></div>
+      <div class="mfoot"><button class="btn ghost mcancel">Cancel</button><button class="btn primary msave">Record &amp; complete</button></div></div>`;
+    const body=ov.querySelector(".mbody");
+    state.forEach((st,ti)=>{
+      const c=getContent(st.topic.id); const items=(c&&c.assessment&&c.assessment.items)||[];
+      const block=document.createElement("div"); block.className="ablock";
+      let inner=`<div class="atop"><b>${esc(glossName(st.topic.name))}</b> <span class="faint">· ${esc(st.topic.subject)}</span></div>`;
+      if(items.length){
+        inner+=items.map((it,ii)=>{
+          const rub=(it.rubric||[]).map((r,ri)=>`<label class="rc"><input type="checkbox" data-t="${ti}" data-k="${ii}_${ri}"> <span>${esc(r)}</span></label>`).join("");
+          return `<div class="aitem"><div class="ap">${esc(it.prompt)}</div>${rub}</div>`;
+        }).join("");
+      } else {
+        inner+=`<div class="faint" style="font-size:.82rem;margin:6px 0">No rubric for this topic — just mark whether ${esc(kid.first_name)} has it.</div>`;
+      }
+      inner+=`<div class="aresult">Result: <button class="rbtn" data-t="${ti}" data-v="mastered">Mastered</button><button class="rbtn" data-t="${ti}" data-v="learning">Keep practicing</button><span class="rauto" data-t="${ti}"></span></div>`;
+      block.innerHTML=inner; body.appendChild(block);
+    });
+    function recompute(ti){
+      const st=state[ti], total=totals[ti];
+      const checked=Object.values(st.checks).filter(Boolean).length;
+      st.auto = total>0 ? (checked===total?"mastered":"learning") : null;
+      const autoEl=ov.querySelector(`.rauto[data-t="${ti}"]`);
+      if(autoEl) autoEl.textContent = total ? `${checked}/${total} checked` : "";
+      const eff = st.result || st.auto || "learning";
+      ov.querySelectorAll(`.rbtn[data-t="${ti}"]`).forEach(b=>b.classList.toggle("on", b.dataset.v===eff));
+    }
+    body.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.onchange=()=>{ const ti=+cb.dataset.t; state[ti].checks[cb.dataset.k]=cb.checked; if(state[ti].result) state[ti].result=null; recompute(ti); });
+    body.querySelectorAll(".rbtn").forEach(b=>b.onclick=()=>{ const ti=+b.dataset.t; state[ti].result=b.dataset.v; recompute(ti); });
+    state.forEach((_,ti)=>recompute(ti));
+    const close=()=>ov.remove();
+    ov.querySelector(".mx").onclick=close; ov.querySelector(".mcancel").onclick=close;
+    ov.onclick=(e)=>{ if(e.target===ov) close(); };
+    ov.querySelector(".msave").onclick=async()=>{
+      const rows=state.map(st=>({child_id:kid.id, topic_id:st.topic.id, status:(st.result||st.auto||"learning"), last_reviewed_at:new Date().toISOString()}));
+      try{
+        await fetch(`${SUPABASE_URL}/rest/v1/mastery?on_conflict=child_id,topic_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)});
+        await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"completed", completed_at:new Date().toISOString()}});
+        await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
+        close(); renderCalendar();
+      }catch(e){ alert("Couldn't save: "+e.message); }
+    };
+    document.body.appendChild(ov);
+  }
+}
+
 async function printSession(s, mode){
   const cards=sessionCardsFrom(s);
   CONTENT=Object.assign(CONTENT, await fetchContent(cards.map(c=>c.topic.id)));
@@ -771,6 +909,12 @@ function openPrint(title, inner){
     .cover .brand{font-family:system-ui,sans-serif;font-weight:800;letter-spacing:.22em;font-size:10pt;color:var(--gold)}
     .cover h1{font-size:26pt;margin:4px 0 3px} .cover .day{color:var(--muted);font-family:system-ui,sans-serif;font-size:10pt}
     .cover .subs{margin-top:9px} .chip{font-family:system-ui,sans-serif;font-size:8.5pt;font-weight:700;border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin-right:5px;color:var(--muted)}
+
+    /* per-day divider page in a prepared range (road-trip binder) */
+    .dayband{break-before:page;border-bottom:2px solid var(--navy);padding-bottom:6mm;margin-bottom:2mm}
+    .dayband .dbnum{font-family:system-ui,sans-serif;font-weight:800;letter-spacing:.18em;text-transform:uppercase;font-size:9pt;color:var(--navy)}
+    .dayband h2{font-size:22pt;margin:3px 0 4px}
+    .dayband .dbsubs{font-family:system-ui,sans-serif;font-size:9.5pt;color:var(--muted)}
 
     /* cover alone on page 1; each topic's teaching guide starts its own page */
     .topic{break-before:page}
