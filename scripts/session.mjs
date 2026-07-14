@@ -67,24 +67,20 @@ const ROTATE = ['History', 'Personal & Social Development', 'Life Skills', 'Comp
 export function composeSession(topics, deps, age, opts = {}) {
   const { mastered = new Set(), size = 6, seed = 0, gates } = opts;
   const bySubject = readyBySubject(topics, deps, age, { mastered, gates });
-  const pick = {}; // subject -> next index
-  const take = (subject) => {
-    const list = bySubject[subject]; if (!list || !list.length) return null;
-    const i = (pick[subject] ?? (seed % list.length)); pick[subject] = i + 1;
-    return list[i % list.length];
-  };
+  // Subjects with something ready, CORE-first; each gets a distinct-topic queue
+  // rotated by the day seed. Round-robin one per subject → breadth before repeats.
+  const order = [...CORE, ...ROTATE].filter((s) => bySubject[s]?.length);
+  const q = {};
+  for (const s of order) { const l = bySubject[s], off = l.length ? seed % l.length : 0; q[s] = l.slice(off).concat(l.slice(0, off)); }
 
-  const cards = [];
-  for (const s of CORE) { const t = take(s); if (t) cards.push(t); }        // core three
-  const rot = ROTATE.filter((s) => bySubject[s]?.length);                    // whatever's available
-  for (let i = 0; cards.length < size && rot.length; i++) {                  // fill by rotation
-    const t = take(rot[(seed + i) % rot.length]);
-    if (t) cards.push(t); else rot.splice((seed + i) % rot.length, 1), i--;
-    if (i > size * 4) break;
+  const cards = []; let progressed = true;
+  while (cards.length < size && progressed) {
+    progressed = false;
+    for (const s of order) {
+      if (cards.length >= size) break;
+      if (q[s].length) { cards.push(q[s].shift()); progressed = true; }
+    }
   }
-  // Top up from core subjects if a small child has few rotate subjects ready.
-  for (let i = 0; cards.length < size; i++) { const t = take(CORE[i % CORE.length]); if (!t) break; cards.push(t); }
-
   return cards.map((t) => ({ topic: t, ...laneOf(t) }));
 }
 

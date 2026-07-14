@@ -249,6 +249,10 @@ async function refreshSession(){
 
 // ---- American-English normalizer (display-time; the taxonomy is UK-authored) ----
 const AMAP = {"maths":"math","centres":"centers","recognise":"recognize","capitalise":"capitalize","recognising":"recognizing","regularised":"regularized","mum":"mom","grey":"gray","colour":"color","travelling":"traveling","capitalisation":"capitalization","practise":"practice","practised":"practiced","organised":"organized","programme":"program","favourite":"favorite","summarise":"summarize","labours":"labors","summarising":"summarizing","emphasises":"emphasizes","synthesise":"synthesize","emphasised":"emphasized","synthesising":"synthesizing","synthesises":"synthesizes","organisation":"organization","humour":"humor","behaviour":"behavior","metre":"meter","organise":"organize","hypothesising":"hypothesizing","neighbour":"neighbor","plough":"plow","licence":"license","categorising":"categorizing","colours":"colors","tick":"check","organising":"organizing","signalling":"signaling","jewellery":"jewelry","mummy":"mommy","specialised":"specialized","labour":"labor","specialise":"specialize","neighbours":"neighbors","neighbouring":"neighboring","honour":"honor","theatre":"theater","honouring":"honoring","favours":"favors","centre":"center","defence":"defense","travelled":"traveled","prioritising":"prioritizing","biscuits":"cookies","labelled":"labeled","litre":"liter","litres":"liters","modelling":"modeling","visualising":"visualizing","labelling":"labeling","generalising":"generalizing","generalise":"generalize","metres":"meters","generalisation":"generalization","analogue":"analog","coloured":"colored","minimise":"minimize","behaviours":"behaviors","rumours":"rumors","practising":"practicing","minimising":"minimizing","recognises":"recognizes","ticks":"checks","prioritise":"prioritize","summarises":"summarizes","vapour":"vapor","recognised":"recognized","lustre":"luster","fibre":"fiber","categorises":"categorizes","characterised":"characterized","rubber":"eraser","flavours":"flavors","odours":"odors","favour":"favor","full stop":"period","full stops":"periods"};
+// Friendly gloss for topic names that use correct-but-unfamiliar jargon, so a
+// parent isn't stumped by a technical term. Display-only; the taxonomy is unchanged.
+const GLOSS = { "onsets & rimes":"word families", "onsets and rimes":"word families" };
+function glossName(name){ const g=GLOSS[String(name||"").toLowerCase().trim()]; return g ? `${name} (${g})` : name; }
 const AKEYS = Object.keys(AMAP).sort((a,b)=>b.length-a.length);
 function amz(text){ if(typeof text!=="string") return text; let out=text;
   for(const k of AKEYS){ const re=new RegExp("\\b"+k.replace(/ /g,"\\s+")+"\\b","gi");
@@ -279,16 +283,21 @@ function readyBySubject(topics, hardPrereqs, age, mastered, childId){
 }
 function composeSession(topics, hardPrereqs, age, mastered, childId, size=6, seed=0){
   const bySub = readyBySubject(topics, hardPrereqs, age, mastered, childId);
-  const pick={}; const take=s=>{const l=bySub[s]; if(!l||!l.length)return null; const i=(pick[s]??(seed%l.length)); pick[s]=i+1; return l[i%l.length];};
-  const cards=[];
-  for(const s of CORE){const t=take(s); if(t)cards.push(t);}
-  let rot=ROTATE.filter(s=>bySub[s]&&bySub[s].length);
-  for(let i=0; cards.length<size && rot.length; i++){
-    const t=take(rot[(seed+i)%rot.length]);
-    if(t)cards.push(t); else {rot.splice((seed+i)%rot.length,1); i--;}
-    if(i>size*4)break;
+  // Subjects that actually have something ready, in CORE-first order.
+  const order = [...CORE, ...ROTATE].filter(s=>bySub[s] && bySub[s].length);
+  // Each subject gets a queue of its distinct ready topics, rotated by the day seed.
+  const q={};
+  for(const s of order){ const l=bySub[s], off=l.length?seed%l.length:0; q[s]=l.slice(off).concat(l.slice(0,off)); }
+  // Round-robin: take one per subject each pass → breadth first, repeat a subject
+  // only once every other subject has been exhausted.
+  const cards=[]; let progressed=true;
+  while(cards.length<size && progressed){
+    progressed=false;
+    for(const s of order){
+      if(cards.length>=size) break;
+      if(q[s].length){ cards.push(q[s].shift()); progressed=true; }
+    }
   }
-  for(let i=0; cards.length<size; i++){const t=take(CORE[i%CORE.length]); if(!t)break; cards.push(t);}
   return cards.map(t=>({topic:t, ...laneOf(t)}));
 }
 
@@ -463,7 +472,7 @@ function renderHome(kid, age, topics, hard, seed){
         <div class="tag" style="background:${st.bg}">${st.e}</div>
         <div class="meta">
           <div class="sj" style="color:${st.c}">${esc(t.subject)}</div>
-          <div class="nm">${esc(t.name)}</div>
+          <div class="nm">${esc(glossName(t.name))}</div>
           <div class="dm">${esc(t.domain||"")} · ages ${t.age_range_start}–${t.age_range_end}</div>
         </div>
         <div class="lane ${lane}">${lane}</div>
@@ -567,7 +576,7 @@ function topicPacket(kid, t, lane, fill, N, keys){
     if(mathProbs){ ws=`<div class="wsec"><div class="eyebrow"><span class="num">✎</span> Practice</div><h2>${esc(t.name)}</h2>
         <div class="mgrid">`+mathProbs.map((p,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${p.q} <u></u></div>`).join("")+`</div></div>`;
       keys.push({name:t.name, rows:mathProbs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`)}); }
-    return `<section class="topic"><div class="thead">${head}<h1>${esc(t.name)}</h1></div>
+    return `<section class="topic"><div class="thead">${head}<h1>${esc(glossName(t.name))}</h1></div>
       <div class="wsec"><div class="eyebrow"><span class="num">1</span> Teach &amp; talk it through</div>
       <p class="lead">${esc(t.description||"")}</p>${ev?`<div class="h">Check they can…</div><ul class="clean">${ev}</ul>`:""}
       <p class="hint">A full grounded lesson for this topic hasn’t been generated yet.</p></div>${ws}</section>`;
@@ -604,7 +613,7 @@ function topicPacket(kid, t, lane, fill, N, keys){
   }).join("");
 
   return `<section class="topic">
-    <div class="thead">${head}<h1>${fill(c.name)}</h1></div>
+    <div class="thead">${head}<h1>${fill(glossName(c.name))}</h1></div>
 
     <div class="gsec"><div class="eyebrow"><span class="num">1</span> For the grown-up · Teaching guide</div>
       ${p.whyItMatters?`<div class="why"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}
