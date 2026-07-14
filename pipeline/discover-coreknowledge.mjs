@@ -15,10 +15,17 @@ const BASE = 'https://www.coreknowledge.org';
 const UA = 'MarbleEdu/1.0 (homeschool content; +https://withmarble.com)';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function get(url, json = false) {
-  const r = await fetch(url, { headers: { 'User-Agent': UA, Accept: json ? 'application/json' : 'text/html' } });
-  if (!r.ok) { const e = new Error(`HTTP ${r.status}`); e.status = r.status; e.res = r; throw e; }
-  return json ? r.json() : r.text();
+async function get(url, json = false, { retries = 4 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    const r = await fetch(url, { headers: { 'User-Agent': UA, Accept: json ? 'application/json' : 'text/html' } });
+    if (r.status === 429 && attempt < retries) { // site throttled us — back off and retry
+      const wait = Math.min(30000, 2000 * 2 ** attempt);
+      console.error(`  429 on ${url} — waiting ${wait / 1000}s (retry ${attempt + 1}/${retries})`);
+      await sleep(wait); continue;
+    }
+    if (!r.ok) { const e = new Error(`HTTP ${r.status}`); e.status = r.status; e.res = r; throw e; }
+    return json ? r.json() : r.text();
+  }
 }
 
 const subjectFromTitle = (t) => {
@@ -44,20 +51,23 @@ const decode = (s) => (s || '')
   .replace(/<[^>]+>/g, '').trim();
 
 // (1) WP REST API — post type `library` (revealed by <link .../wp-json/wp/v2/library/ID>).
+// Ask for `content` too: the rendered post body usually already contains the
+// wp-content .zip/.pdf download links, so we can harvest them WITHOUT fetching
+// each resource page (which the site rate-limits).
 async function enumerateViaRest() {
   const items = [];
   for (let page = 1; page <= 60; page++) {
     let r;
     try {
-      r = await fetch(`${BASE}/wp-json/wp/v2/library?per_page=100&page=${page}&_fields=link,title`, { headers: { 'User-Agent': UA } });
+      r = await fetch(`${BASE}/wp-json/wp/v2/library?per_page=100&page=${page}&_fields=link,title,content`, { headers: { 'User-Agent': UA } });
     } catch (e) { console.error('REST library fetch failed:', e.message); break; }
     if (!r.ok) { if (page === 1) console.error(`REST /library -> HTTP ${r.status}`); break; }
     const arr = await r.json();
     if (!Array.isArray(arr) || !arr.length) break;
-    for (const it of arr) items.push({ link: it.link, title: decode(it.title && it.title.rendered) });
+    for (const it of arr) items.push({ link: it.link, title: decode(it.title && it.title.rendered), content: (it.content && it.content.rendered) || '' });
     const totalPages = Number(r.headers.get('x-wp-totalpages') || 0);
     if (totalPages && page >= totalPages) break;
-    await sleep(120);
+    await sleep(300);
   }
   if (items.length) console.error(`REST post type 'library': ${items.length} resource(s)`);
   return items;
@@ -130,26 +140,28 @@ export async function discoverCoreKnowledge({ subjects = null, grades = null, li
   const items = await enumerateResources();
   const docs = [];
   const seen = new Set();
-  let visited = 0;
+  let visited = 0, fetchedPages = 0;
   for (const it of items) {
     const subj = subjectFromTitle(it.title);
-    if (subjects && subj && !subjects.includes(subj)) continue;
+    // When a subject filter is given, require an explicit match — drop unknowns
+    // (CKMusic, Visual Arts, …) so a slice doesn't pull unrelated content.
+    if (subjects && (!subj || !subjects.includes(subj))) continue;
     const grade = gradeFromTitle(it.title) || gradeFromTitle(it.gradeHint);
     if (grades && grade && !grades.map(String).includes(String(grade))) continue;
     if (limit && visited >= limit) break;
     try {
-      const html = await get(it.link);
-      const links = downloadLinksFor(html);
-      if (!links.length) { console.error(`  no downloads on ${it.link}`); }
+      // Prefer links already in the REST content; only fetch the page if none there.
+      let links = downloadLinksFor(it.content || '');
+      if (!links.length && it.link) { links = downloadLinksFor(await get(it.link)); fetchedPages++; await sleep(400); }
+      if (!links.length) { console.error(`  no downloads for ${it.title || it.link}`); }
       for (const dl of links) {
         if (seen.has(dl)) continue; seen.add(dl);
         docs.push({ url: dl, cite: it.link, title: it.title || it.link, grade, subjects: subj ? [subj] : [] });
       }
       visited++;
-      await sleep(120);
     } catch (e) { console.error(`  page failed ${it.link}: ${e.message}`); }
   }
-  console.error(`Discovered ${docs.length} download(s) across ${visited} resource page(s).`);
+  console.error(`Discovered ${docs.length} download(s) across ${visited} unit(s) (${fetchedPages} page fetch(es), rest from REST content).`);
   return docs;
 }
 

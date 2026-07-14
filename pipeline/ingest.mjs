@@ -78,8 +78,49 @@ async function getFile(doc) {
   throw new Error('manifest doc needs a url or storagePath');
 }
 
-// --- collect passages across all docs ---
-const passages = [];
+// --replace wipes the whole source first (full rebuild). Then EVERY write is an
+// upsert on (source, content_hash) with ignore-duplicates — so a chunked/streamed
+// run, subject slices, and re-runs all accumulate without collisions.
+const replace = process.argv.includes('--replace');
+if (replace) {
+  const del = await fetch(`${SB}/rest/v1/source_documents?source=eq.${encodeURIComponent(source)}`, { method: 'DELETE', headers: sbHeaders });
+  if (!del.ok && del.status !== 404) console.error(`delete warned HTTP ${del.status}`);
+  else console.log(`--replace: cleared existing '${source}' rows.`);
+}
+
+// Stream: embed + upsert each chunk as we go, so memory stays bounded on the full
+// catalog (~100k passages), progress persists if the run is interrupted, and the
+// embed rate-limiter makes steady headway instead of one giant batch at the end.
+const FLUSH_EVERY = Number(process.env.INGEST_FLUSH_EVERY || 800);
+const insertUrl = `${SB}/rest/v1/source_documents?on_conflict=source,content_hash`;
+const prefer = 'return=minimal,resolution=ignore-duplicates';
+const seenHash = new Set();     // global dedupe across the whole run
+let buffer = [];                // passages awaiting flush
+let totalUnique = 0, stored = 0, embFail = false;
+
+async function flush() {
+  if (!buffer.length) return;
+  let embeddings = null;
+  if (!embFail) {
+    try { embeddings = await embedDocuments(buffer.map((p) => p.text)); }
+    catch (e) { console.error(`Embeddings failed (${e.message}) — continuing FTS-only.`); embFail = true; }
+  }
+  const rows = buffer.map((p, i) => ({ ...p, embedding: embeddings ? '[' + embeddings[i].join(',') + ']' : null }));
+  for (let i = 0; i < rows.length; i += 200) {
+    const batch = rows.slice(i, i + 200);
+    const res = await fetch(insertUrl, { method: 'POST', headers: { ...sbHeaders, Prefer: prefer }, body: JSON.stringify(batch) });
+    if (!res.ok) {
+      const body = await res.text();
+      if (body.includes('42P10')) console.error('\n>>> The (source, content_hash) unique index is missing. Apply db/corpus.sql in the Supabase SQL editor.\n');
+      console.error(`insert failed HTTP ${res.status}: ${body}`); process.exit(1);
+    }
+    stored += batch.length;
+  }
+  console.log(`  …stored ${stored} passage(s) so far${embeddings ? ' (with embeddings)' : ' (FTS only)'}`);
+  buffer = [];
+}
+
+// --- stream over docs: extract → dedupe → buffer → flush ---
 for (const doc of docs) {
   try {
     const buf = await getFile(doc);
@@ -95,64 +136,20 @@ for (const doc of docs) {
     for (const pbuf of pdfs) {
       try {
         const { text } = await pdfParse(pbuf);
-        const chunks = chunk(text);
-        for (const c of chunks) passages.push({ source, title: doc.title || null, url: doc.cite || doc.url || null, grade: doc.grade || null, subjects: doc.subjects || [], text: c, content_hash: hashOf(source, c) });
-        n += chunks.length;
+        for (const c of chunk(text)) {
+          const content_hash = hashOf(source, c);
+          if (seenHash.has(content_hash)) continue;   // dedupe boilerplate across the run
+          seenHash.add(content_hash);
+          buffer.push({ source, title: doc.title || null, url: doc.cite || doc.url || null, grade: doc.grade || null, subjects: doc.subjects || [], text: c, content_hash });
+          n++; totalUnique++;
+        }
       } catch (e) { console.error(`    (skipped a PDF in ${doc.title}: ${e.message})`); }
     }
-    console.log(`  ${doc.title || doc.url}: ${pdfs.length} pdf(s), ${n} passage(s)`);
+    console.log(`  ${doc.title || doc.url}: ${pdfs.length} pdf(s), ${n} new passage(s)`);
+    if (buffer.length >= FLUSH_EVERY) await flush();
   } catch (e) { console.error(`  SKIP ${doc.title || doc.url}: ${e.message}`); }
 }
-console.log(`Total passages: ${passages.length}`);
-if (!passages.length) process.exit(1);
+await flush(); // remainder
 
-// Drop duplicate passages: a unit's PDFs repeat boilerplate (standards text,
-// headers, answer keys), so identical chunks recur. Dedupe by content_hash so we
-// never embed or insert the same passage twice (which also collides on the
-// (source, content_hash) unique index).
-{
-  const seen = new Set();
-  const uniq = passages.filter((p) => (seen.has(p.content_hash) ? false : (seen.add(p.content_hash), true)));
-  const dropped = passages.length - uniq.length;
-  if (dropped) console.log(`Deduped ${dropped} duplicate passage(s) -> ${uniq.length} unique.`);
-  passages.length = 0; passages.push(...uniq);
-}
-
-// --- embed (optional) ---
-let embeddings = null;
-try {
-  embeddings = await embedDocuments(passages.map((p) => p.text));
-  console.log(`Embedded ${embeddings.length} passage(s).`);
-} catch (e) { console.error(`Embeddings skipped (${e.message}) — FTS-only ingest.`); }
-
-// --replace wipes the whole source first (full rebuild); default is incremental:
-// upsert on (source, content_hash) so re-runs and subject slices accumulate
-// without wiping each other, and duplicate passages are ignored.
-const replace = process.argv.includes('--replace');
-if (replace) {
-  const del = await fetch(`${SB}/rest/v1/source_documents?source=eq.${encodeURIComponent(source)}`, { method: 'DELETE', headers: sbHeaders });
-  if (!del.ok && del.status !== 404) console.error(`delete warned HTTP ${del.status}`);
-  else console.log(`--replace: cleared existing '${source}' rows.`);
-}
-
-// --- insert/upsert in batches ---
-// on_conflict + ignore-duplicates needs the unique index in db/corpus.sql:
-//   create unique index source_documents_uniq on source_documents (source, content_hash);
-const rows = passages.map((p, i) => ({ ...p, embedding: embeddings ? '[' + embeddings[i].join(',') + ']' : null }));
-const insertUrl = replace
-  ? `${SB}/rest/v1/source_documents`
-  : `${SB}/rest/v1/source_documents?on_conflict=source,content_hash`;
-const prefer = replace ? 'return=minimal' : 'return=minimal,resolution=ignore-duplicates';
-let inserted = 0;
-for (let i = 0; i < rows.length; i += 200) {
-  const batch = rows.slice(i, i + 200);
-  const res = await fetch(insertUrl, { method: 'POST', headers: { ...sbHeaders, Prefer: prefer }, body: JSON.stringify(batch) });
-  if (!res.ok) {
-    const body = await res.text();
-    if (body.includes('42P10')) console.error('\n>>> The (source, content_hash) unique index is missing. Apply db/corpus.sql in the Supabase SQL editor, or re-run with replace=true.\n');
-    console.error(`insert failed HTTP ${res.status}: ${body}`); process.exit(1);
-  }
-  inserted += batch.length;
-  console.log(`  ${replace ? 'inserted' : 'upserted'} ${inserted}/${rows.length}`);
-}
-console.log(`Done: ${inserted} passages ${replace ? 'ingested (replaced)' : 'upserted'} for '${source}'${embeddings ? ' (with embeddings)' : ' (FTS only)'}.`);
+if (!totalUnique) { console.error('No passages ingested.'); process.exit(1); }
+console.log(`Done: ${stored} unique passage(s) ${replace ? 'ingested (replaced)' : 'upserted'} for '${source}'${embFail ? ' (FTS only)' : ' (with embeddings)'}.`);
