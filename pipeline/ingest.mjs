@@ -53,7 +53,11 @@ const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')).default;
 const AdmZip = (await import('adm-zip')).default;
 
 function chunk(text, { size = 1000 } = {}) {
-  const clean = text.replace(/\r/g, '').replace(/[ \t]{2,}/g, ' ').trim();
+  // Strip NUL + other C0 control chars — Postgres text can't store them
+  // (error 22P05), and PDF extraction occasionally emits them from broken glyphs.
+  const clean = text
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ' ')
+    .replace(/\r/g, '').replace(/[ \t]{2,}/g, ' ').trim();
   const paras = clean.split(/\n{2,}/).map((p) => p.replace(/\n/g, ' ').trim()).filter((p) => p.length > 40);
   const out = []; let cur = '';
   for (const p of paras) {
