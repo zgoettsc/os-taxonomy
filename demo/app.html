@@ -157,6 +157,23 @@
   .prepdays{width:56px;font:inherit;font-weight:700;text-align:center;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 6px}
   .prepdays:focus{outline:2px solid var(--navy);outline-offset:1px}
   .prepunit{font-size:.82rem;font-weight:700;color:var(--soft)}
+  .seclabel{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:6px 0 -3px}
+  /* history calendar */
+  .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .histnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .histnav b{font-family:var(--disp);font-size:1rem}
+  .hnav{background:var(--card2);border:1px solid var(--line);border-radius:9px;width:30px;height:30px;font-size:1rem;color:var(--ink);cursor:pointer;line-height:1}
+  .histdow{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+  .histdow span{text-align:center;font-size:.56rem;font-weight:700;text-transform:uppercase;color:var(--faint)}
+  .histgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .hd{position:relative;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--card);border:1px solid var(--line2);border-radius:9px;font:inherit;font-size:.8rem;font-weight:600;color:var(--ink);cursor:pointer}
+  .hd[disabled]{cursor:default;color:var(--faint);opacity:.55;border-color:transparent;background:transparent}
+  .hd.off{opacity:.35} .hd.off[disabled]{opacity:.2}
+  .hd.tod{border-color:var(--gold)}
+  .hd.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+  .hd:not([disabled]):hover{border-color:var(--navy)}
+  .hdot{width:5px;height:5px;border-radius:50%;background:var(--teal)}
+  .hd.sel .hdot{background:#fff}
   /* assessment modal */
   .modal{position:fixed;inset:0;background:rgba(20,26,46,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0}
   @media(min-width:520px){.modal{align-items:center;padding:20px}}
@@ -221,7 +238,7 @@
   <!-- HOME -->
   <section class="body hidden" id="screen-home">
     <div class="brief">
-      <p class="eyebrow" style="color:var(--gold)">Today’s session</p>
+      <p class="eyebrow" style="color:var(--gold)" id="homeEyebrow">Homeschool plan</p>
       <h2 id="homeName">—</h2>
       <div class="focus" id="homeFocus"></div>
       <div class="counts" id="homeCounts"></div>
@@ -263,8 +280,9 @@ const allow = (childId, topicId, val) => {
 // ---- Supabase REST/Auth via plain fetch ----
 let session = null;  // {access_token, refresh_token, user}
 async function sb(path, opts = {}){
-  const { method="GET", body, auth=true, _retry=false } = opts;
+  const { method="GET", body, auth=true, _retry=false, prefer } = opts;
   const headers = { apikey: ANON, "Content-Type":"application/json" };
+  if(prefer) headers.Prefer = prefer;
   headers.Authorization = "Bearer " + ((auth && session) ? session.access_token : ANON);
   const res = await fetch(SUPABASE_URL + path, { method, headers, body: body?JSON.stringify(body):undefined });
   const text = await res.text();
@@ -467,204 +485,242 @@ async function loadTaxonomy(age){
   const hard=new Map(); for(const d of deps){ (hard.get(d.topic_id)||hard.set(d.topic_id,[]).get(d.topic_id)).push(d.prerequisite_id); }
   return {topics, hard};
 }
-// ---- session/calendar state ----
-let MASTERED=new Set();     // topic ids the child has mastered (excluded from new sessions)
-let SESSIONS=[];            // persisted sessions for the open child
-let SELDATE=null;           // yyyy-mm-dd currently shown
-let PREPDAYS=5;             // how many days "prepare ahead" plans (parent sets it)
+// ---- session state: a dateless QUEUE (the plan) + a dated LOG (what happened) ----
+// A session is 'planned' while it sits in the queue (no date). Starting it stamps
+// today's date and flips it to 'started'; assessing completes it. So the queue is
+// forward-looking, and the calendar below is a true record of what was taught and
+// when — click a past day to reprint its materials.
+let MASTERED=new Set();     // topic ids the child has mastered (excluded from new work)
+let SESSIONS=[];            // every persisted session for the open child
+let PREPN=3;                // how many sessions "prepare ahead" adds to the queue
+let HISTMON=null;           // yyyy-mm shown in the history calendar
+let HISTSEL=null;           // yyyy-mm-dd selected in the history calendar
 const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
 const ymd=(d)=>{const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
 const todayStr=()=>ymd(new Date());
 const dayNum=(x)=>Math.floor(new Date(x+"T00:00:00").getTime()/864e5);
 const seedFor=(x)=>((dayNum(x)%7)+7)%7;
 const dLabel=(x)=>{ const d=new Date(x+"T00:00:00"); return d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}); };
-const addDays=(x,k)=>{ const d=new Date(x+"T00:00:00"); d.setDate(d.getDate()+k); return ymd(d); };
+const monStr=(x)=>x.slice(0,7);
 
 async function loadMastery(childId){
   try{ const rows=await sb(`/rest/v1/mastery?select=topic_id,status&child_id=eq.${childId}&status=eq.mastered&limit=5000`);
     MASTERED=new Set(rows.map(r=>r.topic_id)); }catch{ MASTERED=new Set(); }
 }
 async function loadSessions(childId){
-  try{ SESSIONS=await sb(`/rest/v1/sessions?select=id,for_date,seq,topics,status,started_at,completed_at&child_id=eq.${childId}&order=for_date.desc,seq.asc&limit=400`);
+  try{ SESSIONS=await sb(`/rest/v1/sessions?select=id,topics,status,queue_pos,for_date,started_at,completed_at&child_id=eq.${childId}&order=created_at.asc&limit=1000`);
     for(const s of SESSIONS){ if(typeof s.topics==="string"){ try{ s.topics=JSON.parse(s.topics); }catch{ s.topics=[]; } } } }
   catch{ SESSIONS=[]; }
 }
-const sessionsOn=(date)=>SESSIONS.filter(s=>s.for_date===date).sort((a,b)=>a.seq-b.seq);
-const coveredOn=(date)=>{ const set=new Set(); for(const s of sessionsOn(date)) for(const t of (s.topics||[])) set.add(t.topicId); return set; };
-function previewFor(date, extra){
-  const excl=new Set([...MASTERED, ...coveredOn(date), ...(extra||[])]);
-  return composeSession(TOPICS, HARD, CURRENT.age, excl, CURRENT.kid.id, 6, seedFor(date));
-}
+// derived views
+const queue  =()=>SESSIONS.filter(s=>s.status==="planned").sort((a,b)=>a.queue_pos-b.queue_pos);
+const active =()=>SESSIONS.filter(s=>s.status==="started").sort((a,b)=>String(a.started_at).localeCompare(String(b.started_at)));
+// topics already spoken for (queued or in progress) — never plan the same one twice
+const reservedTopics=()=>{ const set=new Set(); for(const s of SESSIONS){ if(s.status==="planned"||s.status==="started") for(const t of (s.topics||[])) set.add(t.topicId); } return set; };
 
 async function openHome(kid, age){
   show("home");
   CURRENT={kid, age, cards:[]};
   document.getElementById("homeName").textContent = kid.first_name;
-  document.getElementById("homeFocus").textContent = "Loading...";
+  document.getElementById("homeFocus").textContent = "Loading…";
   document.getElementById("homeCounts").innerHTML=""; document.getElementById("homeActions").innerHTML="";
   document.getElementById("cards").innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
   try{
     const {topics, hard}=await loadTaxonomy(age);
     TOPICS=topics; HARD=hard; TBYID.clear(); for(const t of topics) TBYID.set(t.id,t);
     await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
-    SELDATE=todayStr();
-    renderCalendar();
+    HISTMON=monStr(todayStr()); HISTSEL=null;
+    renderHome();
   }catch(e){ document.getElementById("cards").innerHTML=`<div class="note err">Couldn't load: ${esc(e.message)}</div>`; }
 }
 
-function renderCalendar(){
-  const kid=CURRENT.kid;
-  document.getElementById("homeName").textContent = `${kid.first_name}'s learning`;
-  const t0=todayStr(); const base=new Date(t0+"T00:00:00"); const strip=[];
-  for(let i=6;i>=0;i--){ const d=new Date(base); d.setDate(base.getDate()-i); strip.push(ymd(d)); }
-  const dow=x=>new Date(x+"T00:00:00").toLocaleDateString(undefined,{weekday:"short"}).slice(0,2);
-  const dnum=x=>new Date(x+"T00:00:00").getDate();
-  const dotFor=x=>{ const ss=sessionsOn(x); if(!ss.length) return ""; const done=ss.every(a=>a.status==="completed"); return `<span class="cdot ${done?"done":"has"}"></span>`; };
-  document.getElementById("homeFocus").textContent = "";
-  document.getElementById("homeCounts").innerHTML =
-    `<div class="week">`+strip.map(x=>`<button class="cday ${x===SELDATE?"on":""} ${x===t0?"today":""}" data-d="${x}">
-        <span class="cdow">${dow(x)}</span><span class="cn">${dnum(x)}</span>${dotFor(x)}</button>`).join("")+`</div>`;
-  document.getElementById("homeCounts").querySelectorAll(".cday").forEach(b=>b.onclick=()=>{ SELDATE=b.dataset.d; renderCalendar(); });
-  const pa=document.getElementById("homeActions");
-  pa.innerHTML=`<div class="prep"><span class="preplabel">🧳 Road trip? Prepare &amp; print ahead</span>
-    <span class="prepbtns"><input class="prepdays" type="number" min="1" max="60" step="1" value="${PREPDAYS}" aria-label="Number of days" inputmode="numeric">
-    <span class="prepunit">days</span></span></div>`;
-  const inp=pa.querySelector(".prepdays");
-  const clamp=()=>{ let v=Math.round(Number(inp.value)); if(!Number.isFinite(v)||v<1)v=1; if(v>60)v=60; PREPDAYS=v; inp.value=v; };
-  inp.onchange=clamp;
-  pa.querySelector(".prepbtns").appendChild(mkBtn("primary","Prepare & print",()=>{ clamp(); prepareAndPrint(PREPDAYS); }));
-  renderDay(SELDATE);
-}
-
-function statusChip(st){ const m={planned:["Planned","var(--gold)"],started:["In progress","var(--navy)"],assessed:["Assessed","var(--teal)"],completed:["Completed","var(--teal)"]}[st]||["",""]; return `<span class="schip" style="color:${m[1]};border-color:${m[1]}">${m[0]}</span>`; }
+function statusChip(st){ const m={planned:["Planned","var(--gold)"],started:["In progress","var(--navy)"],completed:["Completed","var(--teal)"]}[st]||["",""]; return `<span class="schip" style="color:${m[1]};border-color:${m[1]}">${m[0]}</span>`; }
 function sessionCardsFrom(s){ return (s.topics||[]).map(t=>({ topic: TBYID.get(t.topicId)||{id:t.topicId,name:t.name,subject:t.subject,age_range_start:CURRENT.age,age_range_end:CURRENT.age,description:"",evidence:[]}, lane:t.lane })); }
 function mkBtn(kind,label,fn){ const b=document.createElement("button"); b.className="btn "+kind; b.style.flex="0 0 auto"; b.style.fontSize=".8rem"; b.style.padding="8px 12px"; b.textContent=label; b.onclick=fn; return b; }
+function sectionLabel(text){ const d=document.createElement("div"); d.className="seclabel"; d.textContent=text; return d; }
 
-function renderDay(date){
+// One session rendered as a compact card (topics + a row of action buttons).
+function sessionCard(s, title, buttons){
+  const cards=sessionCardsFrom(s); const subj=[...new Set(cards.map(c=>c.topic.subject))];
+  const box=document.createElement("div"); box.className="card"; box.style.padding="14px";
+  box.innerHTML=`<div style="width:100%">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b class="disp">${esc(title)}</b>${statusChip(s.status)}</div>
+    <div class="faint" style="font-size:.8rem;margin-bottom:8px">${cards.length} topics · ${subj.map(esc).join(", ")}</div>
+    <ul class="crit" style="margin-bottom:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
+    <div class="prow"></div></div>`;
+  const prow=box.querySelector(".prow"); (buttons||[]).forEach(b=>prow.appendChild(b));
+  return box;
+}
+function printButtons(s){ return [ mkBtn("ghost","Full packet",()=>printSession(s,"full")), mkBtn("ghost","Materials",()=>printSession(s,"materials")), mkBtn("ghost","New worksheets",()=>printSession(s,"worksheets")) ]; }
+
+function renderHome(){
+  const kid=CURRENT.kid;
+  document.getElementById("homeName").textContent = `${kid.first_name}'s learning`;
+  const q=queue(), act=active();
+  document.getElementById("homeFocus").textContent =
+    `${q.length} session${q.length===1?"":"s"} queued · ${MASTERED.size} topic${MASTERED.size===1?"":"s"} mastered`;
+  document.getElementById("homeCounts").innerHTML="";
+  document.getElementById("homeActions").innerHTML="";
   const wrap=document.getElementById("cards"); wrap.innerHTML="";
-  const kid=CURRENT.kid; const isToday=date===todayStr(); const isPast=dayNum(date)<dayNum(todayStr());
-  const head=document.createElement("div"); head.className="dayhead";
-  head.innerHTML=`<h3>${dLabel(date)}</h3><div class="faint" style="font-size:.76rem">${isToday?"Today":(isPast?"Past day":"Upcoming")}</div>`;
-  wrap.appendChild(head);
 
-  const day=sessionsOn(date);
-  for(const s of day){
-    const cards=sessionCardsFrom(s); const subj=[...new Set(cards.map(c=>c.topic.subject))];
-    const box=document.createElement("div"); box.className="card"; box.style.padding="14px";
-    box.innerHTML=`<div style="width:100%">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b class="disp">Session ${s.seq}</b>${statusChip(s.status)}</div>
-      <div class="faint" style="font-size:.8rem;margin-bottom:8px">${cards.length} topics · ${subj.map(esc).join(", ")}</div>
-      <ul class="crit" style="margin-bottom:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
-      <div class="prow"></div></div>`;
-    const prow=box.querySelector(".prow");
-    if(s.status==="planned"){ prow.appendChild(mkBtn("primary","Start session",()=>markSession(s,"started"))); }
-    else {
-      if(s.status==="started"){ prow.appendChild(mkBtn("primary","Done teaching · Assess",()=>openAssess(s))); }
-      prow.appendChild(mkBtn("ghost","Full packet",()=>printSession(s,"full")));
-      prow.appendChild(mkBtn("ghost","Materials",()=>printSession(s,"materials")));
-      prow.appendChild(mkBtn("ghost","New worksheets",()=>printSession(s,"worksheets")));
-    }
-    wrap.appendChild(box);
+  // A) In progress
+  for(const s of act){
+    wrap.appendChild(sectionLabel("In progress"));
+    wrap.appendChild(sessionCard(s,"Session",[ mkBtn("primary","Done teaching · Assess",()=>openAssess(s)), ...printButtons(s) ]));
   }
 
-  const openOnes=day.filter(s=>s.status!=="completed");
-  if(isToday && !openOnes.length){
-    const cards=previewFor(date, []);
+  // B) Up next (the queue)
+  wrap.appendChild(sectionLabel("Up next"));
+  if(q.length){
+    const bar=document.createElement("div"); bar.className="prow"; bar.style.marginBottom="2px";
+    bar.appendChild(mkBtn("ghost",`🖨 Print all ${q.length}`,()=>printQueue()));
+    wrap.appendChild(bar);
+    q.forEach((s,i)=>{
+      const title=i===0?"Next session":`Session ${i+1}`;
+      wrap.appendChild(sessionCard(s,title,[ mkBtn("primary","Start",()=>startSession(s)), ...printButtons(s), mkBtn("ghost","Remove",()=>removeSession(s)) ]));
+    });
+  } else {
+    const cards=composeNext();
     if(!cards.length){
       const n=document.createElement("div"); n.className="note";
-      n.textContent = day.length ? `All of ${kid.first_name}'s ready topics are done for now — wonderful progress!` : `The Marble curriculum starts at about age 4. When ${kid.first_name} is ready, sessions appear here.`;
+      n.textContent = MASTERED.size ? `All of ${kid.first_name}'s ready topics are done for now — wonderful progress!` : `The Marble curriculum starts at about age 4. When ${kid.first_name} is ready, sessions appear here.`;
       wrap.appendChild(n);
     } else {
-      const another=day.length>0; const subj=[...new Set(cards.map(c=>c.topic.subject))];
+      const subj=[...new Set(cards.map(c=>c.topic.subject))];
       const pv=document.createElement("div"); pv.className="brief";
-      pv.innerHTML=`<p class="eyebrow" style="color:var(--gold)">${another?"Start another session":"Next session · preview"}</p>
+      pv.innerHTML=`<p class="eyebrow" style="color:var(--gold)">Next session · preview</p>
         <h2>${cards.length} things across ${subj.length} subject${subj.length>1?"s":""}</h2>
         <div class="counts">${subj.map(x=>`<span class="pill">${SUBJ[x]?.e||""} ${esc(x)}</span>`).join("")}</div>
         <ul class="crit" style="margin-top:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
-        <div class="actions"><button class="btn primary">Start ${another?"another ":""}session</button></div>
-        <p class="faint" style="font-size:.72rem;margin:8px 0 0">Starting unlocks the full lesson materials and printing.</p>`;
-      pv.querySelector(".btn").onclick=()=>startNew(date, cards);
+        <div class="actions"><button class="btn primary">Start session</button></div>
+        <p class="faint" style="font-size:.72rem;margin:8px 0 0">Starting stamps today's date and unlocks the full materials.</p>`;
+      pv.querySelector(".btn").onclick=()=>startComposed(cards);
       wrap.appendChild(pv);
     }
   }
-  if(!isToday && !day.length){
-    const n=document.createElement("div"); n.className="note faint";
-    n.textContent = isPast ? "No session on this day." : "No session planned yet. Use “Prepare & print ahead” above to plan several days at once.";
-    wrap.appendChild(n);
-  }
+
+  // C) Prepare ahead — appends sessions to the queue (dateless)
+  const prep=document.createElement("div"); prep.className="prep";
+  prep.innerHTML=`<span class="preplabel">🧳 Prepare sessions ahead</span>
+    <span class="prepbtns"><input class="prepdays" type="number" min="1" max="60" step="1" value="${PREPN}" aria-label="Number of sessions" inputmode="numeric">
+    <span class="prepunit">sessions</span></span>`;
+  const inp=prep.querySelector(".prepdays");
+  const clamp=()=>{ let v=Math.round(Number(inp.value)); if(!Number.isFinite(v)||v<1)v=1; if(v>60)v=60; PREPN=v; inp.value=v; };
+  inp.onchange=clamp;
+  prep.querySelector(".prepbtns").appendChild(mkBtn("primary","Add to queue",()=>{ clamp(); prepareSessions(PREPN); }));
+  wrap.appendChild(prep);
+
+  // D) History (past-sessions calendar)
+  renderHistory(wrap);
 }
+
+// ---- start / compose / queue ops ----
+function composeNext(extra){ const excl=new Set([...MASTERED, ...reservedTopics(), ...(extra||[])]); return composeSession(TOPICS, HARD, CURRENT.age, excl, CURRENT.kid.id, 6, seedFor(todayStr())); }
 
 async function persistSession(row){
-  const saved=await sb(`/rest/v1/sessions`,{method:"POST",body:row});
-  const r=Array.isArray(saved)?saved[0]:saved; if(r){ if(typeof r.topics==="string"){try{r.topics=JSON.parse(r.topics);}catch{}} SESSIONS.unshift(r); }
+  const saved=await sb(`/rest/v1/sessions`,{method:"POST",body:row,prefer:"return=representation"});
+  const r=Array.isArray(saved)?saved[0]:saved; if(r){ if(typeof r.topics==="string"){try{r.topics=JSON.parse(r.topics);}catch{}} SESSIONS.push(r); }
   return r;
 }
-async function startNew(date, cards){
+// Start a queued session: stamp today's date, flip to started.
+async function startSession(s){
   try{
-    const seq=(sessionsOn(date).reduce((m,s)=>Math.max(m,s.seq),0))+1;
-    const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
-    await persistSession({child_id:CURRENT.kid.id, for_date:date, seq, topics, status:"started", started_at:new Date().toISOString()});
-    CONTENT=Object.assign(CONTENT, await fetchContent(topics.map(t=>t.topicId)));
-    renderCalendar();
+    await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"started", for_date:todayStr(), started_at:new Date().toISOString()}});
+    s.status="started"; s.for_date=todayStr(); s.started_at=new Date().toISOString();
+    CONTENT=Object.assign(CONTENT, await fetchContent((s.topics||[]).map(t=>t.topicId)));
+    renderHome();
   }catch(e){ alert("Couldn't start session: "+e.message); }
 }
-async function markSession(s, status){
-  try{ await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status, ...(status==="started"?{started_at:new Date().toISOString()}:{})}});
-    s.status=status; if(status==="started") s.started_at=new Date().toISOString();
-    CONTENT=Object.assign(CONTENT, await fetchContent((s.topics||[]).map(t=>t.topicId)));
-    renderCalendar();
+// Compose a brand-new session and start it immediately (empty-queue path).
+async function startComposed(cards){
+  try{
+    const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
+    await persistSession({child_id:CURRENT.kid.id, topics, status:"started", for_date:todayStr(), started_at:new Date().toISOString()});
+    CONTENT=Object.assign(CONTENT, await fetchContent(topics.map(t=>t.topicId)));
+    renderHome();
+  }catch(e){ alert("Couldn't start session: "+e.message); }
+}
+async function removeSession(s){
+  try{ await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"DELETE"});
+    SESSIONS=SESSIONS.filter(x=>x.id!==s.id); renderHome();
   }catch(e){ alert(e.message); }
 }
-
-// ---- Prepare & print ahead (road trip) ----
-// Plan the next N days at once. Each empty day gets one session; topics are
-// non-overlapping ACROSS the whole range (nothing gets taught twice) and exclude
-// already-mastered work. Days that already have sessions are left as-is and folded
-// into the printout. Newly created ones are saved as 'planned' so they show on the
-// calendar; the parent still taps Start on the day to begin & assess.
-async function prepareRange(startDate, nDays){
-  const kid=CURRENT.kid; const made=[]; const exclude=new Set(); let created=0;
-  for(let i=0;i<nDays;i++){
-    const date=addDays(startDate,i); const existing=sessionsOn(date);
-    if(existing.length){ for(const s of existing){ made.push(s); for(const t of (s.topics||[])) exclude.add(t.topicId); } continue; }
-    const cards=composeSession(TOPICS, HARD, CURRENT.age, new Set([...MASTERED, ...exclude]), kid.id, 6, seedFor(date));
-    if(!cards.length) continue;
-    const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
-    const s=await persistSession({child_id:kid.id, for_date:date, seq:1, topics, status:"planned"});
-    if(s){ made.push(s); created++; for(const t of topics) exclude.add(t.topicId); }
-  }
-  made.sort((a,b)=>a.for_date<b.for_date?-1:a.for_date>b.for_date?1:a.seq-b.seq);
-  return {made, created};
-}
-async function prepareAndPrint(nDays){
-  const pa=document.getElementById("homeActions");
-  const keep=pa.innerHTML; pa.innerHTML=`<div class="prep"><span class="preplabel">Preparing ${nDays} days…</span></div>`;
+// Prepare N sessions and append them to the queue (no dates, non-overlapping topics).
+async function prepareSessions(n){
+  const kid=CURRENT.kid; const excl=new Set([...MASTERED, ...reservedTopics()]);
+  let pos=queue().reduce((m,s)=>Math.max(m,s.queue_pos),0); let made=0;
+  const pbtn=document.querySelector(".prep .btn.primary"); if(pbtn){ pbtn.textContent="Preparing…"; pbtn.disabled=true; }
   try{
-    const {made, created}=await prepareRange(todayStr(), nDays);
-    if(!made.length){ alert("Nothing to prepare — every ready topic is already planned or mastered."); return; }
-    const allCards=made.flatMap(s=>sessionCardsFrom(s));
-    CONTENT=Object.assign(CONTENT, await fetchContent(allCards.map(c=>c.topic.id)));
-    const bank=await fetchPractice(allCards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
-    openPrint(`${CURRENT.kid.first_name} — ${nDays}-day plan`, buildRangePacket(CURRENT.kid, made, bank));
+    for(let i=0;i<n;i++){
+      const cards=composeSession(TOPICS, HARD, CURRENT.age, excl, kid.id, 6, (pos+1)%7);
+      if(!cards.length) break;
+      const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
+      pos+=1;
+      const s=await persistSession({child_id:kid.id, topics, status:"planned", queue_pos:pos});
+      if(s){ made++; for(const t of topics) excl.add(t.topicId); }
+    }
+    if(!made) alert("Nothing to prepare — every ready topic is already queued or mastered.");
   }catch(e){ alert("Couldn't prepare: "+e.message); }
-  finally{ renderCalendar(); }
+  finally{ renderHome(); }
 }
-// One binder-ready document: a cover, then per-day divider pages, then each topic's
-// full materials (guide + lesson + worksheet + assessment), and a single answer key.
-function buildRangePacket(kid, made, bank){
+async function printQueue(){
+  const q=queue(); if(!q.length) return;
+  const allCards=q.flatMap(s=>sessionCardsFrom(s));
+  CONTENT=Object.assign(CONTENT, await fetchContent(allCards.map(c=>c.topic.id)));
+  const bank=await fetchPractice(allCards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+  openPrint(`${CURRENT.kid.first_name} — ${q.length} prepared sessions`, buildQueuePacket(CURRENT.kid, q, bank));
+}
+
+// ---- history: the past-sessions calendar (a true record of what was taught) ----
+function renderHistory(wrap){
+  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
+  wrap.appendChild(sectionLabel("History"));
+  if(!taught.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent="No sessions completed yet. Finish one above and it'll be logged here to reprint any time."; wrap.appendChild(n); return; }
+  const byDate={}; for(const s of taught){ (byDate[s.for_date] ||= []).push(s); }
+
+  const [Y,M]=HISTMON.split("-").map(Number);
+  const first=new Date(Y, M-1, 1);
+  const start=new Date(first); start.setDate(1-((first.getDay()+6)%7)); // Monday-lead grid
+  const monName=first.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+  const dows=["Mo","Tu","We","Th","Fr","Sa","Su"];
+  let grid="";
+  for(let i=0;i<42;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const x=ymd(d);
+    const inMon=d.getMonth()===M-1; const has=byDate[x];
+    grid+=`<button class="hd ${inMon?"":"off"} ${x===HISTSEL?"sel":""} ${x===todayStr()?"tod":""}" data-d="${x}" ${has?"":"disabled"}>
+      <span>${d.getDate()}</span>${has?`<span class="hdot done"></span>`:""}</button>`;
+  }
+  const cal=document.createElement("div"); cal.className="histcal";
+  cal.innerHTML=`<div class="histnav"><button class="hnav" data-k="-1" aria-label="Previous month">‹</button><b>${esc(monName)}</b><button class="hnav" data-k="1" aria-label="Next month">›</button></div>
+    <div class="histdow">${dows.map(d=>`<span>${d}</span>`).join("")}</div>
+    <div class="histgrid">${grid}</div>`;
+  cal.querySelectorAll(".hnav").forEach(b=>b.onclick=()=>{ const k=+b.dataset.k; let m=M-1+k, y=Y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} HISTMON=`${y}-${String(m+1).padStart(2,"0")}`; renderHome(); });
+  cal.querySelectorAll(".hd:not([disabled])").forEach(b=>b.onclick=()=>{ HISTSEL=(HISTSEL===b.dataset.d?null:b.dataset.d); renderHome(); });
+  wrap.appendChild(cal);
+
+  if(HISTSEL && byDate[HISTSEL]){
+    const h=document.createElement("div"); h.className="dayhead";
+    h.innerHTML=`<h3>${dLabel(HISTSEL)}</h3><div class="faint" style="font-size:.76rem">${byDate[HISTSEL].length} session${byDate[HISTSEL].length>1?"s":""}</div>`;
+    wrap.appendChild(h);
+    byDate[HISTSEL].forEach((s,i)=>wrap.appendChild(sessionCard(s,`Session ${i+1}`,printButtons(s))));
+  }
+}
+
+// One binder-ready document for a prepared queue: cover, a divider page per session
+// (Session 1, 2, 3…), each topic's full materials, and a single answer key.
+function buildQueuePacket(kid, list, bank){
   bank=bank||{};
   const N=esc(kid.first_name);
   const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
   const keys=[];
-  const allSub=[...new Set(made.flatMap(s=>(s.topics||[]).map(t=>t.subject)))];
-  const totalTopics=made.reduce((n,s)=>n+(s.topics||[]).length,0);
+  const allSub=[...new Set(list.flatMap(s=>(s.topics||[]).map(t=>t.subject)))];
+  const totalTopics=list.reduce((n,s)=>n+(s.topics||[]).length,0);
   const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s learning plan</h1>
-    <div class="day">${dLabel(made[0].for_date)} → ${dLabel(made[made.length-1].for_date)} · ${made.length} day${made.length>1?"s":""} · ${totalTopics} topics</div>
+    <div class="day">${list.length} session${list.length>1?"s":""} · ${totalTopics} topics · work through at your own pace</div>
     <div class="subs">${allSub.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
-  const body=made.map((s,di)=>{
+  const body=list.map((s,di)=>{
     const cards=sessionCardsFrom(s); const subs=[...new Set(cards.map(c=>c.topic.subject))];
-    const band=`<section class="dayband"><div class="dbnum">Day ${di+1}${s.seq>1?` · session ${s.seq}`:""}</div><h2>${dLabel(s.for_date)}</h2>
-      <div class="dbsubs">${cards.length} topic${cards.length>1?"s":""} · ${subs.map(esc).join(" · ")}</div></section>`;
+    const band=`<section class="dayband"><div class="dbnum">Session ${di+1}</div><h2>${cards.length} topic${cards.length>1?"s":""}</h2>
+      <div class="dbsubs">${subs.map(esc).join(" · ")}</div></section>`;
     return band+cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,"full",bank)).join("");
   }).join("");
   let keySec="";
@@ -725,7 +781,7 @@ function openAssess(s){
         await fetch(`${SUPABASE_URL}/rest/v1/mastery?on_conflict=child_id,topic_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)});
         await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"completed", completed_at:new Date().toISOString()}});
         await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
-        close(); renderCalendar();
+        close(); renderHome();
       }catch(e){ alert("Couldn't save: "+e.message); }
     };
     document.body.appendChild(ov);
