@@ -26,6 +26,9 @@ create table if not exists public.source_documents (
 create index if not exists source_documents_fts on public.source_documents using gin (fts);
 create index if not exists source_documents_src on public.source_documents (source);
 create index if not exists source_documents_vec on public.source_documents using hnsw (embedding vector_cosine_ops);
+-- Idempotent, incremental ingestion: upsert on (source, content_hash) so subject
+-- slices and re-runs accumulate without wiping, and duplicate passages are skipped.
+create unique index if not exists source_documents_uniq on public.source_documents (source, content_hash);
 
 alter table public.source_documents enable row level security;
 -- Global, service-role-managed. No family read/write policy: only the server

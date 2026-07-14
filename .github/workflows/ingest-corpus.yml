@@ -37,11 +37,16 @@ on:
         description: 'Optional cap on number of units (for testing the crawler)'
         required: false
         type: string
+      replace:
+        description: 'Wipe this source and rebuild (else incremental: accumulate + dedupe)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   ingest:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -64,5 +69,6 @@ jobs:
             node pipeline/discover-coreknowledge.mjs $ARGS
           else
             [ "${{ inputs.auto_discover }}" = "true" ] && ARGS="$ARGS --auto"
+            [ "${{ inputs.replace }}" = "true" ]       && ARGS="$ARGS --replace"
             node pipeline/ingest.mjs --source "${{ inputs.source }}" $ARGS
           fi

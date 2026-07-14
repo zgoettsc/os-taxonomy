@@ -12,8 +12,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { embedDocuments } from './embed.mjs';
+
+const hashOf = (source, text) => crypto.createHash('sha256').update(source + '\n' + text).digest('hex');
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(dir, '..');
@@ -93,7 +96,7 @@ for (const doc of docs) {
       try {
         const { text } = await pdfParse(pbuf);
         const chunks = chunk(text);
-        for (const c of chunks) passages.push({ source, title: doc.title || null, url: doc.cite || doc.url || null, grade: doc.grade || null, subjects: doc.subjects || [], text: c });
+        for (const c of chunks) passages.push({ source, title: doc.title || null, url: doc.cite || doc.url || null, grade: doc.grade || null, subjects: doc.subjects || [], text: c, content_hash: hashOf(source, c) });
         n += chunks.length;
       } catch (e) { console.error(`    (skipped a PDF in ${doc.title}: ${e.message})`); }
     }
@@ -110,20 +113,30 @@ try {
   console.log(`Embedded ${embeddings.length} passage(s).`);
 } catch (e) { console.error(`Embeddings skipped (${e.message}) — FTS-only ingest.`); }
 
-// --- replace this source's rows (idempotent) ---
-{
+// --replace wipes the whole source first (full rebuild); default is incremental:
+// upsert on (source, content_hash) so re-runs and subject slices accumulate
+// without wiping each other, and duplicate passages are ignored.
+const replace = process.argv.includes('--replace');
+if (replace) {
   const del = await fetch(`${SB}/rest/v1/source_documents?source=eq.${encodeURIComponent(source)}`, { method: 'DELETE', headers: sbHeaders });
   if (!del.ok && del.status !== 404) console.error(`delete warned HTTP ${del.status}`);
+  else console.log(`--replace: cleared existing '${source}' rows.`);
 }
 
-// --- insert in batches ---
+// --- insert/upsert in batches ---
+// on_conflict + ignore-duplicates needs the unique index in db/corpus.sql:
+//   create unique index source_documents_uniq on source_documents (source, content_hash);
 const rows = passages.map((p, i) => ({ ...p, embedding: embeddings ? '[' + embeddings[i].join(',') + ']' : null }));
+const insertUrl = replace
+  ? `${SB}/rest/v1/source_documents`
+  : `${SB}/rest/v1/source_documents?on_conflict=source,content_hash`;
+const prefer = replace ? 'return=minimal' : 'return=minimal,resolution=ignore-duplicates';
 let inserted = 0;
 for (let i = 0; i < rows.length; i += 200) {
   const batch = rows.slice(i, i + 200);
-  const res = await fetch(`${SB}/rest/v1/source_documents`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=minimal' }, body: JSON.stringify(batch) });
+  const res = await fetch(insertUrl, { method: 'POST', headers: { ...sbHeaders, Prefer: prefer }, body: JSON.stringify(batch) });
   if (!res.ok) { console.error(`insert failed HTTP ${res.status}: ${await res.text()}`); process.exit(1); }
   inserted += batch.length;
-  console.log(`  inserted ${inserted}/${rows.length}`);
+  console.log(`  ${replace ? 'inserted' : 'upserted'} ${inserted}/${rows.length}`);
 }
-console.log(`Done: ${inserted} passages ingested for '${source}'${embeddings ? ' (with embeddings)' : ' (FTS only)'}.`);
+console.log(`Done: ${inserted} passages ${replace ? 'ingested (replaced)' : 'upserted'} for '${source}'${embeddings ? ' (with embeddings)' : ' (FTS only)'}.`);
