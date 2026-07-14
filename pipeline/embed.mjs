@@ -31,7 +31,7 @@ async function voyageOnce(texts, inputType) {
 }
 
 // One request with retry/backoff on rate-limit. Waits out the per-minute window.
-async function voyage(texts, inputType, { retries = 6 } = {}) {
+async function voyage(texts, inputType, { retries = 10 } = {}) {
   for (let attempt = 0; ; attempt++) {
     try { return await voyageOnce(texts, inputType); }
     catch (e) {
