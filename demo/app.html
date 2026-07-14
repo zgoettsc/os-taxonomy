@@ -600,7 +600,7 @@ function renderHome(){
       wrap.appendChild(bar);
       list.forEach((cards,i)=>{
         const subj=[...new Set(cards.map(c=>c.topic.subject))];
-        const box=document.createElement("div"); box.className=i===0?"brief":"card";
+        const box=document.createElement("div"); box.className=i===0?"brief":"card"; if(i>0) box.style.padding="14px";
         const eyebrow=i===0?`<p class="eyebrow" style="color:var(--gold)">Next session · preview</p>`:`<div class="seclabel" style="margin:0 0 6px">Then</div>`;
         box.innerHTML=`${eyebrow}
           <h2 style="font-size:${i===0?"1.25rem":"1.05rem"}">${cards.length} topic${cards.length>1?"s":""} · ${subj.map(esc).join(", ")}</h2>
