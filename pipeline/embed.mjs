@@ -1,49 +1,63 @@
-// Embeddings via Voyage AI (Anthropic's recommended embeddings partner).
-// Reads VOYAGE_API_KEY from env; NEVER hard-code. Used both at ingest time
-// (embed each passage) and at generation time (embed the topic query).
+// Embeddings for the corpus (ingest time) and topic queries (generation time).
 //
-// Batches are sized by an approximate token budget (not just item count) so a
-// single request stays under Voyage's per-minute token cap, and 429s are retried
-// with backoff — so ingest survives the free tier (10K TPM / 3 RPM) slowly and
-// flies once a payment method unlocks standard limits (free tokens still apply).
+// Two interchangeable providers behind one interface; the DB column is vector(1024)
+// and BOTH providers emit 1024 dims, so switching needs no schema change:
+//   - openai: text-embedding-3-small (dimensions=1024). High limits, cheap.
+//   - voyage: voyage-3.5-lite (output_dimension=1024).
+// Selection: EMBED_PROVIDER env, else 'openai' if OPENAI_API_KEY is set, else 'voyage'.
+//
+// Batches are sized by an approximate token budget (per provider) and 429s retry
+// with backoff, so ingest survives throttling and flies when limits are generous.
 
-export const EMBED_MODEL = 'voyage-3.5-lite';
 export const EMBED_DIM = 1024;
 
-// Free tier is 10K tokens/min; keep a request comfortably under that. Overridable.
-const TOKEN_BUDGET = Number(process.env.VOYAGE_TOKEN_BUDGET || 9000);
-const MAX_ITEMS = Number(process.env.VOYAGE_MAX_ITEMS || 96);
+const PROVIDER = process.env.EMBED_PROVIDER
+  || (process.env.OPENAI_API_KEY ? 'openai' : 'voyage');
+
+const CONF = {
+  openai: { url: 'https://api.openai.com/v1/embeddings', model: 'text-embedding-3-small', keyEnv: 'OPENAI_API_KEY', tokenBudget: 200000, maxItems: 512 },
+  voyage: { url: 'https://api.voyageai.com/v1/embeddings', model: 'voyage-3.5-lite', keyEnv: 'VOYAGE_API_KEY', tokenBudget: 9000, maxItems: 96 },
+};
+const conf = CONF[PROVIDER] || CONF.voyage;
+
+const TOKEN_BUDGET = Number(process.env.EMBED_TOKEN_BUDGET || conf.tokenBudget);
+const MAX_ITEMS = Number(process.env.EMBED_MAX_ITEMS || conf.maxItems);
 const approxTokens = (s) => Math.ceil((s || '').length / 4); // ~4 chars/token
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function voyageOnce(texts, inputType) {
-  const key = process.env.VOYAGE_API_KEY;
-  if (!key) throw new Error('embeddings need VOYAGE_API_KEY in env');
-  const res = await fetch('https://api.voyageai.com/v1/embeddings', {
+function requestBody(texts, inputType) {
+  if (PROVIDER === 'openai') return { input: texts, model: conf.model, dimensions: EMBED_DIM };
+  return { input: texts, model: conf.model, input_type: inputType, output_dimension: EMBED_DIM };
+}
+
+async function embedOnce(texts, inputType) {
+  const key = process.env[conf.keyEnv];
+  if (!key) throw new Error(`embeddings need ${conf.keyEnv} in env`);
+  const res = await fetch(conf.url, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: texts, model: EMBED_MODEL, input_type: inputType, output_dimension: EMBED_DIM }),
+    body: JSON.stringify(requestBody(texts, inputType)),
   });
-  if (res.status === 429) { const e = new Error(`voyage 429`); e.rateLimited = true; e.body = await res.text(); throw e; }
-  if (!res.ok) throw new Error(`voyage ${res.status}: ${await res.text()}`);
+  if (res.status === 429) { const e = new Error(`${PROVIDER} 429`); e.rateLimited = true; e.body = await res.text(); throw e; }
+  if (!res.ok) throw new Error(`${PROVIDER} ${res.status}: ${await res.text()}`);
   const j = await res.json();
   return (j.data || []).map((d) => d.embedding);
 }
 
-// One request with retry/backoff on rate-limit. Waits out the per-minute window.
-async function voyage(texts, inputType, { retries = 10 } = {}) {
+// One request with retry/backoff on rate-limit.
+async function embed(texts, inputType, { retries = 10 } = {}) {
   for (let attempt = 0; ; attempt++) {
-    try { return await voyageOnce(texts, inputType); }
+    try { return await embedOnce(texts, inputType); }
     catch (e) {
       if (!e.rateLimited || attempt >= retries) throw e;
-      const wait = Math.min(60000, 5000 * 2 ** attempt); // 5s,10s,20s,40s,60s…
-      console.error(`  voyage rate-limited; waiting ${wait / 1000}s (attempt ${attempt + 1}/${retries})`);
+      const wait = Math.min(60000, 5000 * 2 ** attempt);
+      console.error(`  ${PROVIDER} rate-limited; waiting ${wait / 1000}s (attempt ${attempt + 1}/${retries})`);
       await sleep(wait);
     }
   }
 }
 
-// Group items into batches that stay under both the item cap and the token budget.
+// Group items into batches under both the item cap and the token budget.
 function batchByTokens(texts) {
   const batches = []; let cur = []; let tok = 0;
   for (const t of texts) {
@@ -55,20 +69,18 @@ function batchByTokens(texts) {
   return batches;
 }
 
-// Batch-embed corpus passages (input_type=document).
+// Batch-embed corpus passages.
 export async function embedDocuments(texts) {
   const batches = batchByTokens(texts);
   const out = [];
   for (let i = 0; i < batches.length; i++) {
-    out.push(...await voyage(batches[i], 'document'));
-    if (i % 10 === 0 || i === batches.length - 1) console.error(`  embedded batch ${i + 1}/${batches.length}`);
+    out.push(...await embed(batches[i], 'document'));
+    if (i % 10 === 0 || i === batches.length - 1) console.error(`  [${PROVIDER}] embedded batch ${i + 1}/${batches.length}`);
   }
   return out;
 }
 
-// Embed one search query (input_type=query). Fails fast: at generation time we
-// want to fall straight through to FTS-only retrieval if Voyage is throttled,
-// not block for minutes retrying (that's only worth it for the ingest batch).
+// Embed one search query. Fails fast so generation drops to FTS if throttled.
 export async function embedQuery(text) {
-  return (await voyage([text], 'query', { retries: 0 }))[0];
+  return (await embed([text], 'query', { retries: 0 }))[0];
 }
