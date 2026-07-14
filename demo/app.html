@@ -137,6 +137,19 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .hidden{display:none!important}
   .foot{padding:12px 18px;border-top:1px solid var(--line2);font-size:.7rem;color:var(--faint);text-align:center}
+  /* calendar + sessions */
+  .week{display:flex;gap:5px;width:100%}
+  .cday{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 2px 6px;cursor:pointer}
+  .cday.on{border-color:var(--navy);background:var(--navy-soft)}
+  .cday.today .cn{color:var(--navy);font-weight:800}
+  .cdow{font-size:.58rem;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);font-weight:700}
+  .cn{font-family:var(--disp);font-weight:700;font-size:1rem}
+  .cdot{width:6px;height:6px;border-radius:50%;background:var(--gold);margin-top:1px}
+  .cdot.done{background:var(--teal)}
+  .dayhead{display:flex;align-items:baseline;justify-content:space-between;margin:2px 0}
+  .dayhead h3{font-size:1.05rem}
+  .schip{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border:1px solid;border-radius:20px;padding:2px 8px}
+  .prow{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 </style>
 </head>
 <body>
@@ -424,87 +437,179 @@ async function loadTaxonomy(age){
   const hard=new Map(); for(const d of deps){ (hard.get(d.topic_id)||hard.set(d.topic_id,[]).get(d.topic_id)).push(d.prerequisite_id); }
   return {topics, hard};
 }
+// ---- session/calendar state ----
+let MASTERED=new Set();     // topic ids the child has mastered (excluded from new sessions)
+let SESSIONS=[];            // persisted sessions for the open child
+let SELDATE=null;           // yyyy-mm-dd currently shown
+const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
+const ymd=(d)=>{const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
+const todayStr=()=>ymd(new Date());
+const dayNum=(x)=>Math.floor(new Date(x+"T00:00:00").getTime()/864e5);
+const seedFor=(x)=>((dayNum(x)%7)+7)%7;
+const dLabel=(x)=>{ const d=new Date(x+"T00:00:00"); return d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}); };
+
+async function loadMastery(childId){
+  try{ const rows=await sb(`/rest/v1/mastery?select=topic_id,status&child_id=eq.${childId}&status=eq.mastered&limit=5000`);
+    MASTERED=new Set(rows.map(r=>r.topic_id)); }catch{ MASTERED=new Set(); }
+}
+async function loadSessions(childId){
+  try{ SESSIONS=await sb(`/rest/v1/sessions?select=id,for_date,seq,topics,status,started_at,completed_at&child_id=eq.${childId}&order=for_date.desc,seq.asc&limit=400`);
+    for(const s of SESSIONS){ if(typeof s.topics==="string"){ try{ s.topics=JSON.parse(s.topics); }catch{ s.topics=[]; } } } }
+  catch{ SESSIONS=[]; }
+}
+const sessionsOn=(date)=>SESSIONS.filter(s=>s.for_date===date).sort((a,b)=>a.seq-b.seq);
+const coveredOn=(date)=>{ const set=new Set(); for(const s of sessionsOn(date)) for(const t of (s.topics||[])) set.add(t.topicId); return set; };
+function previewFor(date, extra){
+  const excl=new Set([...MASTERED, ...coveredOn(date), ...(extra||[])]);
+  return composeSession(TOPICS, HARD, CURRENT.age, excl, CURRENT.kid.id, 6, seedFor(date));
+}
+
 async function openHome(kid, age){
   show("home");
-  document.getElementById("homeName").textContent = kid.first_name+"'s session";
-  document.getElementById("homeFocus").textContent = "Loading today's plan…";
-  document.getElementById("homeCounts").innerHTML="";
+  CURRENT={kid, age, cards:[]};
+  document.getElementById("homeName").textContent = kid.first_name;
+  document.getElementById("homeFocus").textContent = "Loading...";
+  document.getElementById("homeCounts").innerHTML=""; document.getElementById("homeActions").innerHTML="";
   document.getElementById("cards").innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
-  document.getElementById("homeActions").innerHTML="";
   try{
     const {topics, hard}=await loadTaxonomy(age);
-    const seed=Math.floor(Date.now()/864e5) % 7;        // rotates day to day
-    const preview=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
-    CONTENT=await fetchContent(preview.map(c=>c.topic.id));  // real grounded content for these topics
-    renderHome(kid, age, topics, hard, seed);
-  }catch(e){
-    document.getElementById("cards").innerHTML=`<div class="note err">Couldn't build the session: ${esc(e.message)}</div>`;
-  }
+    TOPICS=topics; HARD=hard; TBYID.clear(); for(const t of topics) TBYID.set(t.id,t);
+    await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
+    SELDATE=todayStr();
+    renderCalendar();
+  }catch(e){ document.getElementById("cards").innerHTML=`<div class="note err">Couldn't load: ${esc(e.message)}</div>`; }
 }
-function renderHome(kid, age, topics, hard, seed){
-  const cards=composeSession(topics, hard, age, new Set(), kid.id, 6, seed);
-  CURRENT={kid, age, cards};
-  if(!cards.length){
-    document.getElementById("homeFocus").textContent = `${kid.first_name} is a little young for the curriculum yet`;
-    document.getElementById("homeCounts").innerHTML="";
-    document.getElementById("cards").innerHTML=`<div class="note">The Marble curriculum starts at about age 4. When ${esc(kid.first_name)} is ready, today's session will appear right here — nothing to do until then.</div>`;
-    document.getElementById("homeActions").innerHTML="";
-    return;
-  }
-  const subjects=[...new Set(cards.map(c=>c.topic.subject))];
-  document.getElementById("homeFocus").textContent = `${cards.length} things to learn across ${subjects.length} subjects`;
-  document.getElementById("homeCounts").innerHTML = subjects.map(s=>`<span class="pill">${SUBJ[s]?.e||""} ${esc(s)}</span>`).join("");
 
+function renderCalendar(){
+  const kid=CURRENT.kid;
+  document.getElementById("homeName").textContent = `${kid.first_name}'s learning`;
+  const t0=todayStr(); const base=new Date(t0+"T00:00:00"); const strip=[];
+  for(let i=6;i>=0;i--){ const d=new Date(base); d.setDate(base.getDate()-i); strip.push(ymd(d)); }
+  const dow=x=>new Date(x+"T00:00:00").toLocaleDateString(undefined,{weekday:"short"}).slice(0,2);
+  const dnum=x=>new Date(x+"T00:00:00").getDate();
+  const dotFor=x=>{ const ss=sessionsOn(x); if(!ss.length) return ""; const done=ss.every(a=>a.status==="completed"); return `<span class="cdot ${done?"done":"has"}"></span>`; };
+  document.getElementById("homeFocus").textContent = "";
+  document.getElementById("homeCounts").innerHTML =
+    `<div class="week">`+strip.map(x=>`<button class="cday ${x===SELDATE?"on":""} ${x===t0?"today":""}" data-d="${x}">
+        <span class="cdow">${dow(x)}</span><span class="cn">${dnum(x)}</span>${dotFor(x)}</button>`).join("")+`</div>`;
+  document.getElementById("homeCounts").querySelectorAll(".cday").forEach(b=>b.onclick=()=>{ SELDATE=b.dataset.d; renderCalendar(); });
+  document.getElementById("homeActions").innerHTML="";
+  renderDay(SELDATE);
+}
+
+function statusChip(st){ const m={planned:["Planned","var(--gold)"],started:["In progress","var(--navy)"],assessed:["Assessed","var(--teal)"],completed:["Completed","var(--teal)"]}[st]||["",""]; return `<span class="schip" style="color:${m[1]};border-color:${m[1]}">${m[0]}</span>`; }
+function sessionCardsFrom(s){ return (s.topics||[]).map(t=>({ topic: TBYID.get(t.topicId)||{id:t.topicId,name:t.name,subject:t.subject,age_range_start:CURRENT.age,age_range_end:CURRENT.age,description:"",evidence:[]}, lane:t.lane })); }
+function mkBtn(kind,label,fn){ const b=document.createElement("button"); b.className="btn "+kind; b.style.flex="0 0 auto"; b.style.fontSize=".8rem"; b.style.padding="8px 12px"; b.textContent=label; b.onclick=fn; return b; }
+
+function renderDay(date){
   const wrap=document.getElementById("cards"); wrap.innerHTML="";
-  for(const {topic:t, lane} of cards){
-    const st=SUBJ[t.subject]||{c:"var(--soft)",bg:"var(--card2)",e:"•"};
-    const crit=(Array.isArray(t.evidence)?t.evidence:[]).map(x=>`<li>${esc(x)}</li>`).join("");
-    const probs=lane==="practice"?sampleProblems(t):null;
-    const laneBody = lane==="practice"
-      ? (probs ? `<div><div class="h">Sample practice (fresh every session)</div><div class="prob">${probs.map(p=>`<span>${p}</span>`).join("")}</div></div>`
-               : `<div class="prov">⚙️ <span>Unlimited practice items generated by code — correct by construction, never repeats.</span></div>`)
-      : (getContent(t.id)
-        ? `<div class="prov">✅ <span>Full grounded lesson ready — verified against reputable sources. Tap “Start &amp; print materials.”</span></div>`
-        : `<div class="prov">📚 <span>Grounded lesson for this topic hasn\u2019t been generated yet — run the content pipeline for it.</span></div>`);
-    const d=document.createElement("details"); d.className="card";
-    d.innerHTML=`
-      <summary>
-        <div class="tag" style="background:${st.bg}">${st.e}</div>
-        <div class="meta">
-          <div class="sj" style="color:${st.c}">${esc(t.subject)}</div>
-          <div class="nm">${esc(glossName(t.name))}</div>
-          <div class="dm">${esc(t.domain||"")} · ages ${t.age_range_start}–${t.age_range_end}</div>
-        </div>
-        <div class="lane ${lane}">${lane}</div>
-      </summary>
-      <div class="detail">
-        <div><div class="h">What ${esc(kid.first_name)} will learn</div><p>${esc(t.description||"")}</p></div>
-        ${crit?`<div><div class="h">You'll know they've got it when…</div><ul class="crit">${crit}</ul></div>`:""}
-        ${laneBody}
-        <div class="cardprint"><button type="button">🖨 Print this card's material</button></div>
-      </div>`;
-    const card={topic:t,lane};
-    d.querySelector(".cardprint button").onclick=(e)=>{ e.preventDefault(); openPrint(`${kid.first_name} — ${t.name}`, buildPacket(kid,[card])); };
-    wrap.appendChild(d);
+  const kid=CURRENT.kid; const isToday=date===todayStr(); const isPast=dayNum(date)<dayNum(todayStr());
+  const head=document.createElement("div"); head.className="dayhead";
+  head.innerHTML=`<h3>${dLabel(date)}</h3><div class="faint" style="font-size:.76rem">${isToday?"Today":(isPast?"Past day":"Upcoming")}</div>`;
+  wrap.appendChild(head);
+
+  const day=sessionsOn(date);
+  for(const s of day){
+    const cards=sessionCardsFrom(s); const subj=[...new Set(cards.map(c=>c.topic.subject))];
+    const box=document.createElement("div"); box.className="card"; box.style.padding="14px";
+    box.innerHTML=`<div style="width:100%">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b class="disp">Session ${s.seq}</b>${statusChip(s.status)}</div>
+      <div class="faint" style="font-size:.8rem;margin-bottom:8px">${cards.length} topics · ${subj.map(esc).join(", ")}</div>
+      <ul class="crit" style="margin-bottom:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
+      <div class="prow"></div></div>`;
+    const prow=box.querySelector(".prow");
+    if(s.status==="planned"){ prow.appendChild(mkBtn("primary","Start session",()=>markSession(s,"started"))); }
+    else {
+      if(s.status==="started"){ prow.appendChild(mkBtn("primary","Done teaching · complete",()=>completeSession(s))); }
+      prow.appendChild(mkBtn("ghost","Full packet",()=>printSession(s,"full")));
+      prow.appendChild(mkBtn("ghost","Materials",()=>printSession(s,"materials")));
+      prow.appendChild(mkBtn("ghost","New worksheets",()=>printSession(s,"worksheets")));
+    }
+    wrap.appendChild(box);
   }
-  renderActions(kid);
+
+  const openOnes=day.filter(s=>s.status!=="completed");
+  if(isToday && !openOnes.length){
+    const cards=previewFor(date, []);
+    if(!cards.length){
+      const n=document.createElement("div"); n.className="note";
+      n.textContent = day.length ? `All of ${kid.first_name}'s ready topics are done for now — wonderful progress!` : `The Marble curriculum starts at about age 4. When ${kid.first_name} is ready, sessions appear here.`;
+      wrap.appendChild(n);
+    } else {
+      const another=day.length>0; const subj=[...new Set(cards.map(c=>c.topic.subject))];
+      const pv=document.createElement("div"); pv.className="brief";
+      pv.innerHTML=`<p class="eyebrow" style="color:var(--gold)">${another?"Start another session":"Next session · preview"}</p>
+        <h2>${cards.length} things across ${subj.length} subject${subj.length>1?"s":""}</h2>
+        <div class="counts">${subj.map(x=>`<span class="pill">${SUBJ[x]?.e||""} ${esc(x)}</span>`).join("")}</div>
+        <ul class="crit" style="margin-top:10px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
+        <div class="actions"><button class="btn primary">Start ${another?"another ":""}session</button></div>
+        <p class="faint" style="font-size:.72rem;margin:8px 0 0">Starting unlocks the full lesson materials and printing.</p>`;
+      pv.querySelector(".btn").onclick=()=>startNew(date, cards);
+      wrap.appendChild(pv);
+    }
+  }
+  if(!isToday && !day.length){
+    const n=document.createElement("div"); n.className="note faint";
+    n.textContent = isPast ? "No session on this day." : "No session planned yet. (Prepare-ahead for road trips is coming next.)";
+    wrap.appendChild(n);
+  }
 }
 
-// ---- session actions: the teach/practice verb ----
-const sessCount=(kid)=>Number(localStorage.getItem("sessions:"+kid.id)||0);
-function renderActions(kid){
-  const a=document.getElementById("homeActions"); a.innerHTML="";
-  const print=document.createElement("button"); print.className="btn primary";
-  print.innerHTML="🖨 Start &amp; print materials";
-  print.onclick=()=>openPrint(kid.first_name+"'s learning materials", buildPacket(kid, CURRENT.cards));
-  const done=document.createElement("button"); done.className="btn ghost";
-  done.textContent="✓ Mark session complete";
-  done.onclick=()=>{ localStorage.setItem("sessions:"+kid.id, sessCount(kid)+1); renderActions(kid);
-    const t=document.createElement("div"); t.className="toast";
-    t.textContent="Session logged. In the full build this is the trigger that sends the exam to "+kid.first_name+"'s app.";
-    a.appendChild(t); setTimeout(()=>t.remove(), 4200); };
-  const pill=document.createElement("span"); pill.className="sess"; pill.textContent="🌱 "+sessCount(kid)+" sessions";
-  a.append(print, done, pill);
+async function persistSession(row){
+  const saved=await sb(`/rest/v1/sessions`,{method:"POST",body:row});
+  const r=Array.isArray(saved)?saved[0]:saved; if(r){ if(typeof r.topics==="string"){try{r.topics=JSON.parse(r.topics);}catch{}} SESSIONS.unshift(r); }
+  return r;
+}
+async function startNew(date, cards){
+  try{
+    const seq=(sessionsOn(date).reduce((m,s)=>Math.max(m,s.seq),0))+1;
+    const topics=cards.map(c=>({topicId:c.topic.id, lane:c.lane, subject:c.topic.subject, name:c.topic.name}));
+    await persistSession({child_id:CURRENT.kid.id, for_date:date, seq, topics, status:"started", started_at:new Date().toISOString()});
+    CONTENT=Object.assign(CONTENT, await fetchContent(topics.map(t=>t.topicId)));
+    renderCalendar();
+  }catch(e){ alert("Couldn't start session: "+e.message); }
+}
+async function markSession(s, status){
+  try{ await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status, ...(status==="started"?{started_at:new Date().toISOString()}:{})}});
+    s.status=status; if(status==="started") s.started_at=new Date().toISOString();
+    CONTENT=Object.assign(CONTENT, await fetchContent((s.topics||[]).map(t=>t.topicId)));
+    renderCalendar();
+  }catch(e){ alert(e.message); }
+}
+async function completeSession(s){
+  if(!confirm(`Mark this session complete for ${CURRENT.kid.first_name}? This records the topics as mastered.`)) return;
+  try{
+    await sb(`/rest/v1/sessions?id=eq.${s.id}`,{method:"PATCH",body:{status:"completed", completed_at:new Date().toISOString()}});
+    const rows=(s.topics||[]).map(t=>({child_id:CURRENT.kid.id, topic_id:t.topicId, status:"mastered", last_reviewed_at:new Date().toISOString()}));
+    if(rows.length){ await fetch(`${SUPABASE_URL}/rest/v1/mastery?on_conflict=child_id,topic_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)}); }
+    await Promise.all([loadMastery(CURRENT.kid.id), loadSessions(CURRENT.kid.id)]);
+    renderCalendar();
+  }catch(e){ alert("Couldn't complete: "+e.message); }
+}
+async function printSession(s, mode){
+  const cards=sessionCardsFrom(s);
+  CONTENT=Object.assign(CONTENT, await fetchContent(cards.map(c=>c.topic.id)));
+  let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+  const suffix=mode==="worksheets"?" · worksheets":mode==="materials"?" · materials":"";
+  openPrint(`${CURRENT.kid.first_name} — ${dLabel(s.for_date)}${suffix}`, buildPacket(CURRENT.kid, cards, mode, bank));
+}
+async function fetchPractice(ids){
+  const out={}; if(!ids.length) return out;
+  try{
+    const inList=ids.map(encodeURIComponent).join(",");
+    const rows=await sb(`/rest/v1/practice_items?select=topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&limit=2000`);
+    for(const r of rows){ (out[r.topic_id] ||= []).push(r); }
+  }catch{}
+  return out;
+}
+const seenKey=(kid,tid)=>`seen:${kid}:${tid}`;
+function sampleBank(kid, tid, items, n=6){
+  if(!items||!items.length) return null;
+  const seen=new Set(JSON.parse(localStorage.getItem(seenKey(kid,tid))||"[]"));
+  const fresh=items.filter(x=>!seen.has(x.prompt)); const pool=fresh.length>=n?fresh:items;
+  const pick=[...pool].sort(()=>0.5-Math.random()).slice(0,n);
+  const ns=new Set([...seen, ...pick.map(x=>x.prompt)]); localStorage.setItem(seenKey(kid,tid), JSON.stringify([...ns].slice(-200)));
+  return pick;
 }
 
 // ---- SETTINGS: the gates live here now ----
@@ -562,24 +667,51 @@ function sourcesFooter(c){
 }
 
 // ONE topic → teaching guide + lesson + worksheet (pushes its answer key)
-function topicPacket(kid, t, lane, fill, N, keys){
+// Render a worksheet (+ answer-key rows) from a list of items (lesson items OR
+// fresh bank items). Bank rows use answer_index (snake); lesson items answerIndex.
+function wsFromItems(items, fill){
+  const html=items.map((it,i)=>{
+    if(it.kind==="mcq" && Array.isArray(it.choices)){
+      const opts=it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("");
+      return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><ul class="choices">${opts}</ul></div>`;
+    }
+    return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><div class="writelines"><div class="ln"></div></div></div>`;
+  }).join("");
+  const keyRows=items.map((it,i)=>{ const ai=(typeof it.answerIndex==="number")?it.answerIndex:it.answer_index; const ans=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof ai==="number")?it.choices[ai]:(it.answer||"—"); return `${i+1}. <b>${esc(ans)}</b>`; });
+  return {html, keyRows};
+}
+
+// One topic, rendered for a print MODE: full | materials | worksheets.
+//  full       = guide + lesson + worksheet + assessment + sources (+ answer key)
+//  materials  = guide + lesson + assessment + sources  (re-teach; fixed content)
+//  worksheets = fresh practice worksheet only (+ answer key)
+function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
+  mode=mode||"full"; bank=bank||{};
   const c=getContent(t.id);
   const st=SUBJ[t.subject]||{c:"#3b4aa0"};
   const head=`<div class="kicker" style="color:${st.c}">${esc(t.subject)}${t.domain?" · "+esc(t.domain):""} · ages ${t.age_range_start}–${t.age_range_end}</div>`;
+  const isMath = lane==="practice" || (c&&c.practice&&c.practice.generator);
+  const wantGuide=mode==="full"||mode==="materials", wantLesson=mode==="full"||mode==="materials",
+        wantWork=mode==="full"||mode==="worksheets", wantAssess=mode==="full"||mode==="materials", wantSources=mode==="full"||mode==="materials";
 
-  // math (or procedural) practice → code-generated worksheet
-  const mathProbs = lane==="practice" ? genProblems(t,12) : (c&&c.practice&&c.practice.generator ? genProblems(t,12) : null);
+  function buildWorksheet(){
+    if(isMath){
+      const probs=genProblems(t,12);
+      if(probs&&probs.length) return { html:`<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`, keyRows:probs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`) };
+      return null;
+    }
+    let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
+    if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own
+    if(!items||!items.length) return null;
+    return wsFromItems(items, fill);
+  }
 
-  if(!c){ // no grounded lesson yet — teach-from-evidence fallback
-    const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
-    let ws="";
-    if(mathProbs){ ws=`<div class="wsec"><div class="eyebrow"><span class="num">✎</span> Practice</div><h2>${esc(t.name)}</h2>
-        <div class="mgrid">`+mathProbs.map((p,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${p.q} <u></u></div>`).join("")+`</div></div>`;
-      keys.push({name:t.name, rows:mathProbs.map((p,i)=>`${i+1}. ${esc(p.q.replace(/\s*=$/,""))} = <b>${esc(p.a)}</b>`)}); }
-    return `<section class="topic"><div class="thead">${head}<h1>${esc(glossName(t.name))}</h1></div>
-      <div class="wsec"><div class="eyebrow"><span class="num">1</span> Teach &amp; talk it through</div>
-      <p class="lead">${esc(t.description||"")}</p>${ev?`<div class="h">Check they can…</div><ul class="clean">${ev}</ul>`:""}
-      <p class="hint">A full grounded lesson for this topic hasn’t been generated yet.</p></div>${ws}</section>`;
+  if(!c){ // no grounded lesson yet — evidence fallback + (math) worksheet
+    const parts=[`<section class="topic"><div class="thead">${head}<h1>${esc(glossName(t.name))}</h1></div>`]; let n=0;
+    if(wantGuide){ const ev=(Array.isArray(t.evidence)?t.evidence:[]).map(e=>`<li>${esc(e)}</li>`).join("");
+      parts.push(`<div class="gsec"><div class="eyebrow"><span class="num">${++n}</span> Teach &amp; talk it through</div><p class="lead">${esc(t.description||"")}</p>${ev?`<div class="h">Check they can…</div><ul class="clean">${ev}</ul>`:""}<p class="hint">A full grounded lesson for this topic hasn't been generated yet.</p></div>`); }
+    if(wantWork){ const w=buildWorksheet(); if(w){ if(w.keyRows.length)keys.push({name:t.name,rows:w.keyRows}); parts.push(`<div class="wsec"><div class="eyebrow"><span class="num">${++n}</span> Practice worksheet</div>${w.html}</div>`); } }
+    parts.push(`</section>`); return parts.join("");
   }
 
   const p=c.parent||{}, s=c.student||{};
@@ -587,67 +719,32 @@ function topicPacket(kid, t, lane, fill, N, keys){
   const home=(p.tryAtHome||[]).map(w=>`<li>${fill(w)}</li>`).join("");
   const paras=String(s.intro||"").split(/\n\n+/).filter(Boolean).map(x=>`<p>${fill(x)}</p>`).join("");
   const ex=(s.examples||[]).map(e=>`<div class="example"><div class="show"><span class="etag">Picture</span>${fill(e.show||"")}</div><div class="say"><span class="etag say">Say</span>${fill(e.say||"")}</div></div>`).join("");
+  const ass=((c.assessment&&c.assessment.items)||[]).map(a=>{ const rub=(a.rubric||[]).map(r=>`<li>${fill(r)}</li>`).join(""); return `<div class="crit"><span class="box"></span><div><strong>${fill(a.prompt)}</strong>${rub?`<ul class="rubric">${rub}</ul>`:""}</div></div>`; }).join("");
 
-  // worksheet + answer key from the practice items (mcq bubbles / short lines)
-  let ws="", keyRows=[];
-  if(mathProbs){
-    ws=`<div class="mgrid">`+mathProbs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`;
-    keyRows=mathProbs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`);
-  } else {
-    const items=(c.practice&&c.practice.items)||[];
-    ws=items.map((it,i)=>{
-      if(it.kind==="mcq"&&Array.isArray(it.choices)){
-        const opts=it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("");
-        return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><ul class="choices">${opts}</ul></div>`;
-      }
-      return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><div class="writelines"><div class="ln"></div></div></div>`;
-    }).join("");
-    keyRows=items.map((it,i)=>{ const a=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof it.answerIndex==="number")?it.choices[it.answerIndex]:(it.answer||"—"); return `${i+1}. <b>${esc(a)}</b>`; });
-  }
-  if(keyRows.length) keys.push({name:c.name, rows:keyRows});
-
-  // assessment (oral, rubric) → grown-up check
-  const ass=((c.assessment&&c.assessment.items)||[]).map(a=>{
-    const rub=(a.rubric||[]).map(r=>`<li>${fill(r)}</li>`).join("");
-    return `<div class="crit"><span class="box"></span><div><strong>${fill(a.prompt)}</strong>${rub?`<ul class="rubric">${rub}</ul>`:""}</div></div>`;
-  }).join("");
-
-  return `<section class="topic">
-    <div class="thead">${head}<h1>${fill(glossName(c.name))}</h1></div>
-
-    <div class="gsec"><div class="eyebrow"><span class="num">1</span> For the grown-up · Teaching guide</div>
-      ${p.whyItMatters?`<div class="why"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}
-      ${p.howToTeach?`<div class="h">How to teach it</div><p>${fill(p.howToTeach)}</p>`:""}
-      <div class="guidegrid">
-        ${watch?`<div class="gcard"><h4>Watch for these mix-ups</h4><ul class="clean">${watch}</ul></div>`:""}
-        ${home?`<div class="gcard"><h4>Try this at home</h4><ul class="clean">${home}</ul></div>`:""}
-      </div></div>
-
-    <div class="lsec"><div class="eyebrow"><span class="num">2</span> The lesson · Read together</div>
-      ${paras}${ex?`<div class="h">Picture cards to talk about</div>${ex}`:""}</div>
-
-    <div class="wsec"><div class="eyebrow"><span class="num">3</span> Practice worksheet</div>
-      <p class="hint">Read each question aloud with ${N} if they are still learning to read.</p>${ws}</div>
-
-    ${ass?`<div class="asec"><div class="eyebrow"><span class="num">4</span> Show what you know · Talk it through</div>
-      <p class="hint">Ask each question out loud. Check the box when ${N} shows they understand.</p>${ass}</div>`:""}
-
-    ${sourcesFooter(c)?`<div class="srcsec">${sourcesFooter(c)}</div>`:""}
-  </section>`;
+  const parts=[`<section class="topic"><div class="thead">${head}<h1>${fill(glossName(c.name))}</h1></div>`]; let n=0;
+  if(wantGuide) parts.push(`<div class="gsec"><div class="eyebrow"><span class="num">${++n}</span> For the grown-up · Teaching guide</div>${p.whyItMatters?`<div class="why"><b>Why it matters.</b> ${fill(p.whyItMatters)}</div>`:""}${p.howToTeach?`<div class="h">How to teach it</div><p>${fill(p.howToTeach)}</p>`:""}<div class="guidegrid">${watch?`<div class="gcard"><h4>Watch for these mix-ups</h4><ul class="clean">${watch}</ul></div>`:""}${home?`<div class="gcard"><h4>Try this at home</h4><ul class="clean">${home}</ul></div>`:""}</div></div>`);
+  if(wantLesson) parts.push(`<div class="lsec"><div class="eyebrow"><span class="num">${++n}</span> The lesson · Read together</div>${paras}${ex?`<div class="h">Picture cards to talk about</div>${ex}`:""}</div>`);
+  if(wantWork){ const w=buildWorksheet(); if(w){ if(w.keyRows.length)keys.push({name:c.name,rows:w.keyRows}); parts.push(`<div class="wsec"><div class="eyebrow"><span class="num">${++n}</span> Practice worksheet</div><p class="hint">Read each question aloud with ${N} if they are still learning to read.</p>${w.html}</div>`); } }
+  if(wantAssess && ass) parts.push(`<div class="asec"><div class="eyebrow"><span class="num">${++n}</span> Show what you know · Talk it through</div><p class="hint">Ask each question out loud. Check the box when ${N} shows they understand.</p>${ass}</div>`);
+  if(wantSources && sourcesFooter(c)) parts.push(`<div class="srcsec">${sourcesFooter(c)}</div>`);
+  parts.push(`</section>`);
+  return parts.join("");
 }
 
-function buildPacket(kid, cards){
+function buildPacket(kid, cards, mode, bank){
+  mode=mode||"full"; bank=bank||{};
   const N=esc(kid.first_name);
   const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
   const date=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   const subs=[...new Set(cards.map(c=>c.topic.subject))];
   const keys=[];
-  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}’s learning materials</h1>
+  const label = mode==="worksheets"?"practice worksheets":mode==="materials"?"teaching materials":"learning materials";
+  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s ${label}</h1>
     <div class="day">${date} · ${cards.length} topic${cards.length>1?"s":""}</div>
     <div class="subs">${subs.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
-  const topics=cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys)).join("");
+  const topics=cards.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,mode,bank)).join("");
   let keySec="";
-  if(keys.length) keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
+  if(keys.length && mode!=="materials") keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
     keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
   const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
   return cover+topics+keySec+foot;
