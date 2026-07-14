@@ -4,17 +4,19 @@
 // full-text and vector ranks. Degrades to FTS-only if embedding is unavailable.
 //
 // Runs where SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are set (the generation
-// Action). Returns [] elsewhere so live-fetch dispatch stays safe.
+// Action). Returns [] elsewhere so live-fetch dispatch stays safe. Logs WHY it's
+// empty to stderr (visible in the Action log) — silent [] hid real failures.
 
 import { embedQuery } from './embed.mjs';
 
 export async function corpusRetrieve(source, topic, { k = 3 } = {}) {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return [];
+  if (!url || !key) { console.error(`  corpus[${source}]: no SUPABASE creds — skipped`); return []; }
   const query = `${topic.name}. ${topic.description || ''}`.trim();
 
   let embedding = null;
-  try { embedding = await embedQuery(query); } catch { embedding = null; } // FTS-only fallback
+  try { embedding = await embedQuery(query); } // FTS-only fallback if throttled/no key
+  catch (e) { console.error(`  corpus[${source}]: query embed failed (${e.message}) — FTS only`); }
   const embStr = embedding ? '[' + embedding.join(',') + ']' : null; // pgvector text format for the cast
 
   try {
@@ -23,8 +25,10 @@ export async function corpusRetrieve(source, topic, { k = 3 } = {}) {
       headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
       body: JSON.stringify({ query_text: query, query_embedding: embStr, src: source, match_count: k }),
     });
-    if (!res.ok) return [];
+    if (!res.ok) { console.error(`  corpus[${source}]: RPC HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`); return []; }
     const rows = await res.json();
-    return (rows || []).map((r) => ({ text: r.text, url: r.url || '', verified: true, title: r.title || source }));
-  } catch { return []; }
+    if (!rows || !rows.length) { console.error(`  corpus[${source}]: 0 passages matched "${topic.name}" (${embedding ? 'hybrid' : 'FTS-only'})`); return []; }
+    console.error(`  corpus[${source}]: ${rows.length} passage(s) (${embedding ? 'hybrid' : 'FTS-only'})`);
+    return rows.map((r) => ({ text: r.text, url: r.url || '', verified: true, title: r.title || source }));
+  } catch (e) { console.error(`  corpus[${source}]: RPC error ${e.message}`); return []; }
 }
