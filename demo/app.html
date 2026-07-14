@@ -153,7 +153,10 @@
   /* prepare-ahead (road trip) */
   .prep{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:9px 12px}
   .preplabel{font-size:.82rem;font-weight:700;color:var(--soft)}
-  .prepbtns{display:flex;gap:6px;margin-left:auto}
+  .prepbtns{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .prepdays{width:56px;font:inherit;font-weight:700;text-align:center;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 6px}
+  .prepdays:focus{outline:2px solid var(--navy);outline-offset:1px}
+  .prepunit{font-size:.82rem;font-weight:700;color:var(--soft)}
   /* assessment modal */
   .modal{position:fixed;inset:0;background:rgba(20,26,46,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:0}
   @media(min-width:520px){.modal{align-items:center;padding:20px}}
@@ -468,6 +471,7 @@ async function loadTaxonomy(age){
 let MASTERED=new Set();     // topic ids the child has mastered (excluded from new sessions)
 let SESSIONS=[];            // persisted sessions for the open child
 let SELDATE=null;           // yyyy-mm-dd currently shown
+let PREPDAYS=5;             // how many days "prepare ahead" plans (parent sets it)
 const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
 const ymd=(d)=>{const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
 const todayStr=()=>ymd(new Date());
@@ -522,9 +526,13 @@ function renderCalendar(){
         <span class="cdow">${dow(x)}</span><span class="cn">${dnum(x)}</span>${dotFor(x)}</button>`).join("")+`</div>`;
   document.getElementById("homeCounts").querySelectorAll(".cday").forEach(b=>b.onclick=()=>{ SELDATE=b.dataset.d; renderCalendar(); });
   const pa=document.getElementById("homeActions");
-  pa.innerHTML=`<div class="prep"><span class="preplabel">🧳 Road trip? Prepare &amp; print ahead</span><span class="prepbtns"></span></div>`;
-  const pb=pa.querySelector(".prepbtns");
-  [3,5,7].forEach(n=>pb.appendChild(mkBtn("ghost",`${n} days`,()=>prepareAndPrint(n))));
+  pa.innerHTML=`<div class="prep"><span class="preplabel">🧳 Road trip? Prepare &amp; print ahead</span>
+    <span class="prepbtns"><input class="prepdays" type="number" min="1" max="60" step="1" value="${PREPDAYS}" aria-label="Number of days" inputmode="numeric">
+    <span class="prepunit">days</span></span></div>`;
+  const inp=pa.querySelector(".prepdays");
+  const clamp=()=>{ let v=Math.round(Number(inp.value)); if(!Number.isFinite(v)||v<1)v=1; if(v>60)v=60; PREPDAYS=v; inp.value=v; };
+  inp.onchange=clamp;
+  pa.querySelector(".prepbtns").appendChild(mkBtn("primary","Prepare & print",()=>{ clamp(); prepareAndPrint(PREPDAYS); }));
   renderDay(SELDATE);
 }
 
