@@ -57,11 +57,14 @@ const decode = (s) => (s || '')
 async function enumerateViaRest() {
   const items = [];
   for (let page = 1; page <= 60; page++) {
-    let r;
-    try {
-      r = await fetch(`${BASE}/wp-json/wp/v2/library?per_page=100&page=${page}&_fields=link,title,content`, { headers: { 'User-Agent': UA } });
-    } catch (e) { console.error('REST library fetch failed:', e.message); break; }
-    if (!r.ok) { if (page === 1) console.error(`REST /library -> HTTP ${r.status}`); break; }
+    let r, attempt = 0;
+    while (true) { // retry this page on 429 rather than aborting the whole enumeration
+      try { r = await fetch(`${BASE}/wp-json/wp/v2/library?per_page=100&page=${page}&_fields=link,title,content`, { headers: { 'User-Agent': UA } }); }
+      catch (e) { console.error('REST library fetch failed:', e.message); r = null; break; }
+      if (r.status === 429 && attempt < 5) { const w = Math.min(30000, 2000 * 2 ** attempt++); console.error(`  REST 429 page ${page} — waiting ${w / 1000}s`); await sleep(w); continue; }
+      break;
+    }
+    if (!r || !r.ok) { if (page === 1) console.error(`REST /library -> HTTP ${r ? r.status : 'error'}`); break; }
     const arr = await r.json();
     if (!Array.isArray(arr) || !arr.length) break;
     for (const it of arr) items.push({ link: it.link, title: decode(it.title && it.title.rendered), content: (it.content && it.content.rendered) || '' });
