@@ -73,3 +73,8 @@ language sql stable as $$
 $$;
 
 grant execute on function public.match_source_documents(text, vector, text, int) to service_role, authenticated;
+
+-- Bulk ingestion (deleting thousands of rows, upserting vector batches while the
+-- HNSW index maintains itself) exceeds the default ~8s API statement timeout.
+-- Give the service role (used by the ingest Action) generous headroom.
+alter role service_role set statement_timeout = '300s';

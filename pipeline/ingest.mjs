@@ -84,8 +84,12 @@ async function getFile(doc) {
 const replace = process.argv.includes('--replace');
 if (replace) {
   const del = await fetch(`${SB}/rest/v1/source_documents?source=eq.${encodeURIComponent(source)}`, { method: 'DELETE', headers: sbHeaders });
-  if (!del.ok && del.status !== 404) console.error(`delete warned HTTP ${del.status}`);
-  else console.log(`--replace: cleared existing '${source}' rows.`);
+  if (!del.ok && del.status !== 404) {
+    console.error(`\n>>> DELETE for --replace failed HTTP ${del.status}: ${(await del.text()).slice(0, 200)}`);
+    console.error('>>> Likely the API statement timeout. Apply db/corpus.sql (it raises service_role statement_timeout), then re-run.\n');
+    process.exit(1); // don't ingest onto stale rows and produce a dirty mix
+  }
+  console.log(`--replace: cleared existing '${source}' rows.`);
 }
 
 // Stream: embed + upsert each chunk as we go, so memory stays bounded on the full
@@ -106,8 +110,9 @@ async function flush() {
     catch (e) { console.error(`Embeddings failed (${e.message}) — continuing FTS-only.`); embFail = true; }
   }
   const rows = buffer.map((p, i) => ({ ...p, embedding: embeddings ? '[' + embeddings[i].join(',') + ']' : null }));
-  for (let i = 0; i < rows.length; i += 200) {
-    const batch = rows.slice(i, i + 200);
+  const INSERT_BATCH = Number(process.env.INGEST_INSERT_BATCH || 50); // small: HNSW upserts are slow
+  for (let i = 0; i < rows.length; i += INSERT_BATCH) {
+    const batch = rows.slice(i, i + INSERT_BATCH);
     const res = await fetch(insertUrl, { method: 'POST', headers: { ...sbHeaders, Prefer: prefer }, body: JSON.stringify(batch) });
     if (!res.ok) {
       const body = await res.text();
