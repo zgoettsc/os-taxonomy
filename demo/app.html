@@ -599,11 +599,12 @@ function renderHome(){
       bar.appendChild(mkBtn("ghost","🔀 Shuffle",()=>{ PVSEED++; renderHome(); }));
       wrap.appendChild(bar);
       list.forEach((cards,i)=>{
+        if(i===1) wrap.appendChild(sectionLabel("Or pick a later one"));
         const subj=[...new Set(cards.map(c=>c.topic.subject))];
         const box=document.createElement("div"); box.className=i===0?"brief":"card"; if(i>0) box.style.padding="14px";
-        const eyebrow=i===0?`<p class="eyebrow" style="color:var(--gold)">Next session · preview</p>`:`<div class="seclabel" style="margin:0 0 6px">Then</div>`;
+        const eyebrow=i===0?`<p class="eyebrow" style="color:var(--gold)">Next session · preview</p>`:"";
         box.innerHTML=`${eyebrow}
-          <h2 style="font-size:${i===0?"1.25rem":"1.05rem"}">${cards.length} topic${cards.length>1?"s":""} · ${subj.map(esc).join(", ")}</h2>
+          <h2 style="font-size:${i===0?"1.25rem":"1.05rem"};margin:0">${cards.length} topic${cards.length>1?"s":""} · ${subj.map(esc).join(", ")}</h2>
           <ul class="crit" style="margin-top:8px">${cards.map(c=>`<li>${esc(glossName(c.topic.name))} <span class="faint">· ${esc(c.topic.subject)}</span></li>`).join("")}</ul>
           <div class="prow"></div>`;
         box.querySelector(".prow").appendChild(mkBtn("primary",i===0?"Start session":"Start this one",()=>startComposed(cards)));
