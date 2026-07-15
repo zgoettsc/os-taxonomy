@@ -21,6 +21,10 @@ content generation, and build the apps. Start here when you're ready to build.
 4. **[`architecture.md`](architecture.md)** — the stack (Supabase, shared TS
    engine, React Native, PencilKit, offline content pipeline; privacy-first).
 5. **[`ROADMAP.md`](ROADMAP.md)** — the phased build plan.
+6. **[`implementation-notes.md`](implementation-notes.md)** — **AS-BUILT**: what the
+   live app + pipeline actually do today (session queue/history, precompute-ahead
+   generation, images, review screen, the SQL/workflow runbook). Read this to know
+   the current state — the docs above describe intent, this one describes reality.
 
 ## The evidence base (why the pedagogy is what it is)
 
@@ -56,7 +60,9 @@ content generation, and build the apps. Start here when you're ready to build.
 | `db/` | Supabase schema + idempotent seed generator | ✅ schema + seed |
 | `demo/parent-app.html` | **Parent app** hi-fi mockup — Today/Plan/Print/Progress + Record (Garden theme) | ✅ runnable |
 | `demo/kid-app.html` | **Student app** hi-fi mockup — profile → today → quiz → letter-tracing → done wall | ✅ runnable |
-| `demo/app.html` | **Live parent app shell** — real Supabase auth → your kids → a child's whole-curriculum session (composed from the seeded taxonomy), expandable cards, sensitivity gates. Open in a browser. | ✅ wired to DB |
+| `demo/app.html` | **Live parent app** — Supabase auth → kids → dateless session **queue** + past-sessions **calendar**, interactive **assess** rubric, prepare-ahead, inline preview, whole-grade binder, illustrated print packets, admin **review** screen. See `implementation-notes.md`. | ✅ wired to DB |
+| `db/sessions.sql` · `practice.sql` · `images.sql` · `review.sql` | Session queue/record, unlimited practice, lesson picture-card images, admin review policies | ✅ applied |
+| `pipeline/resolve-images.mjs` · `backfill.mjs` | Real-first hybrid image resolver (house-style AI + Openverse photos) · readiness backfill (grade batch + frontier) | ✅ runnable |
 | `demo/index.html` | Earlier self-contained app-screen demo | ✅ runnable |
 
 ## Try it (no setup, offline)
