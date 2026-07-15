@@ -137,6 +137,16 @@ The app only reads ready content; if a topic isn't ready it degrades to "Basics"
   scripts (Node, no CORS) walks with `Range` headers until a short page returns. Used for `fetchPractice`,
   `loadServed`, and the backfill's deps/mastery/lesson/image/practice counts (deps at
   `limit=20000` was also being truncated, silently dropping prereq edges).
+- **Fetch practice banks for ALL topics, not just `lane!=="practice"`.** `laneOf` marks
+  every PROCEDURAL topic as generator-lane, but `genProblems` only builds ARITHMETIC.
+  Procedural NON-math topics (e.g. "Sitting and holding a pencil", handwriting) therefore
+  fall to the bank branch at render time — but the worksheet builders were fetching banks
+  only for `lane!=="practice"` topics, so those banks were never loaded → the render fell
+  back to the lesson's 3 built-ins → three one-question sheets. Fix: every `fetchPractice`
+  call site now fetches for all cards (a bank fetched for a true arithmetic topic is
+  ignored by the generator branch, so it's harmless). Confirmed via `[DIAG]` console
+  output: the read returns 18/topic; the only remaining empties were the 3 conceptual-math
+  banks awaiting a backfill run.
 - **Backfill practice-skip must mirror the app's lanes (type-aware, not name-based).**
   The app (`laneOf` + `genProblems`) code-generates a math worksheet only when the
   topic's `type !== 'CONCEPTUAL'` **and** its name is an arithmetic the generator knows.
