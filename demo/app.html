@@ -355,17 +355,19 @@ async function sb(path, opts = {}){
   return data;
 }
 // Paginated read. PostgREST caps a single response at ~1000 rows regardless of a
-// &limit= in the URL, so a plain GET silently truncates large result sets (e.g. the
-// whole-grade practice bank). Walk with Range headers until a short page comes back.
+// &limit= in the URL, so a plain GET can silently truncate large result sets (e.g. a
+// big whole-grade practice bank). Page with URL offset/limit through the SAME sb()
+// helper the rest of the app uses — no custom Range headers (those trigger a CORS
+// preflight the browser can reject, which silently emptied the bank and printed
+// one-question sheets).
 async function sbAll(path, pageSize=1000){
   const out=[]; const sep = path.includes("?") ? "&" : "?";
-  for(let from=0; ; from+=pageSize){
-    const headers={ apikey: ANON, "Content-Type":"application/json",
-      Authorization: "Bearer " + (session ? session.access_token : ANON),
-      Range: `${from}-${from+pageSize-1}`, "Range-Unit":"items" };
-    const res=await fetch(SUPABASE_URL + path + sep + "limit=" + pageSize, { headers });
-    if(!res.ok){ if(from===0) throw new Error("HTTP "+res.status); break; }
-    const text=await res.text(); const rows=text?JSON.parse(text):[];
+  for(let offset=0; ; offset+=pageSize){
+    const url=`${path}${sep}limit=${pageSize}&offset=${offset}`;
+    console.log(`[DIAG] sbAll page: ${url}`);
+    const rows=await sb(url);
+    console.log(`[DIAG] sbAll page returned ${Array.isArray(rows)?rows.length:"NOT-ARRAY ("+typeof rows+")"} row(s)`);
+    if(!Array.isArray(rows) || !rows.length) break;
     out.push(...rows);
     if(rows.length < pageSize) break;
   }
@@ -1227,13 +1229,19 @@ async function printSession(s, mode){
 }
 async function fetchPractice(ids){
   const out={}; if(!ids.length) return out;
+  console.log(`[DIAG] fetchPractice: requesting ${ids.length} topic(s)`);
   try{
     const inList=ids.map(encodeURIComponent).join(",");
     // Paginated — a single request caps at ~1000 rows, which silently truncated the
     // grade bank and made full topics render as one thin sheet. Page through instead.
     const rows=await sbAll(`/rest/v1/practice_items?select=id,topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&order=topic_id`);
     for(const r of rows){ (out[r.topic_id] ||= []).push(r); }
-  }catch{}
+    const counts=Object.entries(out).map(([k,v])=>`${k}:${v.length}`);
+    console.log(`[DIAG] fetchPractice OK: ${rows.length} rows across ${Object.keys(out).length} topic(s)`);
+    console.log(`[DIAG] per-topic counts:`, counts.join("  "));
+    const empties=ids.filter(id=>!out[id]||!out[id].length);
+    if(empties.length) console.warn(`[DIAG] ${empties.length} topic(s) came back EMPTY:`, empties.join(", "));
+  }catch(e){ console.error(`[DIAG] fetchPractice FAILED — bank will be empty and worksheets thin:`, e && e.message, e); }
   return out;
 }
 // Per-child SERVED tracking → worksheets don't repeat a question until the bank is

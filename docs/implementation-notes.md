@@ -129,8 +129,12 @@ The app only reads ready content; if a topic isn't ready it degrades to "Basics"
   rows past #1000 never arrived, and those topics fell back to the lesson's 3 built-in
   questions — the "3/6/18" pattern in the PDF was a **read-truncation artifact, not a
   thin bank** (backfill, counting the same table, correctly reported the banks full).
-  Fix: `sbAll()` in the app and `getAll()` in `backfill.mjs`/`audit-practice.mjs` walk
-  the table with `Range` headers until a short page returns. Used for `fetchPractice`,
+  Fix: `sbAll()` in the app pages with URL `offset`/`limit` through the normal `sb()`
+  helper (an earlier `Range`-header version silently broke: the custom `Range-Unit`
+  header forced a CORS preflight the browser rejected, so `fetchPractice` caught the
+  error and returned an EMPTY bank → every knowledge topic printed one-question sheets
+  from the lesson's 3 built-ins. No custom headers now). `getAll()` in the pipeline
+  scripts (Node, no CORS) walks with `Range` headers until a short page returns. Used for `fetchPractice`,
   `loadServed`, and the backfill's deps/mastery/lesson/image/practice counts (deps at
   `limit=20000` was also being truncated, silently dropping prereq edges).
 - **Backfill practice-skip must mirror the app's lanes (type-aware, not name-based).**
