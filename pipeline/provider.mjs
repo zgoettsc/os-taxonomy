@@ -183,7 +183,7 @@ export async function practiceProvider(name) {
         + `FACTS (write only from these):\n${(facts || []).map((f) => '- ' + f).join('\n')}\n\n`
         + `AVOID repeating these prompts:\n${(avoid || []).slice(0, 80).map((a) => '- ' + a).join('\n') || '(none yet)'}`;
       const res = await client.messages.create({
-        model: 'claude-opus-4-8', max_tokens: 6000, system,
+        model: 'claude-haiku-4-5-20251001', max_tokens: 6000, system,  // practice is high-volume; Haiku is cheap + plenty for auto-checkable Q&A
         messages: [{ role: 'user', content: user }],
         output_config: { format: { type: 'json_schema', schema: PRACTICE_SCHEMA } },
       });

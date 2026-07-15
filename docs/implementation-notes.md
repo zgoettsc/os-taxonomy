@@ -122,6 +122,30 @@ The app only reads ready content; if a topic isn't ready it degrades to "Basics"
 - **Coherence gate.** After generation, a cheap Haiku copy-editor (`coherenceProvider`)
   scans the prose for garbled/broken text (bad find-replace, dropped letters); any hit
   is a review flag that holds the lesson. Protects the "every fact verified" promise.
+- **PostgREST 1000-row cap — paginate every large read.** A single PostgREST response
+  is capped at ~1000 rows *regardless* of a `&limit=` in the URL. A one-shot GET on a
+  big table silently truncates. This is what made the grade Worksheets binder render
+  full topics as one thin sheet: the app fetched all 41 topics' banks in one call, the
+  rows past #1000 never arrived, and those topics fell back to the lesson's 3 built-in
+  questions — the "3/6/18" pattern in the PDF was a **read-truncation artifact, not a
+  thin bank** (backfill, counting the same table, correctly reported the banks full).
+  Fix: `sbAll()` in the app and `getAll()` in `backfill.mjs`/`audit-practice.mjs` walk
+  the table with `Range` headers until a short page returns. Used for `fetchPractice`,
+  `loadServed`, and the backfill's deps/mastery/lesson/image/practice counts (deps at
+  `limit=20000` was also being truncated, silently dropping prereq edges).
+- **Backfill practice-skip must mirror the app's lanes (type-aware, not name-based).**
+  The app (`laneOf` + `genProblems`) code-generates a math worksheet only when the
+  topic's `type !== 'CONCEPTUAL'` **and** its name is an arithmetic the generator knows.
+  Conceptual math ("Division as equal sharing", "Addition as combining…", "Subtraction
+  as taking away…") is a LESSON topic in the app and needs a stored `practice_items`
+  bank. The old backfill skipped any math topic whose *name* matched `add|subtract|…`,
+  wrongly starving those conceptual topics (bank stayed 0 → empty worksheet). Fixed:
+  `appCodeGenerates(t) = subject==='Mathematics' && type!=='CONCEPTUAL' && arithName(t)`,
+  matching the app exactly. Re-run `backfill --age 4` to fill the affected banks.
+- **`pipeline/audit-practice.mjs`** — read-only diagnostic: prints the live per-topic
+  practice bank count for an age band (raw rows + distinct-by-prompt = the app view),
+  plus a histogram and a below-target list. `node pipeline/audit-practice.mjs --age 4`.
+  Use it to see the DB truth instead of inferring bank depth from a printout.
 - **Infinite unique practice.** `practice_items` is a persistent per-topic bank: lessons
   **seed** it with their built-in practice (`generate.mjs` → `seedPractice`), and the
   **backfill tops each bank up to a target** (`--practice`, default 18 = three 6-Q

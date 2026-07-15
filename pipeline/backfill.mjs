@@ -32,17 +32,30 @@ const SB = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 if (!SB || !KEY) { console.error('needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY'); process.exit(1); }
 const H = { apikey: KEY, Authorization: 'Bearer ' + KEY };
 async function get(p) { const r = await fetch(SB + p, { headers: H }); if (!r.ok) throw new Error(`${r.status} ${await r.text()}`); return r.json(); }
+// Paginated read — PostgREST caps a single response at ~1000 rows regardless of a
+// &limit= in the URL. A one-shot GET therefore silently truncates big tables (deps,
+// mastery, practice_items), which was under-counting banks and dropping prereq edges.
+async function getAll(pathBase, pageSize = 1000) {
+  const out = [];
+  for (let from = 0; ; from += pageSize) {
+    const r = await fetch(SB + pathBase, { headers: { ...H, Range: `${from}-${from + pageSize - 1}`, 'Range-Unit': 'items' } });
+    if (!r.ok) { if (from === 0) throw new Error(`${r.status} ${await r.text()}`); break; }
+    const rows = await r.json(); out.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return out;
+}
 
 // --- taxonomy (offline) + graph/mastery (DB) ---
 const topics = JSON.parse(fs.readFileSync(path.join(dir, '..', 'data', 'topics.json'), 'utf8')).topics;
 const byId = new Map(topics.map((t) => [t.id, t]));
 const [children, deps, masteredRows, doneLessons, doneImages, donePractice] = await Promise.all([
-  get('/rest/v1/children?select=id,first_name,birth_year'),
-  get('/rest/v1/dependencies?select=topic_id,prerequisite_id&strength=eq.hard&limit=20000'),
-  get('/rest/v1/mastery?select=child_id,topic_id&status=eq.mastered&limit=20000'),
-  get('/rest/v1/content_items?select=topic_id&reviewed=eq.true&limit=20000'),
-  get('/rest/v1/lesson_images?select=topic_id&limit=20000'),
-  get('/rest/v1/practice_items?select=topic_id&limit=50000').catch(() => []),
+  getAll('/rest/v1/children?select=id,first_name,birth_year'),
+  getAll('/rest/v1/dependencies?select=topic_id,prerequisite_id&strength=eq.hard&order=topic_id'),
+  getAll('/rest/v1/mastery?select=child_id,topic_id&status=eq.mastered&order=child_id'),
+  getAll('/rest/v1/content_items?select=topic_id&reviewed=eq.true&order=topic_id'),
+  getAll('/rest/v1/lesson_images?select=topic_id&order=topic_id'),
+  getAll('/rest/v1/practice_items?select=topic_id&order=topic_id').catch(() => []),
 ]);
 const practiceCount = {}; for (const r of donePractice) practiceCount[r.topic_id] = (practiceCount[r.topic_id] || 0) + 1;
 const hard = new Map(); for (const d of deps) { (hard.get(d.topic_id) || hard.set(d.topic_id, []).get(d.topic_id)).push(d.prerequisite_id); }
@@ -81,10 +94,15 @@ if (argv.age) {
 }
 const needLesson = need.filter((t) => !haveLesson.has(t.id));
 const needImages = need.filter((t) => haveLesson.has(t.id) && !haveImages.has(t.id));
-// Practice top-up: knowledge + non-arithmetic-math topics with a lesson but a thin
-// bank. Arithmetic math is code-generated (infinite) so it needs no stored bank.
-const isArith = (t) => t.subject === 'Mathematics' && /\badd|subtract|division|divide|multipl|\bsum|take away|combin/i.test(t.name);
-const needPractice = need.filter((t) => haveLesson.has(t.id) && !isArith(t) && (practiceCount[t.id] || 0) < PRACTICE_TARGET);
+// Practice top-up: any topic with a lesson but a thin bank, EXCEPT topics the app
+// code-generates worksheets for (infinite, no stored bank needed). This must mirror
+// the app exactly (demo/app.html laneOf + genProblems): a Math topic is code-generated
+// only when its type is NOT conceptual AND its name/domain matches an arithmetic the
+// generator understands. Conceptual math (e.g. "Division as equal sharing") is a LESSON
+// topic in the app and DOES need a bank — the old name-only test wrongly skipped it.
+const arithName = (t) => /multipl|divis|subtract|change|difference|\badd|\bsum|plus/i.test(`${t.domain || ''} ${t.name}`);
+const appCodeGenerates = (t) => t.subject === 'Mathematics' && t.type !== 'CONCEPTUAL' && arithName(t);
+const needPractice = need.filter((t) => haveLesson.has(t.id) && !appCodeGenerates(t) && (practiceCount[t.id] || 0) < PRACTICE_TARGET);
 console.log(`  missing lesson: ${needLesson.length} · lesson-but-no-images: ${needImages.length} · thin practice bank: ${needPractice.length} · this run caps at ${MAX}`);
 
 if (DRY) {
