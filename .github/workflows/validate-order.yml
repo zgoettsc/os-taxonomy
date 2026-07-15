@@ -1,0 +1,29 @@
+name: Validate teaching order
+
+# Guards the concept map: the taxonomy must always sequence into a teaching order
+# where no hard prerequisite comes after its dependent, and the hard-edge graph has
+# no cycles. Fails the build if an edit to topics.json / dependencies.json breaks it.
+
+on:
+  push:
+    paths:
+      - 'data/topics.json'
+      - 'data/dependencies.json'
+      - 'scripts/sequence.mjs'
+      - 'scripts/check-order.mjs'
+  pull_request:
+    paths:
+      - 'data/topics.json'
+      - 'data/dependencies.json'
+      - 'scripts/sequence.mjs'
+  workflow_dispatch:
+
+jobs:
+  order:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/check-order.mjs

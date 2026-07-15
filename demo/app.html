@@ -188,8 +188,16 @@
   .pvbadge{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;border:1px solid var(--line);color:var(--faint);border-radius:20px;padding:1px 7px}
   .pvbadge.ok{color:var(--teal);border-color:var(--teal)}
   .pvhint{font-size:.74rem;color:var(--faint);font-style:italic;margin:6px 0 0}
+  /* history search */
+  .histsearch{margin:2px 0}
+  .hsearch{width:100%;font:inherit;font-size:.86rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 12px}
+  .hsearch::placeholder{color:var(--faint)}
+  .hsearch:focus{outline:2px solid var(--navy);outline-offset:1px}
+  .hviewseg{display:inline-flex;gap:2px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:2px;margin:8px 0 2px}
+  .hviewseg button{font:inherit;font-size:.76rem;font-weight:700;border:0;background:none;color:var(--soft);padding:5px 13px;border-radius:8px;cursor:pointer}
+  .hviewseg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,26,46,.14)}
   /* history calendar */
-  .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:6px}
   .histnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .histnav b{font-family:var(--disp);font-size:1rem}
   .hnav{background:var(--card2);border:1px solid var(--line);border-radius:9px;width:30px;height:30px;font-size:1rem;color:var(--ink);cursor:pointer;line-height:1}
@@ -562,6 +570,9 @@ let PREPN=3;                // how many sessions "prepare ahead" adds to the que
 let PVSEED=0;               // shuffle offset for the look-ahead preview
 let HISTMON=null;           // yyyy-mm shown in the history calendar
 let HISTSEL=null;           // yyyy-mm-dd selected in the history calendar
+let HSEARCH="";             // History search box text
+let HVIEW="list";           // History view: 'list' | 'calendar'
+let SEARCHABLE=[];          // topics you can search: this grade + worked-ahead topics
 const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
 const ymd=(d)=>{const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
 const todayStr=()=>ymd(new Date());
@@ -596,9 +607,26 @@ async function openHome(kid, age){
     const {topics, hard}=await loadTaxonomy(age);
     TOPICS=topics; HARD=hard; TBYID.clear(); for(const t of topics) TBYID.set(t.id,t);
     await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
-    HISTMON=monStr(todayStr()); HISTSEL=null;
+    HISTMON=monStr(todayStr()); HISTSEL=null; HSEARCH="";
+    await buildSearchable();
     renderHome();
   }catch(e){ document.getElementById("cards").innerHTML=`<div class="note err">Couldn't load: ${esc(e.message)}</div>`; }
+}
+// Searchable topic set = this grade (TOPICS) + any topics the child has actually
+// done in sessions but that sit outside the current grade band (worked ahead).
+async function buildSearchable(){
+  const known=new Set(TOPICS.map(t=>t.id));
+  const extraIds=[...new Set(SESSIONS.flatMap(s=>(s.topics||[]).map(x=>x.topicId)).filter(id=>!known.has(id)))];
+  let extra=[];
+  if(extraIds.length){
+    try{
+      const cols="id,subject,domain,name,description,type,age_range_start,age_range_end,centrality,evidence";
+      const rows=await sb(`/rest/v1/topics?select=${cols}&id=in.(${extraIds.map(encodeURIComponent).join(",")})&limit=2000`);
+      for(const t of rows){ t.name=amz(t.name); t.description=amz(t.description); t.domain=amz(t.domain); if(Array.isArray(t.evidence)) t.evidence=t.evidence.map(amz); TBYID.set(t.id,t); }
+      extra=rows;
+    }catch{}
+  }
+  SEARCHABLE=TOPICS.concat(extra);
 }
 
 function statusChip(st){ const m={planned:["Planned","var(--gold)"],started:["In progress","var(--navy)"],completed:["Completed","var(--teal)"]}[st]||["",""]; return `<span class="schip" style="color:${m[1]};border-color:${m[1]}">${m[0]}</span>`; }
@@ -741,6 +769,7 @@ function renderHome(){
   const gbtns=gb.querySelector(".prepbtns");
   gbtns.appendChild(mkBtn("ghost","Full",()=>printGrade("full")));
   gbtns.appendChild(mkBtn("ghost","Materials",()=>printGrade("materials")));
+  gbtns.appendChild(mkBtn("ghost","Worksheets",()=>printGradePractice()));
   wrap.appendChild(gb);
 
   // D) History (past-sessions calendar)
@@ -834,10 +863,77 @@ async function printQueue(){
   openPrint(`${CURRENT.kid.first_name} — ${q.length} prepared sessions`, buildQueuePacket(CURRENT.kid, q, bank));
 }
 
-// ---- history: the past-sessions calendar (a true record of what was taught) ----
+// ---- history: search box → calendar (empty) or search results (typed) ----
 function renderHistory(wrap){
-  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
   wrap.appendChild(sectionLabel("History"));
+  const bar=document.createElement("div"); bar.className="histsearch";
+  const inp=document.createElement("input"); inp.className="hsearch"; inp.type="search";
+  inp.placeholder="Find a topic or past session…"; inp.value=HSEARCH; inp.setAttribute("aria-label","Find a topic or session");
+  bar.appendChild(inp); wrap.appendChild(bar);
+  const out=document.createElement("div"); wrap.appendChild(out);
+  const draw=()=>{
+    HSEARCH=inp.value; out.innerHTML="";
+    const q=HSEARCH.trim().toLowerCase();
+    if(q){ drawSearch(out,q); return; }
+    const seg=document.createElement("div"); seg.className="hviewseg";
+    [["list","List"],["calendar","Calendar"]].forEach(([v,lbl])=>{ const b=document.createElement("button"); b.textContent=lbl; b.className=HVIEW===v?"on":""; b.onclick=()=>{ HVIEW=v; draw(); }; seg.appendChild(b); });
+    out.appendChild(seg);
+    const body=document.createElement("div"); out.appendChild(body);
+    if(HVIEW==="list") drawList(body); else drawCalendar(body);
+  };
+  inp.oninput=draw; draw();
+}
+// Chronological log — completed sessions newest-first, grouped by day, topics visible.
+function drawList(wrap){
+  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
+  if(!taught.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent="No sessions completed yet. Finish one above and it'll be logged here to reprint any time."; wrap.appendChild(n); return; }
+  const byDate={}; for(const s of taught){ (byDate[s.for_date] ||= []).push(s); }
+  const dates=Object.keys(byDate).sort((a,b)=>a<b?1:-1);
+  for(const d of dates){
+    const h=document.createElement("div"); h.className="dayhead"; h.style.marginTop="10px";
+    h.innerHTML=`<h3>${dLabel(d)}</h3><div class="faint" style="font-size:.76rem">${byDate[d].length} session${byDate[d].length>1?"s":""}</div>`;
+    wrap.appendChild(h);
+    byDate[d].sort((a,b)=>String(a.started_at).localeCompare(String(b.started_at))).forEach((s,i)=>wrap.appendChild(sessionCard(s, `Session ${i+1}`, printButtons(s))));
+  }
+}
+function drawSearch(wrap, q){
+  const topics=SEARCHABLE
+    .filter(t=>((t.name||"")+" "+(t.subject||"")+" "+(t.domain||"")+" "+(t.description||"")).toLowerCase().includes(q))
+    .sort((a,b)=>{ const an=(a.name||"").toLowerCase().startsWith(q)?0:1, bn=(b.name||"").toLowerCase().startsWith(q)?0:1; return an-bn || (a.name||"").localeCompare(b.name||""); })
+    .slice(0,25);
+  const sessions=SESSIONS.filter(s=>s.for_date && s.status!=="planned")
+    .filter(s=> dLabel(s.for_date).toLowerCase().includes(q) || (s.topics||[]).some(t=>(t.name||"").toLowerCase().includes(q)))
+    .sort((a,b)=>a.for_date<b.for_date?1:-1).slice(0,15);
+  if(!topics.length && !sessions.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent=`No topics or sessions match “${HSEARCH.trim()}”.`; wrap.appendChild(n); return; }
+  if(topics.length){
+    wrap.appendChild(revLabel(`Topics (${topics.length})`));
+    for(const t of topics) wrap.appendChild(topicResultCard(t));
+  }
+  if(sessions.length){
+    wrap.appendChild(revLabel(`Past sessions (${sessions.length})`));
+    for(const s of sessions) wrap.appendChild(sessionCard(s, dLabel(s.for_date), printButtons(s)));
+  }
+}
+function topicResultCard(t){
+  const box=document.createElement("div"); box.className="card"; box.style.padding="12px 14px";
+  box.innerHTML=`<div style="width:100%"><div class="revhd" style="margin-bottom:5px"><b class="disp">${esc(glossName(t.name))}</b> <span class="faint" style="font-size:.78rem">· ${esc(t.subject)}${t.domain?" · "+esc(t.domain):""}</span></div><div class="prow"></div></div>`;
+  const prow=box.querySelector(".prow");
+  prow.appendChild(mkBtn("ghost","Full",()=>printTopic(t,"full")));
+  prow.appendChild(mkBtn("ghost","Materials",()=>printTopic(t,"materials")));
+  prow.appendChild(mkBtn("ghost","Worksheet",()=>printTopic(t,"worksheets")));
+  return box;
+}
+// Reprint ONE topic's materials (mini-packet). full | materials | worksheets.
+async function printTopic(t, mode){
+  const kid=CURRENT.kid; const card={topic:t, ...laneOf(t)};
+  CONTENT=Object.assign(CONTENT, await fetchContent([t.id]));
+  if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages([t.id]));
+  let bank={}; if(mode!=="materials" && card.lane!=="practice") bank=await fetchPractice([t.id]);
+  const suffix=mode==="worksheets"?" · worksheet":mode==="materials"?" · materials":"";
+  openPrint(`${kid.first_name} — ${glossName(t.name)}${suffix}`, buildPacket(kid, [card], mode, bank));
+}
+function drawCalendar(wrap){
+  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
   if(!taught.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent="No sessions completed yet. Finish one above and it'll be logged here to reprint any time."; wrap.appendChild(n); return; }
   const byDate={}; for(const s of taught){ (byDate[s.for_date] ||= []).push(s); }
 
@@ -920,6 +1016,31 @@ async function printGrade(mode){
   }catch(e){ alert("Couldn't build the binder: "+e.message); }
   finally{ if(label) label.textContent=keep; btns.forEach(b=>{b.disabled=false;}); }
 }
+// Order a set of topic-cards by curriculum PROGRESSION: a topological sort over
+// the hard-prerequisite graph (prereqs before dependents), ties broken by age then
+// centrality then name. So page 1 is the most foundational, later pages harder.
+// (Only as good as the prereq edges in the graph — sparse edges → falls back to
+// age/centrality; enriching the edges is the deeper fix.)
+function topoSort(cards){
+  const ids=new Set(cards.map(c=>c.topic.id));
+  const byId=new Map(cards.map(c=>[c.topic.id,c]));
+  const preOf=(id)=>(HARD.get(id)||[]).filter(p=>ids.has(p));
+  const indeg=new Map(cards.map(c=>[c.topic.id, preOf(c.topic.id).length]));
+  const deps=new Map(cards.map(c=>[c.topic.id,[]]));
+  for(const c of cards) for(const p of preOf(c.topic.id)) deps.get(p).push(c.topic.id);
+  // Tiebreak among ready topics: centrality desc ("most important first"), then
+  // younger age, then id — matches scripts/sequence.mjs (the canonical sequencer).
+  const cmp=(a,b)=> ((b.topic.centrality||0)-(a.topic.centrality||0)) || ((a.topic.age_range_start||0)-(b.topic.age_range_start||0)) || (a.topic.id<b.topic.id?-1:a.topic.id>b.topic.id?1:0);
+  let frontier=cards.filter(c=>indeg.get(c.topic.id)===0);
+  const out=[]; const done=new Set();
+  while(frontier.length){
+    frontier.sort(cmp);
+    const c=frontier.shift(); if(done.has(c.topic.id)) continue; out.push(c); done.add(c.topic.id);
+    for(const d of deps.get(c.topic.id)){ indeg.set(d, indeg.get(d)-1); if(indeg.get(d)===0) frontier.push(byId.get(d)); }
+  }
+  for(const c of cards) if(!done.has(c.topic.id)) out.push(c);   // any cycle remainder
+  return out;
+}
 function buildGradePacket(kid, cards, mode, bank){
   mode=mode||"full"; bank=bank||{};
   const N=esc(kid.first_name);
@@ -929,16 +1050,83 @@ function buildGradePacket(kid, cards, mode, bank){
   const subs=Object.keys(bySub).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
   const label = mode==="materials"?"teaching materials":"learning binder";
   const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s grade ${label}</h1>
-    <div class="day">Age ${CURRENT.age} · ${cards.length} topics · ${subs.length} subject${subs.length>1?"s":""}</div>
+    <div class="day">Age ${CURRENT.age} · ${cards.length} topics · ${subs.length} subject${subs.length>1?"s":""} · in progression order</div>
     <div class="subs">${subs.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
   const body=subs.map(sub=>{
-    const band=`<section class="dayband"><div class="dbnum">${esc(sub)}</div><h2>${bySub[sub].length} topic${bySub[sub].length>1?"s":""}</h2></section>`;
-    return band+bySub[sub].map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,mode,bank)).join("");
+    const list=topoSort(bySub[sub]);
+    const band=`<section class="dayband"><div class="dbnum">${esc(sub)}</div><h2>${list.length} topic${list.length>1?"s":""}</h2></section>`;
+    return band+list.map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,mode,bank)).join("");
   }).join("");
   let keySec="";
   if(keys.length && mode!=="materials") keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
     keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
   const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
+  return cover+body+keySec+foot;
+}
+// ---- whole-grade PRACTICE binder: N worksheets per topic + answer keys only ----
+async function printGradePractice(){
+  const kid=CURRENT.kid;
+  const cards=[...TOPICS].map(t=>({topic:t, ...laneOf(t)}));
+  if(!cards.length){ alert("No topics loaded for this grade yet."); return; }
+  const label=document.querySelector(".gradebar .preplabel"); const keep=label?label.textContent:"";
+  if(label) label.textContent="Building practice materials…";
+  try{
+    const ids=cards.map(c=>c.topic.id);
+    CONTENT=Object.assign(CONTENT, await fetchContent(ids));
+    const bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+    openPrint(`${kid.first_name} — Grade practice (age ${CURRENT.age})`, buildPracticePacket(kid, cards, bank, 3));
+  }catch(e){ alert("Couldn't build practice: "+e.message); }
+  finally{ if(label) label.textContent=keep; }
+}
+function buildPracticePacket(kid, cards, bank, perTopic){
+  perTopic=perTopic||3; bank=bank||{};
+  const N=esc(kid.first_name);
+  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
+  const keys=[]; const order=[...CORE,...ROTATE];
+  const bySub={}; for(const c of cards){ (bySub[c.topic.subject] ||= []).push(c); }
+  const subs=Object.keys(bySub).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s grade practice</h1>
+    <div class="day">Age ${CURRENT.age} · up to ${perTopic} worksheets per topic · answer keys at the back</div>
+    <div class="subs">${subs.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
+  const sheetHtml=(v,inner)=>`<div class="wsec"><div class="eyebrow"><span class="num">${v+1}</span> Practice worksheet ${v+1}</div>${inner}</div>`;
+  const body=subs.map(sub=>{
+    const list=topoSort(bySub[sub]);
+    const band=`<section class="dayband"><div class="dbnum">${esc(sub)}</div><h2>${list.length} topic${list.length>1?"s":""}</h2></section>`;
+    return band+list.map(({topic:t,lane})=>{
+      const st=SUBJ[t.subject]||{c:"#3b4aa0"};
+      const head=`<div class="kicker" style="color:${st.c}">${esc(t.subject)}${t.domain?" · "+esc(t.domain):""} · ages ${t.age_range_start}–${t.age_range_end}</div>`;
+      const c=getContent(t.id);
+      const isMath = (lane==="practice" || (c&&c.practice&&c.practice.generator)) && !!genProblems(t,1);
+      const sheets=[];
+      if(isMath){
+        for(let v=0; v<perTopic; v++){                          // fresh random set each sheet
+          const probs=genProblems(t,12); if(!probs||!probs.length) break;
+          keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:probs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`)});
+          sheets.push(sheetHtml(v, `<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`));
+        }
+      } else {
+        // Combine the generated bank + the lesson's built-in practice, deduped by prompt.
+        const seen=new Set();
+        const pool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
+          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
+        if(pool.length){
+          const size=Math.min(6, pool.length);                          // SAME count on every sheet
+          const nSheets=Math.max(1, Math.min(perTopic, Math.floor(pool.length/size)));
+          for(let v=0; v<nSheets; v++){
+            const w=wsFromItems(pool.slice(v*size, v*size+size), fill);  // consecutive slices → no shared question
+            if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
+            sheets.push(sheetHtml(v, w.html));
+          }
+        }
+      }
+      if(!sheets.length) return "";
+      return `<section class="topic"><div class="thead">${head}<h1>${esc(glossName(t.name))}</h1></div>${sheets.join("")}</section>`;
+    }).join("");
+  }).join("");
+  let keySec="";
+  if(keys.length) keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
+    keys.map(k=>`<div class="kb"><b class="kname">${esc(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
+  const foot=`<div class="pfoot">Generated by Marble · practice worksheets · answers on the grown-up copy</div>`;
   return cover+body+keySec+foot;
 }
 // Done teaching -> interactive assessment. The parent works the rubric (the
@@ -1190,7 +1378,8 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
     if(isMath){
       const probs=genProblems(t,12);
       if(probs&&probs.length) return { html:`<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`, keyRows:probs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`) };
-      return null;
+      // non-arithmetic math (counting, shapes, comparing…) has no generator —
+      // fall through to grounded practice below instead of skipping the worksheet.
     }
     let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
     if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own

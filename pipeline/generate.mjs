@@ -23,7 +23,7 @@ import { getProvider } from './provider.mjs';
 import { verify } from './verify.mjs';
 import { mascotSVG, seedFromId } from './illustrate.mjs';
 import { GENERATORS } from '../scripts/generators.mjs';
-import { americanizeDeep } from '../scripts/americanize.mjs';
+import { findBritishisms } from '../scripts/americanize.mjs';
 import { gatherGrounding } from './sources.mjs';
 import { liveFetch } from './fetchers.mjs';
 import { storeContentItem } from './store.mjs';
@@ -50,7 +50,10 @@ if (!topic) { console.error('No topic found. Use --topic <id> or --age/--subject
 // Wikidata, OpenStax, and — in personal mode — CK-12 / Core Knowledge …), each
 // tagged with its license. `--commercial` drops every NonCommercial source.
 // See pipeline/sources.mjs + docs/content-sourcing.md.
-const allowNonCommercial = !process.argv.includes('--commercial'); // pass --commercial to exclude NC sources
+// Commercial mode: --commercial flag OR the COMMERCIAL_MODE repo var. Drops
+// NonCommercial sources AND tells the model to avoid copyrighted examples.
+const commercialMode = process.argv.includes('--commercial') || String(process.env.COMMERCIAL_MODE || '').toLowerCase() === 'on';
+const allowNonCommercial = !commercialMode;
 function findStandard(key) {
   const flat = JSON.stringify(standards);
   const idx = flat.indexOf(key.split(':').pop());
@@ -69,7 +72,7 @@ const grounding = [...anchor, ...sourced.grounding];   // the layered, multi-sou
 
 // --- 2. Generate ----------------------------------------------------------
 const provider = await getProvider(argv.provider || 'mock');
-const gen = await provider.generateLesson({ topic, grounding });
+const gen = await provider.generateLesson({ topic, grounding, commercialSafe: commercialMode });
 
 // --- 3. Fill-in: code-checked math + illustration -------------------------
 const mathGen = topic.subject === 'Mathematics' && /within 5|within 10|within 20|number bond/i.test(topic.name);
@@ -117,10 +120,15 @@ let content = {
   },
   license: 'CC-BY-SA-4.0',
 };
-content = americanizeDeep(content); // normalize on the way out
+// NB: we do NOT run americanizeDeep on generated prose — the model already
+// writes American English, and the lexical swaps (e.g. rubber→eraser) corrupt
+// valid text ("rubber band" → "eraser band"). Britishisms, if any slip through,
+// are surfaced as a review flag below instead of being blindly rewritten.
+const britishisms = findBritishisms(JSON.stringify(content));
 
 // --- 4. Verify ------------------------------------------------------------
 const report = verify(content, { grounding, mathGen });
+if (britishisms.length) report.flags.push({ code: 'britishism', message: `possible British spelling(s): ${[...new Set(britishisms)].slice(0, 8).join(', ')}` });
 content.provenance.verification = report.passed;
 
 // Auto-review gate (D8): approve when nothing was flagged; otherwise leave it

@@ -23,8 +23,14 @@ The unit is a **session** (a small bundle of topics), not a day.
   work is excluded.
 - **Start → started:** stamps `for_date = today`, `status='started'`. In progress.
 - **Assess → completed:** the interactive rubric records mastery and completes it.
-- **History (the record):** a month calendar built from `for_date` of completed
-  sessions — click a past day to **reprint** (Full / Materials / Worksheets).
+- **History (the record):** a **List ⇄ Calendar** toggle (defaults to List — a
+  chronological log, newest-first, grouped by day with topics visible). Calendar is
+  the month grid; click a past day to reprint. Both reprint (Full / Materials /
+  Worksheets). A **search box** at the top: type a topic/keyword to find **topics**
+  (reprint a
+  SINGLE topic's Full/Materials/fresh Worksheet via `printTopic`) and **past
+  sessions** (reprint the session). Search covers this grade + any worked-ahead
+  topics from the child's own session history (`buildSearchable`).
 
 Home layout: **In progress → Up next → Prepare ahead → Whole-grade binder → History.**
 - **Empty queue** shows a live **look-ahead** of the next few prospective sessions
@@ -42,10 +48,34 @@ Ink-light (white pages, thin color accents). Modes: **Full** (guide + lesson +
 worksheet + assessment + sources + answer key), **Materials** (no worksheets),
 **Worksheets** (fresh practice only). One topic per page-break unit. Picture cards
 render their resolved image (see Images), else a text placeholder.
+Worksheet source per topic: arithmetic math → code generator (`genProblems`);
+everything else → the `practice_items` bank if present, else the lesson's own
+`practice.items`. (Non-arithmetic math falls through to the bank/lesson practice —
+it does NOT skip the worksheet.) So every topic with a lesson gets a worksheet.
+For **fresh/varied** worksheets across reprints, generate `practice_items` banks
+(generate-practice / backfill); a lesson's built-in practice is fixed.
 
 ### Whole-grade binder
 `printGrade(mode)` prints **every topic in the child's age band**, grouped **by
-subject** with dividers. Deliberately by-subject (a reference/scope binder) because
+subject** with dividers, and **within each subject in curriculum-progression order**
+(`topoSort`: topological sort over the hard-prereq graph, ties by age→centrality→name —
+so page 1 is foundational, later pages harder). A **Worksheets** button
+(`printGradePractice` → `buildPracticePacket`) prints a practice-only binder: **3
+worksheets per topic** (variant-rotated so they differ) + answer keys, nothing else.
+Ordering uses `topoSort` in the app (tiebreak centrality→age→id), matching the
+canonical **`scripts/sequence.mjs`** (Kahn's algorithm over the hard-edge subgraph +
+soft-edge preference + a `validateOrder` checker). The full graph is a clean DAG
+(1590/1590 sequence with 0 hard violations); **`scripts/check-order.mjs`** +
+the `validate-order` workflow fail CI if an edit ever introduces a hard-edge
+violation or cycle. (Earlier "0 age-4-math edges" was a false alarm — an audit bug,
+snake_case vs camelCase keys; there are 14 real edges and the graph models the
+number strand correctly.)
+
+The **Worksheets** binder makes SAME-size sheets with **non-overlapping questions**
+(consecutive slices of the deduped bank + built-in practice; math uses the generator
+for fresh random sets). 3 full unique sheets/topic requires a bank of ≥ 3×6 items —
+so knowledge topics need `practice_items` generated (generate-practice / backfill);
+until then they show one full sheet. Deliberately by-subject (a reference/scope binder) because
 the session/queue/prepare-ahead flows are all by-session. **Alternative not built:** a
 "Course sequence" export = the whole grade pre-composed into interleaved sessions in
 teaching order (prereqs respected) — add as a *separate* mode if wanted; it overlaps
@@ -85,6 +115,15 @@ The app only reads ready content; if a topic isn't ready it degrades to "Basics"
   when 0 flags, else held for the review screen. Provider seam `mock|claude`
   (`claude-opus-4-8`). Corpus retrieval is **FTS keyword-only** (vectors dropped for
   IO/cost).
+- **No blind americanization.** We do NOT run the lexical americanizer over generated
+  prose (it corrupted valid text: "rubber band"→"eraser band"). The model writes
+  American English; any britishism that slips through is a **review flag**
+  (`findBritishisms`), not an auto-rewrite.
+- **Commercial-mode toggle** (repo var `COMMERCIAL_MODE=on`, or `--commercial`): when
+  on, generation excludes NonCommercial sources AND forbids copyrighted/trademarked
+  examples (no Disney/branded characters). OFF by default (fine for personal use).
+  It's a GENERATION-time flag (content is pre-baked), not a live app toggle — flip it
+  and regenerate when going commercial.
 
 ---
 

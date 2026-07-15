@@ -80,8 +80,8 @@ export async function claudeProvider() {
   const client = new Anthropic(); // resolves ANTHROPIC_API_KEY / ant profile
   return {
     name: 'claude',
-    async generateLesson({ topic, grounding }) {
-      const system =
+    async generateLesson({ topic, grounding, commercialSafe = false }) {
+      let system =
         'You are an expert children\'s textbook author. Write a COMPLETE, '
         + 'book-quality lesson for the given age by ADAPTING the provided grounding.\n'
         + 'Rules:\n'
@@ -112,6 +112,14 @@ export async function claudeProvider() {
         + '7. practice items may be multiple-choice (kind "mcq" with choices) or short. '
         + 'assessment items are rubric-graded OPEN questions — use kind "short" or '
         + '"constructed" with a rubric, never "mcq" (they have no answer choices).';
+      // Commercial-safe mode (toggle): forbid copyrighted/trademarked examples so the
+      // content is distributable. Off by default (fine for personal/family use).
+      if (commercialSafe) system +=
+        '\n8. Use ONLY generic or public-domain examples — everyday objects (a cat, a ball, '
+        + 'an apple), nature, the child\'s own toys, folk/traditional tales. NEVER use '
+        + 'trademarked or copyrighted characters, brands, franchises, or fictional names '
+        + '(no Disney, Pixar, Marvel, Pokémon, branded toys, movie/TV characters, etc.). '
+        + 'A counting example is "five red apples," never a named cartoon character.';
       const user =
         `TOPIC: ${topic.name}\nDESCRIPTION: ${topic.description || ''}\n`
         + `AGE: ${topic.ageRangeStart}-${topic.ageRangeEnd}\nSUBJECT: ${topic.subject}\n`
