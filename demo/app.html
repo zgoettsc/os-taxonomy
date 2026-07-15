@@ -1285,7 +1285,8 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
     if(isMath){
       const probs=genProblems(t,12);
       if(probs&&probs.length) return { html:`<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`, keyRows:probs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`) };
-      return null;
+      // non-arithmetic math (counting, shapes, comparing…) has no generator —
+      // fall through to grounded practice below instead of skipping the worksheet.
     }
     let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
     if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own

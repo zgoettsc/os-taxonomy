@@ -48,6 +48,12 @@ Ink-light (white pages, thin color accents). Modes: **Full** (guide + lesson +
 worksheet + assessment + sources + answer key), **Materials** (no worksheets),
 **Worksheets** (fresh practice only). One topic per page-break unit. Picture cards
 render their resolved image (see Images), else a text placeholder.
+Worksheet source per topic: arithmetic math → code generator (`genProblems`);
+everything else → the `practice_items` bank if present, else the lesson's own
+`practice.items`. (Non-arithmetic math falls through to the bank/lesson practice —
+it does NOT skip the worksheet.) So every topic with a lesson gets a worksheet.
+For **fresh/varied** worksheets across reprints, generate `practice_items` banks
+(generate-practice / backfill); a lesson's built-in practice is fixed.
 
 ### Whole-grade binder
 `printGrade(mode)` prints **every topic in the child's age band**, grouped **by
