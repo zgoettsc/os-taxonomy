@@ -1128,25 +1128,25 @@ function buildPracticePacket(kid, cards, bank, perTopic, served, used){
           sheets.push(sheetHtml(v, `<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`));
         }
       } else {
-        // Combine the generated bank + the lesson's built-in practice, deduped by prompt,
-        // then order UNSERVED-first so a child never repeats a question until the bank runs out.
+        // Text questions: bank + lesson's built-in practice, deduped by prompt, UNSERVED
+        // first so a child never repeats a question until the bank runs out.
         const seen=new Set();
-        let pool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
-          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
-        pool.sort((a,b)=> (served.has(a.id)?1:0)-(served.has(b.id)?1:0));   // unseen first
-        if(pool.length){
-          // Always aim for `perTopic` sheets, uniform size within the topic (capped at
-          // 6). Full 6-question sheets need a bank of >= perTopic*6; a thin bank still
-          // gets `perTopic` sheets, just with fewer questions each.
-          const size=Math.max(1, Math.min(6, Math.floor(pool.length/perTopic)));
-          const nSheets=Math.min(perTopic, Math.max(1, Math.floor(pool.length/size)));
-          for(let v=0; v<nSheets; v++){
-            const slice=pool.slice(v*size, v*size+size);                 // consecutive → no shared question
-            const w=wsFromItems(slice, fill);
-            if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
-            sheets.push(sheetHtml(v, w.html));
-            for(const it of slice){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); }
-          }
+        const qpool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
+          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; })
+          .sort((a,b)=> (served.has(a.id)?1:0)-(served.has(b.id)?1:0));
+        // Code-generated do-it activities (trace/write/draw/circle/match) MIXED IN with
+        // the questions, per an age/topic blend. Activities may recur across sheets (motor
+        // repetition is fine); questions are consumed so they never repeat.
+        const acts=genActivities(t), blend=activityBlend(t);
+        for(let v=0; v<perTopic; v++){
+          const activities=[]; for(let a=0; a<blend.act && acts.length; a++) activities.push(acts[(v*blend.act+a)%acts.length]);
+          const questions=qpool.splice(0, blend.q);
+          const mixed=_interleave(activities, questions);
+          if(!mixed.length) continue;                                   // nothing to put on this sheet
+          const w=wsFromItems(mixed, fill);
+          if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
+          sheets.push(sheetHtml(v, w.html));
+          for(const it of mixed){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); }
         }
       }
       if(!sheets.length) return "";
@@ -1377,6 +1377,71 @@ function genProblems(t, n){
   if(!gen) return null;
   return Array.from({length:n}, gen);
 }
+// ---- code-generated ACTIVITY items: trace / write / draw / circle / match ----
+// Pre-readers can't answer text questions; early topics need do-it-with-a-pencil work.
+// These are deterministic (no LLM, no stored bank) and get MIXED IN with the text
+// questions on each worksheet. Routing (genActivities) is by subject + age + name.
+const _pick=(arr,seed)=>arr[Math.abs(seed|0)%arr.length];
+function _lettersFor(t){
+  // trace the letters this topic is about if it names any (e.g. "Sounds: s a t p"), else A–D
+  const m=(t.name+" "+(t.domain||"")).match(/:\s*([a-z](?:[ ,/]+[a-z]\b){1,5})/i);
+  const set=(m?m[1].replace(/[^a-z]/gi,""):"").slice(0,4).toUpperCase() || "ABCD".slice(0,3+(t.name.length%2));
+  return set.split("").map(ch=>ch+" "+ch.toLowerCase()).join("   ");
+}
+const traceGlyphs=(g,prompt)=>({kind:"trace",prompt:prompt||"Trace over the light letters.",glyphs:g});
+const writeRuled=(prompt,copy,lines)=>({kind:"write",prompt,copy:copy||"",lines:lines||2});
+const drawItem=(prompt,count)=>({kind:"draw",prompt,count:count||0});
+const circleItem=(prompt,targets,answer)=>({kind:"circle",prompt,targets,answer});
+const matchItem=(prompt,left,right,answer)=>({kind:"match",prompt,left,right,answer});
+function _scatter(ch){ const o=["m","r","o","e","a","t","n","i"]; const row=[]; for(let i=0;i<8;i++) row.push(i%3===0?ch:_pick(o,i*7).toUpperCase()); return row; }
+function genActivities(t){
+  const hay=((t.name||"")+" "+(t.domain||"")).toLowerCase(), sub=t.subject;
+  const age=(t.age_range_start!=null?t.age_range_start:t.ageRangeStart)||6, early=age<=6;
+  const N=3+(t.name.length%4), out=[];   // small stable count 3–6
+  if(sub==="English"){
+    if(/pencil|hold|grip|sitting|fine motor|\bhand|handwriting|trace|pattern|mark[- ]?making/.test(hay)){
+      out.push(traceGlyphs("|  |  |  |      ╱ ╱ ╱      ○ ○ ○ ○","Trace the lines and shapes. Keep your pencil on the path."));
+      out.push(traceGlyphs(_lettersFor(t),"Trace the letters."));
+      out.push(writeRuled("Write your name.","",2));
+    }
+    if(/letter|alphabet|sound|phonic|grapheme|rhyme|blend|digraph|onset|rime|\bword|read/.test(hay)){
+      const L=_lettersFor(t).trim().charAt(0);
+      out.push(traceGlyphs(_lettersFor(t),"Trace the letters."));
+      out.push(circleItem(`Circle every letter ${L}.`,_scatter(L),`all the ${L}`));
+      out.push(matchItem("Draw a line to match big and small letters.",["A","B","C"],["c","a","b"],"A–a, B–b, C–c"));
+      out.push(writeRuled("Copy the word.",_pick(["cat","dog","sun","hat","pig","red","map","bed"],t.name.length),1));
+    }
+    if(/sentence|writing|compose|spelling|caption/.test(hay)) out.push(writeRuled("Write a sentence about your day.","",3));
+    if(/talk|discuss|listen|speak|oral|aloud|opinion|express|story|retell|describ/.test(hay)) out.push(drawItem("Draw a picture about what you talked about.",0));
+  }
+  if(sub==="Mathematics"){
+    if(/count|number|quantit|how many|total|one more|pair|bond|subitis|ten[- ]?frame|numeral|combin|shar/.test(hay)){
+      out.push(drawItem(`Draw ${N} dots in the box.`,N));
+      out.push(circleItem(`Circle the group that has ${N}.`,["●".repeat(Math.max(1,N-1)),"●".repeat(N),"●".repeat(N+1)],`the group of ${N}`));
+      out.push(writeRuled(`Write the number ${N}.`,String(N),1));
+    }
+    if(/shape|2-?d|3-?d|geomet|circle|square|triangle|rectangle/.test(hay)){
+      out.push(traceGlyphs("△  △  △        □  □  □        ○  ○  ○","Trace the shapes."));
+      out.push(drawItem("Draw a triangle, a square, and a circle.",0));
+    }
+    if(/measur|length|height|mass|weight|capacit|compar|duration|\btime|position|spatial|order/.test(hay))
+      out.push(drawItem("Draw something big and something small.",0));
+  }
+  if(sub==="Science" && early) out.push(drawItem("Draw one thing you observed.",0));
+  if(early && !out.length) out.push(drawItem("Draw a picture about what you learned.",0));
+  return out;
+}
+// How many activities vs text questions per sheet — activities dominate for the very
+// young and motor topics, taper to pure Q&A for older knowledge topics.
+function activityBlend(t){
+  const age=(t.age_range_start!=null?t.age_range_start:t.ageRangeStart)||6;
+  const hay=((t.name||"")+" "+(t.domain||"")).toLowerCase();
+  if(/pencil|hold|grip|sitting|trace|fine motor|handwriting|mark[- ]?making/.test(hay)) return {act:3,q:1};
+  if(age<=6) return {act:2,q:3};
+  if(age<=8) return {act:1,q:5};
+  return {act:0,q:6};   // older → pure written Q&A
+}
+const _interleave=(a,b)=>{ const out=[],n=Math.max(a.length,b.length); for(let i=0;i<n;i++){ if(i<a.length)out.push(a[i]); if(i<b.length)out.push(b[i]); } return out; };
 // ---- render the printable packet from the DB (content_items body schema) ----
 // Ink-light: white pages, color only as thin accents (rules, hollow bubbles,
 // small labels). One topic = teaching guide + lesson + worksheet; answer key at
@@ -1405,13 +1470,34 @@ function sourcesFooter(c){
 // fresh bank items). Bank rows use answer_index (snake); lesson items answerIndex.
 function wsFromItems(items, fill){
   const html=items.map((it,i)=>{
-    if(it.kind==="mcq" && Array.isArray(it.choices)){
-      const opts=it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("");
-      return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><ul class="choices">${opts}</ul></div>`;
+    const q=(inner)=>`<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt||"")}</p>${inner}</div>`;
+    switch(it.kind){
+      case "mcq":
+        if(Array.isArray(it.choices)) return q(`<ul class="choices">${it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("")}</ul>`);
+        break;
+      case "trace":
+        return q(`<div class="tracerow">${esc(it.glyphs||"")}</div>`);
+      case "write":
+        return q((it.copy?`<div class="copyme">${esc(it.copy)}</div>`:"")+`<div class="ruled">${Array.from({length:it.lines||2},()=>`<div class="rule3"></div>`).join("")}</div>`);
+      case "draw":
+        return q(`<div class="drawbox">${it.count?`<span class="drawhint">${it.count}</span>`:""}</div>`);
+      case "circle":
+        return q(`<div class="targets">${(it.targets||[]).map(x=>`<span class="tok">${esc(x)}</span>`).join("")}</div>`);
+      case "match":
+        return q(`<div class="matchgrid"><div class="mcol">${(it.left||[]).map(x=>`<span class="tok">${esc(x)}</span>`).join("")}</div><div class="mcol">${(it.right||[]).map(x=>`<span class="tok">${esc(x)}</span>`).join("")}</div></div>`);
     }
-    return `<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt)}</p><div class="writelines"><div class="ln"></div></div></div>`;
+    return q(`<div class="writelines"><div class="ln"></div></div>`);   // default: short written answer
   }).join("");
-  const keyRows=items.map((it,i)=>{ const ai=(typeof it.answerIndex==="number")?it.answerIndex:it.answer_index; const ans=(it.kind==="mcq"&&Array.isArray(it.choices)&&typeof ai==="number")?it.choices[ai]:(it.answer||"—"); return `${i+1}. <b>${esc(ans)}</b>`; });
+  // Answer key only for items that HAVE a set answer (mcq / short / circle / match).
+  // Trace / write / draw are open-ended — no key row (keeps the grown-up copy clean).
+  const keyRows=[];
+  items.forEach((it,i)=>{
+    let ans=null;
+    if(it.kind==="mcq" && Array.isArray(it.choices)){ const ai=(typeof it.answerIndex==="number")?it.answerIndex:it.answer_index; if(typeof ai==="number") ans=it.choices[ai]; }
+    else if(it.kind==="short") ans=it.answer||null;
+    else if(it.kind==="circle"||it.kind==="match") ans=it.answer||null;
+    if(ans) keyRows.push(`${i+1}. <b>${esc(ans)}</b>`);
+  });
   return {html, keyRows};
 }
 
@@ -1437,8 +1523,13 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
     }
     let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
     if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own
-    if(!items||!items.length) return null;
-    return wsFromItems(items, fill);
+    items=items||[];
+    // Mix in code-generated do-it activities (trace/write/draw/…) per the age/topic blend.
+    const acts=genActivities(t), blend=activityBlend(t), activities=[];
+    for(let a=0; a<blend.act && acts.length; a++) activities.push(acts[a%acts.length]);
+    const mixed=_interleave(activities, items.slice(0, blend.q||6));
+    if(!mixed.length) return null;
+    return wsFromItems(mixed, fill);
   }
 
   if(!c){ // no grounded lesson yet — evidence fallback + (math) worksheet
@@ -1552,6 +1643,19 @@ function openPrint(title, inner){
     .writelines .ln{border-bottom:1.5px solid var(--rule);margin:18px 0}
     .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-top:6px}
     .mprob{font-size:12pt;font-variant-numeric:tabular-nums} .mprob u{display:inline-block;min-width:62px;border-bottom:1.5px solid var(--rule);text-decoration:none}
+    /* do-it activities: trace / write (ruled) / draw / circle / match */
+    .tracerow{font-family:"Comic Sans MS","Chalkboard SE",system-ui,sans-serif;font-size:30pt;letter-spacing:8px;line-height:1.5;color:#d3d3e2;-webkit-text-stroke:.4px #c2c2d6;margin:8px 0}
+    .copyme{font-family:"Comic Sans MS","Chalkboard SE",system-ui,sans-serif;font-size:22pt;letter-spacing:3px;color:#d3d3e2;margin:4px 0}
+    .ruled{margin:6px 0}
+    .ruled .rule3{height:0;margin:30px 0 12px;border-bottom:1.8px solid var(--rule);position:relative}
+    .ruled .rule3::before{content:"";position:absolute;left:0;right:0;bottom:15px;border-bottom:1px dashed #d7d7e4}
+    .ruled .rule3::after{content:"";position:absolute;left:0;right:0;bottom:30px;border-bottom:1px solid var(--line)}
+    .drawbox{height:150px;border:1.7px dashed var(--rule);border-radius:10px;margin:6px 0;position:relative}
+    .drawhint{position:absolute;top:7px;right:11px;font-size:9pt;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:1px 9px}
+    .targets{display:flex;flex-wrap:wrap;gap:16px;margin:8px 0}
+    .tok{font-size:20pt;font-weight:700;color:#2c2c3a;min-width:26px;text-align:center}
+    .matchgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 70px;margin:8px 0}
+    .mcol{display:flex;flex-direction:column;gap:16px;align-items:center}
 
     /* assessment */
     .crit{display:flex;gap:9px;align-items:flex-start;margin:7px 0;break-inside:avoid}
