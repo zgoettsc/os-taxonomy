@@ -46,13 +46,21 @@
   .muted{color:var(--soft)} .faint{color:var(--faint)}
 
   /* top bar */
-  .top{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line2);min-height:58px}
+  .top{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line2);min-height:58px;position:relative}
   .brand{font-family:var(--disp);font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:7px}
   .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--navy);display:grid;place-items:center;color:#fff;font-size:.8rem}
-  .top .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .top .right{margin-left:auto;display:flex;gap:6px;align-items:center;position:relative}
   .link{background:none;border:0;color:var(--faint);font:inherit;font-size:.78rem;cursor:pointer;padding:6px 8px;border-radius:9px}
   .link:hover{background:var(--card2);color:var(--ink)}
   .back{cursor:pointer;color:var(--faint);font-size:.82rem;background:none;border:0;font:inherit;padding:6px 4px}
+  /* header overflow menu */
+  .menubtn{background:none;border:0;color:var(--soft);font-size:1.35rem;line-height:1;cursor:pointer;padding:2px 8px;border-radius:9px}
+  .menubtn:hover{background:var(--card2);color:var(--ink)}
+  .menu{position:absolute;right:0;top:calc(100% + 8px);min-width:200px;background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 36px rgba(20,26,46,.32);padding:6px;display:flex;flex-direction:column;gap:1px;z-index:60}
+  .menu-email{font-size:.72rem;color:var(--faint);padding:7px 10px 8px;border-bottom:1px solid var(--line2);margin-bottom:4px;word-break:break-all}
+  .menu-item{text-align:left;background:none;border:0;font:inherit;font-size:.86rem;font-weight:600;color:var(--ink);padding:9px 10px;border-radius:8px;cursor:pointer}
+  .menu-item:hover{background:var(--card2)}
+  .menu-item.danger{color:var(--berry)}
   .back:hover{color:var(--ink)}
 
   .body{padding:18px;display:flex;flex-direction:column;gap:14px;flex:1}
@@ -227,10 +235,13 @@
     <button class="back hidden" id="backBtn">‹ Back</button>
     <div class="brand"><span class="dot">🌱</span> Marble</div>
     <div class="right">
-      <span class="faint" id="whoami" style="font-size:.74rem"></span>
-      <button class="link hidden" id="reviewBtn">✓ Review</button>
-      <button class="link hidden" id="settingsBtn">⚙ Settings</button>
-      <button class="link hidden" id="signOut">Sign out</button>
+      <button class="menubtn hidden" id="menuBtn" aria-label="Menu" aria-haspopup="true">⋯</button>
+      <div class="menu hidden" id="menu" role="menu">
+        <div class="menu-email" id="whoami"></div>
+        <button class="menu-item hidden" id="reviewBtn" role="menuitem">✓ Review queue</button>
+        <button class="menu-item" id="settingsBtn" role="menuitem">⚙ Settings</button>
+        <button class="menu-item danger" id="signOut" role="menuitem">Sign out</button>
+      </div>
     </div>
   </div>
 
@@ -430,17 +441,17 @@ let ADMIN=false;
 function show(name){
   screens.forEach(s=>document.getElementById("screen-"+s).classList.toggle("hidden", s!==name));
   document.getElementById("backBtn").classList.toggle("hidden", name==="auth"||name==="kids");
-  document.getElementById("settingsBtn").classList.toggle("hidden", !(name==="kids"||name==="home"));
-  document.getElementById("reviewBtn").classList.toggle("hidden", !(ADMIN && (name==="kids"||name==="home")));
-  document.getElementById("signOut").classList.toggle("hidden", name==="auth");
+  document.getElementById("menuBtn").classList.toggle("hidden", name==="auth");
+  document.getElementById("menu").classList.add("hidden");   // close on navigation
   document.getElementById("whoami").textContent = (name!=="auth" && session) ? session.user.email : "";
 }
 async function checkAdmin(){
   try{ const r=await sb(`/rest/v1/admins?select=user_id&user_id=eq.${session.user.id}`); ADMIN=Array.isArray(r)&&r.length>0; }
   catch{ ADMIN=false; }
-  const onNav = !document.getElementById("screen-kids").classList.contains("hidden") || !document.getElementById("screen-home").classList.contains("hidden");
-  document.getElementById("reviewBtn").classList.toggle("hidden", !(ADMIN && onNav));
+  document.getElementById("reviewBtn").classList.toggle("hidden", !ADMIN);
 }
+document.getElementById("menuBtn").onclick=(e)=>{ e.stopPropagation(); document.getElementById("menu").classList.toggle("hidden"); };
+document.addEventListener("click",(e)=>{ const m=document.getElementById("menu"); if(!m.classList.contains("hidden") && !m.contains(e.target) && e.target.id!=="menuBtn") m.classList.add("hidden"); });
 
 // ---- AUTH ----
 let mode="in";
@@ -724,6 +735,14 @@ function renderHome(){
   prep.querySelector(".prepbtns").appendChild(mkBtn("primary","Add to queue",()=>{ clamp(); prepareSessions(PREPN); }));
   wrap.appendChild(prep);
 
+  // C2) Whole-grade binder — print the entire grade at once (reference, not the daily flow)
+  const gb=document.createElement("div"); gb.className="prep gradebar";
+  gb.innerHTML=`<span class="preplabel">📚 Whole-grade binder <span class="faint" style="font-weight:600">· ${TOPICS?TOPICS.length:0} topics</span></span><span class="prepbtns"></span>`;
+  const gbtns=gb.querySelector(".prepbtns");
+  gbtns.appendChild(mkBtn("ghost","Full",()=>printGrade("full")));
+  gbtns.appendChild(mkBtn("ghost","Materials",()=>printGrade("materials")));
+  wrap.appendChild(gb);
+
   // D) History (past-sessions calendar)
   renderHistory(wrap);
 }
@@ -869,6 +888,55 @@ function buildQueuePacket(kid, list, bank){
   }).join("");
   let keySec="";
   if(keys.length) keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
+    keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
+  const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
+  return cover+body+keySec+foot;
+}
+
+// Print the WHOLE grade at once — every topic in the child's age band, grouped by
+// subject. A big reference binder (not the daily-session flow). mode: full|materials.
+//
+// DESIGN NOTE: organized BY SUBJECT on purpose — the daily/queue/prepare-ahead
+// flows are all by-session (interleaved), so this fills the one gap: a subject-
+// organized reference/scope binder. A "Course sequence" export (the whole grade
+// pre-composed into interleaved sessions, in teaching order, prereqs respected) is
+// a viable ALTERNATIVE if wanted later — build it as a separate mode rather than
+// changing this one, since it overlaps heavily with prepare-ahead → "Print all".
+async function printGrade(mode){
+  const kid=CURRENT.kid; const order=[...CORE,...ROTATE];
+  const cards=[...TOPICS]
+    .sort((a,b)=> (order.indexOf(a.subject)-order.indexOf(b.subject)) || a.age_range_start-b.age_range_start || (b.centrality||0)-(a.centrality||0))
+    .map(t=>({topic:t, ...laneOf(t)}));
+  if(!cards.length){ alert("No topics loaded for this grade yet."); return; }
+  const btns=document.querySelectorAll("#homeActions .gbtn, .gradebar .btn"); btns.forEach(b=>{b.disabled=true;});
+  const label=document.querySelector(".gradebar .preplabel"); const keep=label?label.textContent:"";
+  if(label) label.textContent=`Building ${cards.length}-topic binder…`;
+  try{
+    const ids=cards.map(c=>c.topic.id);
+    CONTENT=Object.assign(CONTENT, await fetchContent(ids));
+    if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages(ids));
+    let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+    openPrint(`${kid.first_name} — Grade binder (age ${CURRENT.age})`, buildGradePacket(kid, cards, mode, bank));
+  }catch(e){ alert("Couldn't build the binder: "+e.message); }
+  finally{ if(label) label.textContent=keep; btns.forEach(b=>{b.disabled=false;}); }
+}
+function buildGradePacket(kid, cards, mode, bank){
+  mode=mode||"full"; bank=bank||{};
+  const N=esc(kid.first_name);
+  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
+  const keys=[]; const order=[...CORE,...ROTATE];
+  const bySub={}; for(const c of cards){ (bySub[c.topic.subject] ||= []).push(c); }
+  const subs=Object.keys(bySub).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  const label = mode==="materials"?"teaching materials":"learning binder";
+  const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s grade ${label}</h1>
+    <div class="day">Age ${CURRENT.age} · ${cards.length} topics · ${subs.length} subject${subs.length>1?"s":""}</div>
+    <div class="subs">${subs.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
+  const body=subs.map(sub=>{
+    const band=`<section class="dayband"><div class="dbnum">${esc(sub)}</div><h2>${bySub[sub].length} topic${bySub[sub].length>1?"s":""}</h2></section>`;
+    return band+bySub[sub].map(({topic:t,lane})=>topicPacket(kid,t,lane,fill,N,keys,mode,bank)).join("");
+  }).join("");
+  let keySec="";
+  if(keys.length && mode!=="materials") keySec=`<section class="keysec"><div class="eyebrow"><span class="num">✓</span> Answer key · grown-up copy</div>`+
     keys.map(k=>`<div class="kb"><b class="kname">${fill(k.name)}</b><div class="krows">${k.rows.join(" &nbsp;·&nbsp; ")}</div></div>`).join("")+`</section>`;
   const foot=`<div class="pfoot">Generated by Marble · every fact verified against reputable sources before it reaches ${N} · empowering parents, not screens</div>`;
   return cover+body+keySec+foot;
