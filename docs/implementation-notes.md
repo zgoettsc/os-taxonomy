@@ -57,7 +57,13 @@ For **fresh/varied** worksheets across reprints, generate `practice_items` banks
 
 ### Whole-grade binder
 `printGrade(mode)` prints **every topic in the child's age band**, grouped **by
-subject** with dividers. Deliberately by-subject (a reference/scope binder) because
+subject** with dividers, and **within each subject in curriculum-progression order**
+(`topoSort`: topological sort over the hard-prereq graph, ties by age→centrality→name —
+so page 1 is foundational, later pages harder). A **Worksheets** button
+(`printGradePractice` → `buildPracticePacket`) prints a practice-only binder: **3
+worksheets per topic** (variant-rotated so they differ) + answer keys, nothing else.
+Ordering is only as good as the prereq EDGES — sparse edges fall back to age/centrality;
+enriching the number-strand edges is a known deeper fix. Deliberately by-subject (a reference/scope binder) because
 the session/queue/prepare-ahead flows are all by-session. **Alternative not built:** a
 "Course sequence" export = the whole grade pre-composed into interleaved sessions in
 teaching order (prereqs respected) — add as a *separate* mode if wanted; it overlaps
@@ -97,6 +103,15 @@ The app only reads ready content; if a topic isn't ready it degrades to "Basics"
   when 0 flags, else held for the review screen. Provider seam `mock|claude`
   (`claude-opus-4-8`). Corpus retrieval is **FTS keyword-only** (vectors dropped for
   IO/cost).
+- **No blind americanization.** We do NOT run the lexical americanizer over generated
+  prose (it corrupted valid text: "rubber band"→"eraser band"). The model writes
+  American English; any britishism that slips through is a **review flag**
+  (`findBritishisms`), not an auto-rewrite.
+- **Commercial-mode toggle** (repo var `COMMERCIAL_MODE=on`, or `--commercial`): when
+  on, generation excludes NonCommercial sources AND forbids copyrighted/trademarked
+  examples (no Disney/branded characters). OFF by default (fine for personal use).
+  It's a GENERATION-time flag (content is pre-baked), not a live app toggle — flip it
+  and regenerate when going commercial.
 
 ---
 

@@ -41,6 +41,7 @@ jobs:
           SMITHSONIAN_API_KEY: ${{ secrets.SMITHSONIAN_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+          COMMERCIAL_MODE: ${{ vars.COMMERCIAL_MODE }}   # 'on' when going commercial: no copyrighted examples + no NC sources
         run: |
           node pipeline/generate.mjs \
             --topic "${{ inputs.topic }}" \
