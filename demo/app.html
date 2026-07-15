@@ -878,7 +878,7 @@ async function printQueue(){
   const ids=allCards.map(c=>c.topic.id);
   CONTENT=Object.assign(CONTENT, await fetchContent(ids));
   IMAGES=Object.assign(IMAGES, await fetchImages(ids));
-  const bank=await fetchPractice(allCards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+  const bank=await fetchPractice(allCards.map(c=>c.topic.id));   // fetch for ALL — procedural non-math topics need their bank too
   openPrint(`${CURRENT.kid.first_name} — ${q.length} prepared sessions`, buildQueuePacket(CURRENT.kid, q, bank));
 }
 
@@ -947,7 +947,7 @@ async function printTopic(t, mode){
   const kid=CURRENT.kid; const card={topic:t, ...laneOf(t)};
   CONTENT=Object.assign(CONTENT, await fetchContent([t.id]));
   if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages([t.id]));
-  let bank={}; if(mode!=="materials" && card.lane!=="practice") bank=await fetchPractice([t.id]);
+  let bank={}; if(mode!=="materials") bank=await fetchPractice([t.id]);
   const suffix=mode==="worksheets"?" · worksheet":mode==="materials"?" · materials":"";
   openPrint(`${kid.first_name} — ${glossName(t.name)}${suffix}`, buildPacket(kid, [card], mode, bank));
 }
@@ -1030,7 +1030,7 @@ async function printGrade(mode){
     const ids=cards.map(c=>c.topic.id);
     CONTENT=Object.assign(CONTENT, await fetchContent(ids));
     if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages(ids));
-    let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+    let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.map(c=>c.topic.id));
     openPrint(`${kid.first_name} — Grade binder (age ${CURRENT.age})`, buildGradePacket(kid, cards, mode, bank));
   }catch(e){ alert("Couldn't build the binder: "+e.message); }
   finally{ if(label) label.textContent=keep; btns.forEach(b=>{b.disabled=false;}); }
@@ -1092,7 +1092,7 @@ async function printGradePractice(){
   try{
     const ids=cards.map(c=>c.topic.id);
     CONTENT=Object.assign(CONTENT, await fetchContent(ids));
-    const bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+    const bank=await fetchPractice(cards.map(c=>c.topic.id));   // fetch for ALL — procedural non-math topics need their bank too
     const served=await loadServed(kid.id, ids);
     const used=[];
     const html=buildPracticePacket(kid, cards, bank, 3, served, used);
@@ -1223,7 +1223,7 @@ async function printSession(s, mode){
   const ids=cards.map(c=>c.topic.id);
   CONTENT=Object.assign(CONTENT, await fetchContent(ids));
   if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages(ids));
-  let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
+  let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.map(c=>c.topic.id));
   const suffix=mode==="worksheets"?" · worksheets":mode==="materials"?" · materials":"";
   openPrint(`${CURRENT.kid.first_name} — ${dLabel(s.for_date)}${suffix}`, buildPacket(CURRENT.kid, cards, mode, bank));
 }
