@@ -94,10 +94,15 @@ if (argv.age) {
 }
 const needLesson = need.filter((t) => !haveLesson.has(t.id));
 const needImages = need.filter((t) => haveLesson.has(t.id) && !haveImages.has(t.id));
-// Practice top-up: knowledge + non-arithmetic-math topics with a lesson but a thin
-// bank. Arithmetic math is code-generated (infinite) so it needs no stored bank.
-const isArith = (t) => t.subject === 'Mathematics' && /\badd|subtract|division|divide|multipl|\bsum|take away|combin/i.test(t.name);
-const needPractice = need.filter((t) => haveLesson.has(t.id) && !isArith(t) && (practiceCount[t.id] || 0) < PRACTICE_TARGET);
+// Practice top-up: any topic with a lesson but a thin bank, EXCEPT topics the app
+// code-generates worksheets for (infinite, no stored bank needed). This must mirror
+// the app exactly (demo/app.html laneOf + genProblems): a Math topic is code-generated
+// only when its type is NOT conceptual AND its name/domain matches an arithmetic the
+// generator understands. Conceptual math (e.g. "Division as equal sharing") is a LESSON
+// topic in the app and DOES need a bank — the old name-only test wrongly skipped it.
+const arithName = (t) => /multipl|divis|subtract|change|difference|\badd|\bsum|plus/i.test(`${t.domain || ''} ${t.name}`);
+const appCodeGenerates = (t) => t.subject === 'Mathematics' && t.type !== 'CONCEPTUAL' && arithName(t);
+const needPractice = need.filter((t) => haveLesson.has(t.id) && !appCodeGenerates(t) && (practiceCount[t.id] || 0) < PRACTICE_TARGET);
 console.log(`  missing lesson: ${needLesson.length} · lesson-but-no-images: ${needImages.length} · thin practice bank: ${needPractice.length} · this run caps at ${MAX}`);
 
 if (DRY) {
