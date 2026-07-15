@@ -1116,8 +1116,11 @@ function buildPracticePacket(kid, cards, bank, perTopic, served, used){
           .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
         pool.sort((a,b)=> (served.has(a.id)?1:0)-(served.has(b.id)?1:0));   // unseen first
         if(pool.length){
-          const size=Math.min(6, pool.length);                          // SAME count on every sheet
-          const nSheets=Math.max(1, Math.min(perTopic, Math.floor(pool.length/size)));
+          // Always aim for `perTopic` sheets, uniform size within the topic (capped at
+          // 6). Full 6-question sheets need a bank of >= perTopic*6; a thin bank still
+          // gets `perTopic` sheets, just with fewer questions each.
+          const size=Math.max(1, Math.min(6, Math.floor(pool.length/perTopic)));
+          const nSheets=Math.min(perTopic, Math.max(1, Math.floor(pool.length/size)));
           for(let v=0; v<nSheets; v++){
             const slice=pool.slice(v*size, v*size+size);                 // consecutive → no shared question
             const w=wsFromItems(slice, fill);

@@ -31,35 +31,57 @@ if (!trows.length) { console.error('topic not found'); process.exit(1); }
 const t = trows[0];
 const topic = { name: t.name, subject: t.subject, ageRangeStart: t.age_range_start, ageRangeEnd: t.age_range_end };
 
-// --- grounding: the lesson's cited spans (must have a lesson first) ---
-const crows = await get(`/rest/v1/content_items?topic_id=eq.${encodeURIComponent(topicId)}&select=provenance&limit=1`);
-let facts = [];
-if (crows.length) { let p = crows[0].provenance; if (typeof p === 'string') { try { p = JSON.parse(p); } catch {} } facts = ((p && p.citations) || []).map((c) => c.span).filter(Boolean); }
-if (!facts.length) { console.error('No grounded facts for this topic — generate a lesson for it first.'); process.exit(1); }
+// --- grounding: the WHOLE lesson (intro sentences, examples, guidance, citations),
+// not just the few citation spans — a rich well so the model can produce many
+// distinct questions rather than repeating itself. ---
+const crows = await get(`/rest/v1/content_items?topic_id=eq.${encodeURIComponent(topicId)}&select=body,provenance&limit=1`);
+if (!crows.length) { console.error('No lesson for this topic — generate one first.'); process.exit(1); }
+let body = crows[0].body; if (typeof body === 'string') { try { body = JSON.parse(body); } catch {} }
+let prov = crows[0].provenance; if (typeof prov === 'string') { try { prov = JSON.parse(prov); } catch {} }
+const s = body?.student || {}, par = body?.parent || {};
+const facts = [...new Set([
+  ...String(s.intro || '').split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 20),
+  ...((s.examples) || []).flatMap((e) => [e.show, e.say]).filter(Boolean),
+  ...[par.whyItMatters, par.howToTeach].filter(Boolean),
+  ...((par.watchFor) || []), ...((par.tryAtHome) || []),
+  ...(((prov && prov.citations) || []).map((c) => c.span).filter(Boolean)),
+])];
+if (!facts.length) { console.error('Lesson has no usable text to ground practice on.'); process.exit(1); }
 
 // --- existing items → avoid list + dedupe ---
-const existing = await get(`/rest/v1/practice_items?topic_id=eq.${encodeURIComponent(topicId)}&select=prompt,content_hash&limit=1000`);
+const existing = await get(`/rest/v1/practice_items?topic_id=eq.${encodeURIComponent(topicId)}&select=prompt,content_hash&limit=2000`);
 const seen = new Set(existing.map((x) => x.content_hash));
 const avoid = existing.map((x) => x.prompt);
-console.log(`Topic: ${topic.name} · ${facts.length} facts · ${existing.length} existing item(s) · generating ${count}…`);
+console.log(`Topic: ${topic.name} · ${facts.length} grounding lines · ${existing.length} existing item(s) · target ${count} new…`);
 
-// --- generate + validate (auto-checkable only) ---
+// --- generate + validate, LOOPING until we actually have `count` new unique items ---
 const provider = await practiceProvider(argv.provider || 'mock');
-const items = await provider.generatePractice({ topic, facts, count, avoid });
 const clean = [];
-for (const it of items || []) {
-  const prompt = String(it.prompt || '').trim(); if (!prompt) continue;
-  const ch = sha(topicId + '|' + norm(prompt)); if (seen.has(ch)) continue; seen.add(ch);
-  if (it.kind === 'mcq') {
-    const choices = Array.isArray(it.choices) ? it.choices.map(String) : [];
-    if (choices.length < 2 || typeof it.answerIndex !== 'number' || it.answerIndex < 0 || it.answerIndex >= choices.length) continue;
-    clean.push({ topic_id: topicId, kind: 'mcq', prompt, choices, answer_index: it.answerIndex, answer: null, content_hash: ch, source: 'llm' });
-  } else {
-    const answer = String(it.answer || '').trim(); if (!answer) continue;
-    clean.push({ topic_id: topicId, kind: 'short', prompt, choices: null, answer_index: null, answer, content_hash: ch, source: 'llm' });
+const pushValid = (batch) => {
+  let added = 0;
+  for (const it of batch || []) {
+    const prompt = String(it.prompt || '').trim(); if (!prompt) continue;
+    const ch = sha(topicId + '|' + norm(prompt)); if (seen.has(ch)) continue; seen.add(ch);
+    if (it.kind === 'mcq') {
+      const choices = Array.isArray(it.choices) ? it.choices.map(String) : [];
+      if (choices.length < 2 || typeof it.answerIndex !== 'number' || it.answerIndex < 0 || it.answerIndex >= choices.length) continue;
+      clean.push({ topic_id: topicId, kind: 'mcq', prompt, choices, answer_index: it.answerIndex, answer: null, content_hash: ch, source: 'llm' }); added++;
+    } else {
+      const answer = String(it.answer || '').trim(); if (!answer) continue;
+      clean.push({ topic_id: topicId, kind: 'short', prompt, choices: null, answer_index: null, answer, content_hash: ch, source: 'llm' }); added++;
+    }
   }
+  return added;
+};
+const MAX_ROUNDS = 8;
+for (let round = 0; round < MAX_ROUNDS && clean.length < count; round++) {
+  const ask = Math.min(20, Math.max((count - clean.length) + 4, 8));   // over-ask to cover dedupe losses
+  const batch = await provider.generatePractice({ topic, facts, count: ask, avoid: [...avoid, ...clean.map((x) => x.prompt)] });
+  const added = pushValid(batch);
+  console.log(`  round ${round + 1}: +${added} valid (have ${clean.length}/${count})`);
+  if (added === 0) { console.log('  no new distinct items this round — stopping early.'); break; }
 }
-console.log(`  ${clean.length} valid new item(s) — mcq: ${clean.filter((x) => x.kind === 'mcq').length}, short: ${clean.filter((x) => x.kind === 'short').length}`);
+console.log(`  ${clean.length} new item(s) — mcq: ${clean.filter((x) => x.kind === 'mcq').length}, short: ${clean.filter((x) => x.kind === 'short').length}`);
 clean.slice(0, 4).forEach((x) => console.log(`   • ${x.prompt}`));
 
 // --- store ---
