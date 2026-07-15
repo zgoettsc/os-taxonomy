@@ -1050,7 +1050,7 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
   const ex=(s.examples||[]).map((e,ei)=>{
     const im=imgs[ei];
     const show=im
-      ? `<img class="showimg" src="${esc(im.url)}" alt="${esc(im.alt||e.show||'')}">${im.kind==='photo'&&im.attribution?`<span class="showcredit">${esc(im.attribution)}</span>`:''}`
+      ? `<img class="showimg" src="${esc(im.url)}" alt="${esc(im.alt||e.show||'')}">${im.kind==='photo'&&im.attribution?`<span class="showcredit">${esc(String(im.attribution).slice(0,80))}</span>`:''}`
       : `<span class="etag">Picture</span>${fill(e.show||"")}`;
     return `<div class="example"><div class="show${im?' has':''}">${show}</div><div class="say"><span class="etag say">Say</span>${fill(e.say||"")}</div></div>`;
   }).join("");

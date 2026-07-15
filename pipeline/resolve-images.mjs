@@ -69,8 +69,10 @@ async function findPhoto(query) {
       if (!/^image\//.test(ct)) continue;
       const buf = Buffer.from(await ir.arrayBuffer());
       if (buf.length < 2000) continue; // skip tiny/placeholder
-      const credit = it.attribution || `${it.title || 'Image'}${it.creator ? ' by ' + it.creator : ''} (${it.license?.toUpperCase() || ''} ${it.license_version || ''})`.trim();
-      return { buf, ct, license: `${(it.license || '').toUpperCase()} ${it.license_version || ''}`.trim(), attribution: credit, source_url: it.foreign_landing_url || src, source: 'openverse' };
+      const lic = `${(it.license || '').toUpperCase()} ${it.license_version || ''}`.trim();
+      const who = (it.creator || it.title || 'Unknown').replace(/\s+/g, ' ').trim().slice(0, 48);
+      const credit = `${who} · ${lic}`;                 // short one-liner, not the full CC boilerplate
+      return { buf, ct, license: lic, attribution: credit, source_url: it.foreign_landing_url || src, source: 'openverse' };
     } catch { /* try next */ }
   }
   return null;
