@@ -24,7 +24,11 @@ The unit is a **session** (a small bundle of topics), not a day.
 - **Start → started:** stamps `for_date = today`, `status='started'`. In progress.
 - **Assess → completed:** the interactive rubric records mastery and completes it.
 - **History (the record):** a month calendar built from `for_date` of completed
-  sessions — click a past day to **reprint** (Full / Materials / Worksheets).
+  sessions — click a past day to **reprint** (Full / Materials / Worksheets). A
+  **search box** at the top: type a topic/keyword to find **topics** (reprint a
+  SINGLE topic's Full/Materials/fresh Worksheet via `printTopic`) and **past
+  sessions** (reprint the session). Search covers this grade + any worked-ahead
+  topics from the child's own session history (`buildSearchable`).
 
 Home layout: **In progress → Up next → Prepare ahead → Whole-grade binder → History.**
 - **Empty queue** shows a live **look-ahead** of the next few prospective sessions

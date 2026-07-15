@@ -188,8 +188,13 @@
   .pvbadge{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;border:1px solid var(--line);color:var(--faint);border-radius:20px;padding:1px 7px}
   .pvbadge.ok{color:var(--teal);border-color:var(--teal)}
   .pvhint{font-size:.74rem;color:var(--faint);font-style:italic;margin:6px 0 0}
+  /* history search */
+  .histsearch{margin:2px 0}
+  .hsearch{width:100%;font:inherit;font-size:.86rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 12px}
+  .hsearch::placeholder{color:var(--faint)}
+  .hsearch:focus{outline:2px solid var(--navy);outline-offset:1px}
   /* history calendar */
-  .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:6px}
   .histnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .histnav b{font-family:var(--disp);font-size:1rem}
   .hnav{background:var(--card2);border:1px solid var(--line);border-radius:9px;width:30px;height:30px;font-size:1rem;color:var(--ink);cursor:pointer;line-height:1}
@@ -562,6 +567,8 @@ let PREPN=3;                // how many sessions "prepare ahead" adds to the que
 let PVSEED=0;               // shuffle offset for the look-ahead preview
 let HISTMON=null;           // yyyy-mm shown in the history calendar
 let HISTSEL=null;           // yyyy-mm-dd selected in the history calendar
+let HSEARCH="";             // History search box text
+let SEARCHABLE=[];          // topics you can search: this grade + worked-ahead topics
 const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
 const ymd=(d)=>{const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
 const todayStr=()=>ymd(new Date());
@@ -596,9 +603,26 @@ async function openHome(kid, age){
     const {topics, hard}=await loadTaxonomy(age);
     TOPICS=topics; HARD=hard; TBYID.clear(); for(const t of topics) TBYID.set(t.id,t);
     await Promise.all([loadMastery(kid.id), loadSessions(kid.id)]);
-    HISTMON=monStr(todayStr()); HISTSEL=null;
+    HISTMON=monStr(todayStr()); HISTSEL=null; HSEARCH="";
+    await buildSearchable();
     renderHome();
   }catch(e){ document.getElementById("cards").innerHTML=`<div class="note err">Couldn't load: ${esc(e.message)}</div>`; }
+}
+// Searchable topic set = this grade (TOPICS) + any topics the child has actually
+// done in sessions but that sit outside the current grade band (worked ahead).
+async function buildSearchable(){
+  const known=new Set(TOPICS.map(t=>t.id));
+  const extraIds=[...new Set(SESSIONS.flatMap(s=>(s.topics||[]).map(x=>x.topicId)).filter(id=>!known.has(id)))];
+  let extra=[];
+  if(extraIds.length){
+    try{
+      const cols="id,subject,domain,name,description,type,age_range_start,age_range_end,centrality,evidence";
+      const rows=await sb(`/rest/v1/topics?select=${cols}&id=in.(${extraIds.map(encodeURIComponent).join(",")})&limit=2000`);
+      for(const t of rows){ t.name=amz(t.name); t.description=amz(t.description); t.domain=amz(t.domain); if(Array.isArray(t.evidence)) t.evidence=t.evidence.map(amz); TBYID.set(t.id,t); }
+      extra=rows;
+    }catch{}
+  }
+  SEARCHABLE=TOPICS.concat(extra);
 }
 
 function statusChip(st){ const m={planned:["Planned","var(--gold)"],started:["In progress","var(--navy)"],completed:["Completed","var(--teal)"]}[st]||["",""]; return `<span class="schip" style="color:${m[1]};border-color:${m[1]}">${m[0]}</span>`; }
@@ -834,10 +858,55 @@ async function printQueue(){
   openPrint(`${CURRENT.kid.first_name} — ${q.length} prepared sessions`, buildQueuePacket(CURRENT.kid, q, bank));
 }
 
-// ---- history: the past-sessions calendar (a true record of what was taught) ----
+// ---- history: search box → calendar (empty) or search results (typed) ----
 function renderHistory(wrap){
-  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
   wrap.appendChild(sectionLabel("History"));
+  const bar=document.createElement("div"); bar.className="histsearch";
+  const inp=document.createElement("input"); inp.className="hsearch"; inp.type="search";
+  inp.placeholder="Find a topic or past session…"; inp.value=HSEARCH; inp.setAttribute("aria-label","Find a topic or session");
+  bar.appendChild(inp); wrap.appendChild(bar);
+  const out=document.createElement("div"); wrap.appendChild(out);
+  const draw=()=>{ HSEARCH=inp.value; out.innerHTML=""; const q=HSEARCH.trim().toLowerCase(); if(q) drawSearch(out,q); else drawCalendar(out); };
+  inp.oninput=draw; draw();
+}
+function drawSearch(wrap, q){
+  const topics=SEARCHABLE
+    .filter(t=>((t.name||"")+" "+(t.subject||"")+" "+(t.domain||"")+" "+(t.description||"")).toLowerCase().includes(q))
+    .sort((a,b)=>{ const an=(a.name||"").toLowerCase().startsWith(q)?0:1, bn=(b.name||"").toLowerCase().startsWith(q)?0:1; return an-bn || (a.name||"").localeCompare(b.name||""); })
+    .slice(0,25);
+  const sessions=SESSIONS.filter(s=>s.for_date && s.status!=="planned")
+    .filter(s=> dLabel(s.for_date).toLowerCase().includes(q) || (s.topics||[]).some(t=>(t.name||"").toLowerCase().includes(q)))
+    .sort((a,b)=>a.for_date<b.for_date?1:-1).slice(0,15);
+  if(!topics.length && !sessions.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent=`No topics or sessions match “${HSEARCH.trim()}”.`; wrap.appendChild(n); return; }
+  if(topics.length){
+    wrap.appendChild(revLabel(`Topics (${topics.length})`));
+    for(const t of topics) wrap.appendChild(topicResultCard(t));
+  }
+  if(sessions.length){
+    wrap.appendChild(revLabel(`Past sessions (${sessions.length})`));
+    for(const s of sessions) wrap.appendChild(sessionCard(s, dLabel(s.for_date), printButtons(s)));
+  }
+}
+function topicResultCard(t){
+  const box=document.createElement("div"); box.className="card"; box.style.padding="12px 14px";
+  box.innerHTML=`<div style="width:100%"><div class="revhd" style="margin-bottom:5px"><b class="disp">${esc(glossName(t.name))}</b> <span class="faint" style="font-size:.78rem">· ${esc(t.subject)}${t.domain?" · "+esc(t.domain):""}</span></div><div class="prow"></div></div>`;
+  const prow=box.querySelector(".prow");
+  prow.appendChild(mkBtn("ghost","Full",()=>printTopic(t,"full")));
+  prow.appendChild(mkBtn("ghost","Materials",()=>printTopic(t,"materials")));
+  prow.appendChild(mkBtn("ghost","Worksheet",()=>printTopic(t,"worksheets")));
+  return box;
+}
+// Reprint ONE topic's materials (mini-packet). full | materials | worksheets.
+async function printTopic(t, mode){
+  const kid=CURRENT.kid; const card={topic:t, ...laneOf(t)};
+  CONTENT=Object.assign(CONTENT, await fetchContent([t.id]));
+  if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages([t.id]));
+  let bank={}; if(mode!=="materials" && card.lane!=="practice") bank=await fetchPractice([t.id]);
+  const suffix=mode==="worksheets"?" · worksheet":mode==="materials"?" · materials":"";
+  openPrint(`${kid.first_name} — ${glossName(t.name)}${suffix}`, buildPacket(kid, [card], mode, bank));
+}
+function drawCalendar(wrap){
+  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
   if(!taught.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent="No sessions completed yet. Finish one above and it'll be logged here to reprint any time."; wrap.appendChild(n); return; }
   const byDate={}; for(const s of taught){ (byDate[s.for_date] ||= []).push(s); }
 
