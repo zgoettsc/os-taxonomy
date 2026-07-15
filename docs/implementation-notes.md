@@ -62,8 +62,20 @@ subject** with dividers, and **within each subject in curriculum-progression ord
 so page 1 is foundational, later pages harder). A **Worksheets** button
 (`printGradePractice` → `buildPracticePacket`) prints a practice-only binder: **3
 worksheets per topic** (variant-rotated so they differ) + answer keys, nothing else.
-Ordering is only as good as the prereq EDGES — sparse edges fall back to age/centrality;
-enriching the number-strand edges is a known deeper fix. Deliberately by-subject (a reference/scope binder) because
+Ordering uses `topoSort` in the app (tiebreak centrality→age→id), matching the
+canonical **`scripts/sequence.mjs`** (Kahn's algorithm over the hard-edge subgraph +
+soft-edge preference + a `validateOrder` checker). The full graph is a clean DAG
+(1590/1590 sequence with 0 hard violations); **`scripts/check-order.mjs`** +
+the `validate-order` workflow fail CI if an edit ever introduces a hard-edge
+violation or cycle. (Earlier "0 age-4-math edges" was a false alarm — an audit bug,
+snake_case vs camelCase keys; there are 14 real edges and the graph models the
+number strand correctly.)
+
+The **Worksheets** binder makes SAME-size sheets with **non-overlapping questions**
+(consecutive slices of the deduped bank + built-in practice; math uses the generator
+for fresh random sets). 3 full unique sheets/topic requires a bank of ≥ 3×6 items —
+so knowledge topics need `practice_items` generated (generate-practice / backfill);
+until then they show one full sheet. Deliberately by-subject (a reference/scope binder) because
 the session/queue/prepare-ahead flows are all by-session. **Alternative not built:** a
 "Course sequence" export = the whole grade pre-composed into interleaved sessions in
 teaching order (prereqs respected) — add as a *separate* mode if wanted; it overlaps

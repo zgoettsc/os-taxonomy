@@ -1028,7 +1028,9 @@ function topoSort(cards){
   const indeg=new Map(cards.map(c=>[c.topic.id, preOf(c.topic.id).length]));
   const deps=new Map(cards.map(c=>[c.topic.id,[]]));
   for(const c of cards) for(const p of preOf(c.topic.id)) deps.get(p).push(c.topic.id);
-  const cmp=(a,b)=> (a.topic.age_range_start-b.topic.age_range_start) || ((b.topic.centrality||0)-(a.topic.centrality||0)) || String(a.topic.name).localeCompare(String(b.topic.name));
+  // Tiebreak among ready topics: centrality desc ("most important first"), then
+  // younger age, then id — matches scripts/sequence.mjs (the canonical sequencer).
+  const cmp=(a,b)=> ((b.topic.centrality||0)-(a.topic.centrality||0)) || ((a.topic.age_range_start||0)-(b.topic.age_range_start||0)) || (a.topic.id<b.topic.id?-1:a.topic.id>b.topic.id?1:0);
   let frontier=cards.filter(c=>indeg.get(c.topic.id)===0);
   const out=[]; const done=new Set();
   while(frontier.length){
@@ -1076,40 +1078,46 @@ async function printGradePractice(){
   }catch(e){ alert("Couldn't build practice: "+e.message); }
   finally{ if(label) label.textContent=keep; }
 }
-// One worksheet for a topic, variant-rotated so repeated sheets differ.
-function practiceSheet(kid, t, lane, bank, variant){
-  const c=getContent(t.id);
-  const N=esc(kid.first_name);
-  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
-  const isMath = lane==="practice" || (c&&c.practice&&c.practice.generator);
-  if(isMath){ const probs=genProblems(t,12); if(probs&&probs.length) return { html:`<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`, keyRows:probs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`) }; }
-  let pool=((bank&&bank[t.id])||[]);
-  if(!pool.length && c && c.practice && Array.isArray(c.practice.items)) pool=c.practice.items;
-  if(!pool.length) return null;
-  const n=Math.min(6,pool.length); const start=(variant*n)%pool.length;
-  const items=Array.from({length:n},(_,i)=>pool[(start+i)%pool.length]);
-  return wsFromItems(items, fill);
-}
 function buildPracticePacket(kid, cards, bank, perTopic){
   perTopic=perTopic||3; bank=bank||{};
   const N=esc(kid.first_name);
+  const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
   const keys=[]; const order=[...CORE,...ROTATE];
   const bySub={}; for(const c of cards){ (bySub[c.topic.subject] ||= []).push(c); }
   const subs=Object.keys(bySub).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
   const cover=`<div class="cover"><div class="brand">MARBLE</div><h1>${N}'s grade practice</h1>
-    <div class="day">Age ${CURRENT.age} · ${perTopic} worksheets per topic · answer keys at the back</div>
+    <div class="day">Age ${CURRENT.age} · up to ${perTopic} worksheets per topic · answer keys at the back</div>
     <div class="subs">${subs.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div></div>`;
+  const sheetHtml=(v,inner)=>`<div class="wsec"><div class="eyebrow"><span class="num">${v+1}</span> Practice worksheet ${v+1}</div>${inner}</div>`;
   const body=subs.map(sub=>{
     const list=topoSort(bySub[sub]);
     const band=`<section class="dayband"><div class="dbnum">${esc(sub)}</div><h2>${list.length} topic${list.length>1?"s":""}</h2></section>`;
     return band+list.map(({topic:t,lane})=>{
       const st=SUBJ[t.subject]||{c:"#3b4aa0"};
       const head=`<div class="kicker" style="color:${st.c}">${esc(t.subject)}${t.domain?" · "+esc(t.domain):""} · ages ${t.age_range_start}–${t.age_range_end}</div>`;
+      const c=getContent(t.id);
+      const isMath = (lane==="practice" || (c&&c.practice&&c.practice.generator)) && !!genProblems(t,1);
       const sheets=[];
-      for(let v=0; v<perTopic; v++){
-        const w=practiceSheet(kid,t,lane,bank,v); if(!w) break;
-        if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
-        sheets.push(`<div class="wsec"><div class="eyebrow"><span class="num">${v+1}</span> Practice worksheet ${v+1}</div>${w.html}</div>`);
+      if(isMath){
+        for(let v=0; v<perTopic; v++){                          // fresh random set each sheet
+          const probs=genProblems(t,12); if(!probs||!probs.length) break;
+          keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:probs.map((q,i)=>`${i+1}. ${esc(q.q.replace(/\s*=$/,""))} = <b>${esc(q.a)}</b>`)});
+          sheets.push(sheetHtml(v, `<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`));
+        }
+      } else {
+        // Combine the generated bank + the lesson's built-in practice, deduped by prompt.
+        const seen=new Set();
+        const pool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
+          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
+        if(pool.length){
+          const size=Math.min(6, pool.length);                          // SAME count on every sheet
+          const nSheets=Math.max(1, Math.min(perTopic, Math.floor(pool.length/size)));
+          for(let v=0; v<nSheets; v++){
+            const w=wsFromItems(pool.slice(v*size, v*size+size), fill);  // consecutive slices → no shared question
+            if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
+            sheets.push(sheetHtml(v, w.html));
+          }
+        }
       }
       if(!sheets.length) return "";
       return `<section class="topic"><div class="thead">${head}<h1>${esc(glossName(t.name))}</h1></div>${sheets.join("")}</section>`;
