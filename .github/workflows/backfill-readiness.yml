@@ -1,0 +1,64 @@
+name: Backfill readiness (keep the frontier generated)
+
+# Keeps every child's upcoming ready-frontier generated AHEAD of demand, so the
+# app never waits: it only ever reads content that's already there. Generates any
+# missing lesson (then its images), and tops up images for lessons that lack them.
+# Content is global per topic, so shared early topics are generated once.
+#
+# Runs on a schedule + on demand. Each run is cost-capped (`max`). Safe to run
+# often — it only does work for topics that aren't ready yet.
+#
+# Prereqs: db/images.sql applied. Secrets: ANTHROPIC_API_KEY, OPENAI_API_KEY,
+# SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (+ SMITHSONIAN/VOYAGE if used by grounding).
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch:
+    inputs:
+      age:
+        description: 'Grade mode: generate the WHOLE age band (e.g. 4). Blank = frontier mode.'
+        required: false
+        default: ''
+        type: string
+      buffer:
+        description: 'Frontier mode: ready topics to keep ahead per child'
+        required: false
+        default: '20'
+        type: string
+      max:
+        description: 'Max generate/resolve actions this run (cost cap)'
+        required: false
+        default: '8'
+        type: string
+      dry:
+        description: 'Dry run — just report what it would do'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the Anthropic SDK
+        run: npm install @anthropic-ai/sdk
+      - name: Backfill the frontier
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SMITHSONIAN_API_KEY: ${{ secrets.SMITHSONIAN_API_KEY }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+          AI_IMAGES: ${{ vars.AI_IMAGES }}
+        run: |
+          node pipeline/backfill.mjs \
+            ${{ inputs.age && format('--age {0}', inputs.age) || '' }} \
+            --buffer "${{ inputs.buffer || '20' }}" \
+            --max "${{ inputs.max || '8' }}" \
+            ${{ inputs.dry && '--dry' || '' }}

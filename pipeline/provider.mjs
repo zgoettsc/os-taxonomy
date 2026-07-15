@@ -220,10 +220,13 @@ export async function imageProvider(name) {
     async imageDirectives({ topic, examples = [] }) {
       const system =
         'You turn a children\'s lesson\'s picture-card descriptions into image directives, ONE per card, in order.\n'
-        + 'For each card decide kind:\n'
-        + '• "photo" — the card depicts a SPECIFIC, real, nameable thing best shown by a real photograph '
-        + '(an animal, a plant, a planet, a landmark, a real everyday object). \n'
-        + '• "illustration" — a generic concept, comparison, action, or scene with no single real referent.\n'
+        + 'The DEFAULT kind is "illustration" — a clean house-style drawing is more consistent and less cluttered than a '
+        + 'stock photo, and it is what almost every card should be.\n'
+        + 'Choose "photo" ONLY when the card shows a SPECIFIC real thing a child genuinely benefits from seeing accurately '
+        + 'and where an illustration could mislead: a particular animal SPECIES (a monarch butterfly, a bald eagle), a real '
+        + 'place or landmark (the Grand Canyon, the Statue of Liberty), a planet or astronomical body, or a real historical '
+        + 'artifact. For GENERIC nouns (a tree, a shoe, a rose, a lamb, a ball, a house, a cup) and for ANY concept, '
+        + 'comparison, action, feeling, or scene, use "illustration".\n'
         + 'For EVERY card provide: subject = one clear SCENE with a SINGLE main object, plain background, no text/letters, '
         + 'uncluttered so a pre-reader instantly sees what it is; query = 3–6 word photo search terms (fill it even for '
         + 'illustration); alt = one age-appropriate sentence describing the picture. Keep everything concrete, calm, and '

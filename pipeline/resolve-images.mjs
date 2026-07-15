@@ -69,8 +69,10 @@ async function findPhoto(query) {
       if (!/^image\//.test(ct)) continue;
       const buf = Buffer.from(await ir.arrayBuffer());
       if (buf.length < 2000) continue; // skip tiny/placeholder
-      const credit = it.attribution || `${it.title || 'Image'}${it.creator ? ' by ' + it.creator : ''} (${it.license?.toUpperCase() || ''} ${it.license_version || ''})`.trim();
-      return { buf, ct, license: `${(it.license || '').toUpperCase()} ${it.license_version || ''}`.trim(), attribution: credit, source_url: it.foreign_landing_url || src, source: 'openverse' };
+      const lic = `${(it.license || '').toUpperCase()} ${it.license_version || ''}`.trim();
+      const who = (it.creator || it.title || 'Unknown').replace(/\s+/g, ' ').trim().slice(0, 48);
+      const credit = `${who} · ${lic}`;                 // short one-liner, not the full CC boilerplate
+      return { buf, ct, license: lic, attribution: credit, source_url: it.foreign_landing_url || src, source: 'openverse' };
     } catch { /* try next */ }
   }
   return null;
@@ -128,7 +130,19 @@ for (let i = 0; i < examples.length; i++) {
     const ext = asset.ct.includes('png') ? 'png' : asset.ct.includes('webp') ? 'webp' : 'jpg';
     url = await upload(`${base}.${ext}`, asset.buf, asset.ct);
   }
-  rows.push({ topic_id: topicId, slot: i, status: 'approved', alt: d.alt || '', width: 1024, height: 1024, url: url || 'pending://not-stored', storage_path: url ? new URL(url).pathname : null, ...meta });
+  // AI illustrations are reliably on-style → auto-approve. Real photos are the
+  // risky ones (irrelevant/cluttered results) → hold for a human glance.
+  const status = meta.kind === 'photo' ? 'pending' : 'approved';
+  // Every row MUST have an identical key set — PostgREST bulk insert rejects
+  // ragged objects (PGRST102). Fill the photo-only fields with null on AI rows.
+  rows.push({
+    topic_id: topicId, slot: i, status,
+    kind: meta.kind, source: meta.source, prompt: meta.prompt || null,
+    url: url || 'pending://not-stored', storage_path: url ? new URL(url).pathname : null,
+    alt: d.alt || '',
+    license: meta.license || null, attribution: meta.attribution || null, source_url: meta.source_url || null,
+    width: meta.kind === 'illustration' ? 1024 : null, height: meta.kind === 'illustration' ? 1024 : null,
+  });
 }
 
 console.log(`Resolved ${rows.length}/${examples.length} card(s): ` + rows.map((r) => r.kind).join(', '));

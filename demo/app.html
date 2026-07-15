@@ -158,6 +158,13 @@
   .prepdays:focus{outline:2px solid var(--navy);outline-offset:1px}
   .prepunit{font-size:.82rem;font-weight:700;color:var(--soft)}
   .seclabel{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:6px 0 -3px}
+  /* review queue */
+  .revhd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .revflag{font-size:.74rem;color:var(--gold);font-weight:600;margin-bottom:8px}
+  .revlesson{font-size:.84rem;color:var(--soft);max-height:260px;overflow:auto;border:1px solid var(--line2);border-radius:10px;padding:9px 11px;margin-bottom:10px}
+  .revlesson p{margin:0 0 7px} .revh{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--teal);margin:9px 0 3px}
+  .revul{margin:2px 0;padding-left:16px} .revul li{margin:3px 0}
+  .revimg{width:100%;max-height:220px;object-fit:contain;background:var(--card2);border:1px solid var(--line);border-radius:10px;margin-bottom:2px}
   /* session preview (inline expander, sits at the bottom of the card) */
   .pvwrap{margin:11px 0 0;border-top:1px solid var(--line2);padding-top:9px}
   .pvlink{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;font-size:.74rem;font-weight:700;color:var(--faint);cursor:pointer}
@@ -221,6 +228,7 @@
     <div class="brand"><span class="dot">🌱</span> Marble</div>
     <div class="right">
       <span class="faint" id="whoami" style="font-size:.74rem"></span>
+      <button class="link hidden" id="reviewBtn">✓ Review</button>
       <button class="link hidden" id="settingsBtn">⚙ Settings</button>
       <button class="link hidden" id="signOut">Sign out</button>
     </div>
@@ -268,6 +276,14 @@
     <h2 style="font-size:1.3rem;margin:-6px 0 2px">Parent controls</h2>
     <p class="muted" style="font-size:.83rem;margin:0 0 6px">Sensitive topics are <b>off by default</b>. Turn one on for a child to include it in that child's sessions.</p>
     <div id="settingsKids" style="display:flex;flex-direction:column;gap:16px"></div>
+  </section>
+
+  <!-- REVIEW (admin only) -->
+  <section class="body hidden" id="screen-review">
+    <p class="eyebrow">Review queue</p>
+    <h2 style="font-size:1.3rem;margin:-6px 0 2px">Approve what a child sees</h2>
+    <p class="muted" style="font-size:.83rem;margin:0 0 10px">Held lessons and real photos that need a human glance. AI illustrations auto-approve, so this stays short.</p>
+    <div id="reviewBody" style="display:flex;flex-direction:column;gap:14px"></div>
   </section>
 
   <div class="foot" id="foot">Connected to your live curriculum · 1,590 topics</div>
@@ -409,13 +425,21 @@ const initials = s => (s||"?").trim()[0].toUpperCase();
 const esc = s => (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 
 // ---- screen router ----
-const screens = ["auth","kids","home","settings"];
+const screens = ["auth","kids","home","settings","review"];
+let ADMIN=false;
 function show(name){
   screens.forEach(s=>document.getElementById("screen-"+s).classList.toggle("hidden", s!==name));
   document.getElementById("backBtn").classList.toggle("hidden", name==="auth"||name==="kids");
   document.getElementById("settingsBtn").classList.toggle("hidden", !(name==="kids"||name==="home"));
+  document.getElementById("reviewBtn").classList.toggle("hidden", !(ADMIN && (name==="kids"||name==="home")));
   document.getElementById("signOut").classList.toggle("hidden", name==="auth");
   document.getElementById("whoami").textContent = (name!=="auth" && session) ? session.user.email : "";
+}
+async function checkAdmin(){
+  try{ const r=await sb(`/rest/v1/admins?select=user_id&user_id=eq.${session.user.id}`); ADMIN=Array.isArray(r)&&r.length>0; }
+  catch{ ADMIN=false; }
+  const onNav = !document.getElementById("screen-kids").classList.contains("hidden") || !document.getElementById("screen-home").classList.contains("hidden");
+  document.getElementById("reviewBtn").classList.toggle("hidden", !(ADMIN && onNav));
 }
 
 // ---- AUTH ----
@@ -448,9 +472,9 @@ document.getElementById("authBtn").onclick=async()=>{
 };
 document.getElementById("signOut").onclick=()=>{ session=null; localStorage.removeItem("session"); show("auth"); };
 document.getElementById("settingsBtn").onclick=()=>{ settingsReturn = document.getElementById("screen-home").classList.contains("hidden")?"kids":"home"; renderSettings(); show("settings"); };
+document.getElementById("reviewBtn").onclick=()=>{ settingsReturn = document.getElementById("screen-home").classList.contains("hidden")?"kids":"home"; show("review"); renderReview(); };
 document.getElementById("backBtn").onclick=()=>{
-  const onSettings=!document.getElementById("screen-settings").classList.contains("hidden");
-  if(onSettings && settingsReturn==="home" && CURRENT.kid) openHome(CURRENT.kid, CURRENT.age);
+  if(settingsReturn==="home" && CURRENT.kid) openHome(CURRENT.kid, CURRENT.age);
   else show("kids");
 };
 
@@ -460,6 +484,7 @@ let CURRENT={kid:null,age:null,cards:[]};   // the child whose Home is open
 let settingsReturn="kids";
 async function loadKids(){
   show("kids");
+  checkAdmin();
   const list=document.getElementById("kidsList"); list.innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
   try{
     const kids=await sb("/rest/v1/children?select=id,first_name,birth_year,avatar&order=first_name");
@@ -959,6 +984,77 @@ function renderSettings(){
   }
 }
 
+// ---- REVIEW QUEUE (admin) ----
+// Held lessons (reviewed=false) + pending real photos (status='pending'). Approve
+// to make it servable; reject to pull it (a rejected lesson regenerates next sweep).
+async function renderReview(){
+  const wrap=document.getElementById("reviewBody");
+  wrap.innerHTML='<div class="center" style="padding:24px"><div class="spinner"></div></div>';
+  try{
+    const [lessons, imgs] = await Promise.all([
+      sb(`/rest/v1/content_items?select=id,topic_id,body,provenance&reviewed=eq.false&order=created_at.desc&limit=100`),
+      sb(`/rest/v1/lesson_images?select=id,topic_id,slot,kind,url,alt,attribution&status=eq.pending&order=created_at.desc&limit=200`),
+    ]);
+    const ids=[...new Set([...lessons.map(l=>l.topic_id), ...imgs.map(i=>i.topic_id)])];
+    const names={};
+    if(ids.length){ try{ const rows=await sb(`/rest/v1/topics?select=id,name,subject&id=in.(${ids.map(encodeURIComponent).join(",")})`); for(const r of rows) names[r.id]=r; }catch{} }
+    wrap.innerHTML="";
+    if(!lessons.length && !imgs.length){ wrap.innerHTML='<div class="note ok">All caught up — nothing waiting for review. 🎉</div>'; return; }
+
+    if(lessons.length){
+      wrap.appendChild(revLabel(`Lessons held (${lessons.length})`));
+      for(const l of lessons) wrap.appendChild(reviewLessonCard(l, names[l.topic_id]));
+    }
+    if(imgs.length){
+      wrap.appendChild(revLabel(`Photos to vet (${imgs.length})`));
+      for(const im of imgs) wrap.appendChild(reviewImageCard(im, names[im.topic_id]));
+    }
+  }catch(e){ wrap.innerHTML=`<div class="note err">Couldn't load the review queue: ${esc(e.message)}${/permission|denied|JWT/i.test(e.message)?" — is your account seeded in the admins table (db/review.sql)?":""}</div>`; }
+}
+function revLabel(t){ const d=document.createElement("div"); d.className="seclabel"; d.style.margin="8px 0 0"; d.textContent=t; return d; }
+
+function reviewLessonCard(l, t){
+  let b=l.body; if(typeof b==="string"){ try{ b=JSON.parse(b); }catch{ b={}; } }
+  let prov=l.provenance; if(typeof prov==="string"){ try{ prov=JSON.parse(prov); }catch{ prov={}; } }
+  const s=b.student||{}, p=b.parent||{};
+  const flags=(prov&&(prov.flags||(prov.verification&&prov.verification.flags)))||[];
+  const paras=String(s.intro||"").split(/\n\n+/).filter(Boolean).map(x=>`<p>${esc(x)}</p>`).join("");
+  const ex=(s.examples||[]).map(e=>`<li><b>${esc(e.show||"")}</b> — ${esc(e.say||"")}</li>`).join("");
+  const ass=((b.assessment&&b.assessment.items)||b.assessment||[]).map(a=>`<li>${esc(a.prompt||"")}</li>`).join("");
+  const box=document.createElement("div"); box.className="card"; box.style.padding="14px";
+  box.innerHTML=`<div style="width:100%">
+    <div class="revhd"><b class="disp">${esc(glossName((t&&t.name)||l.topic_id))}</b><span class="faint" style="font-size:.78rem">${esc(t?t.subject:"")}</span></div>
+    ${flags.length?`<div class="revflag">Held: ${flags.map(f=>esc(typeof f==="string"?f:(f.message||f.code||"flag"))).join(" · ")}</div>`:`<div class="revflag">Held for a human glance.</div>`}
+    <div class="revlesson">
+      ${paras?`<div class="revh">Lesson</div>${paras}`:""}
+      ${ex?`<div class="revh">Picture cards</div><ul class="revul">${ex}</ul>`:""}
+      ${p.whyItMatters?`<div class="revh">Why it matters</div><p>${esc(p.whyItMatters)}</p>`:""}
+      ${ass?`<div class="revh">Assessment</div><ul class="revul">${ass}</ul>`:""}
+    </div>
+    <div class="prow"></div></div>`;
+  const prow=box.querySelector(".prow");
+  prow.appendChild(mkBtn("primary","Approve",()=>revAct(box, `/rest/v1/content_items?id=eq.${l.id}`, {method:"PATCH", body:{reviewed:true, reviewer:"human"}})));
+  prow.appendChild(mkBtn("ghost","Reject & remove",()=>{ if(confirm("Remove this lesson? The backfill will regenerate a fresh one.")) revAct(box, `/rest/v1/content_items?id=eq.${l.id}`, {method:"DELETE"}); }));
+  return box;
+}
+function reviewImageCard(im, t){
+  const box=document.createElement("div"); box.className="card"; box.style.padding="14px";
+  box.innerHTML=`<div style="width:100%">
+    <div class="revhd"><b class="disp">${esc(glossName((t&&t.name)||im.topic_id))}</b><span class="faint" style="font-size:.78rem">card ${im.slot+1} · ${esc(im.kind)}</span></div>
+    <img class="revimg" src="${esc(im.url)}" alt="${esc(im.alt||"")}">
+    ${im.attribution?`<div class="faint" style="font-size:.72rem;margin-top:5px">${esc(im.attribution)}</div>`:""}
+    <div class="prow"></div></div>`;
+  const prow=box.querySelector(".prow");
+  prow.appendChild(mkBtn("primary","Approve",()=>revAct(box, `/rest/v1/lesson_images?id=eq.${im.id}`, {method:"PATCH", body:{status:"approved"}})));
+  prow.appendChild(mkBtn("ghost","Reject",()=>revAct(box, `/rest/v1/lesson_images?id=eq.${im.id}`, {method:"PATCH", body:{status:"rejected"}})));
+  return box;
+}
+async function revAct(card, path, opts){
+  const btns=card.querySelectorAll("button"); btns.forEach(b=>b.disabled=true);
+  try{ await sb(path, opts); card.style.transition="opacity .2s"; card.style.opacity="0"; setTimeout(()=>{ card.remove(); const left=document.getElementById("reviewBody").querySelectorAll(".card").length; if(!left) renderReview(); }, 200); }
+  catch(e){ alert("Couldn't save: "+e.message); btns.forEach(b=>b.disabled=false); }
+}
+
 // ---- printable materials (opens a clean print window with real lessons) ----
 function genProblems(t, n){
   const hay=((t.domain||"")+" "+(t.name||"")).toLowerCase();
@@ -1050,7 +1146,7 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
   const ex=(s.examples||[]).map((e,ei)=>{
     const im=imgs[ei];
     const show=im
-      ? `<img class="showimg" src="${esc(im.url)}" alt="${esc(im.alt||e.show||'')}">${im.kind==='photo'&&im.attribution?`<span class="showcredit">${esc(im.attribution)}</span>`:''}`
+      ? `<img class="showimg" src="${esc(im.url)}" alt="${esc(im.alt||e.show||'')}">${im.kind==='photo'&&im.attribution?`<span class="showcredit">${esc(String(im.attribution).slice(0,80))}</span>`:''}`
       : `<span class="etag">Picture</span>${fill(e.show||"")}`;
     return `<div class="example"><div class="show${im?' has':''}">${show}</div><div class="say"><span class="etag say">Say</span>${fill(e.say||"")}</div></div>`;
   }).join("");
