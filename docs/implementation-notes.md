@@ -119,6 +119,17 @@ The app only reads ready content; if a topic isn't ready it degrades to "Basics"
   prose (it corrupted valid text: "rubber band"→"eraser band"). The model writes
   American English; any britishism that slips through is a **review flag**
   (`findBritishisms`), not an auto-rewrite.
+- **Coherence gate.** After generation, a cheap Haiku copy-editor (`coherenceProvider`)
+  scans the prose for garbled/broken text (bad find-replace, dropped letters); any hit
+  is a review flag that holds the lesson. Protects the "every fact verified" promise.
+- **Infinite unique practice.** `practice_items` is a persistent per-topic bank: lessons
+  **seed** it with their built-in practice (`generate.mjs` → `seedPractice`), and the
+  **backfill tops each bank up to a target** (`--practice`, default 18 = three 6-Q
+  sheets), generating only the shortfall (existing items are reused). Per-child
+  **`practice_served`** logs which items a child got, so worksheets draw UNSERVED-first
+  and never repeat until the bank is exhausted — then the backfill makes more. The grade
+  Worksheets binder is served-aware (`loadServed`/`recordServed`); the per-session "New
+  worksheets" path still uses local seen-tracking (migratable to `practice_served`).
 - **Commercial-mode toggle** (repo var `COMMERCIAL_MODE=on`, or `--commercial`): when
   on, generation excludes NonCommercial sources AND forbids copyrighted/trademarked
   examples (no Disney/branded characters). OFF by default (fine for personal use).

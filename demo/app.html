@@ -1074,12 +1074,16 @@ async function printGradePractice(){
     const ids=cards.map(c=>c.topic.id);
     CONTENT=Object.assign(CONTENT, await fetchContent(ids));
     const bank=await fetchPractice(cards.filter(c=>c.lane!=="practice").map(c=>c.topic.id));
-    openPrint(`${kid.first_name} — Grade practice (age ${CURRENT.age})`, buildPracticePacket(kid, cards, bank, 3));
+    const served=await loadServed(kid.id, ids);
+    const used=[];
+    const html=buildPracticePacket(kid, cards, bank, 3, served, used);
+    recordServed(kid.id, used);   // mark what we handed out so it won't repeat next time
+    openPrint(`${kid.first_name} — Grade practice (age ${CURRENT.age})`, html);
   }catch(e){ alert("Couldn't build practice: "+e.message); }
   finally{ if(label) label.textContent=keep; }
 }
-function buildPracticePacket(kid, cards, bank, perTopic){
-  perTopic=perTopic||3; bank=bank||{};
+function buildPracticePacket(kid, cards, bank, perTopic, served, used){
+  perTopic=perTopic||3; bank=bank||{}; served=served||new Set(); used=used||[];
   const N=esc(kid.first_name);
   const fill=s=>esc(String(s||"")).replaceAll("Hugh",N).replaceAll("{{name}}",N);
   const keys=[]; const order=[...CORE,...ROTATE];
@@ -1105,17 +1109,21 @@ function buildPracticePacket(kid, cards, bank, perTopic){
           sheets.push(sheetHtml(v, `<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`));
         }
       } else {
-        // Combine the generated bank + the lesson's built-in practice, deduped by prompt.
+        // Combine the generated bank + the lesson's built-in practice, deduped by prompt,
+        // then order UNSERVED-first so a child never repeats a question until the bank runs out.
         const seen=new Set();
-        const pool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
+        let pool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
           .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
+        pool.sort((a,b)=> (served.has(a.id)?1:0)-(served.has(b.id)?1:0));   // unseen first
         if(pool.length){
           const size=Math.min(6, pool.length);                          // SAME count on every sheet
           const nSheets=Math.max(1, Math.min(perTopic, Math.floor(pool.length/size)));
           for(let v=0; v<nSheets; v++){
-            const w=wsFromItems(pool.slice(v*size, v*size+size), fill);  // consecutive slices → no shared question
+            const slice=pool.slice(v*size, v*size+size);                 // consecutive → no shared question
+            const w=wsFromItems(slice, fill);
             if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
             sheets.push(sheetHtml(v, w.html));
+            for(const it of slice){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); }
           }
         }
       }
@@ -1201,10 +1209,26 @@ async function fetchPractice(ids){
   const out={}; if(!ids.length) return out;
   try{
     const inList=ids.map(encodeURIComponent).join(",");
-    const rows=await sb(`/rest/v1/practice_items?select=topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&limit=2000`);
+    const rows=await sb(`/rest/v1/practice_items?select=id,topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&limit=5000`);
     for(const r of rows){ (out[r.topic_id] ||= []).push(r); }
   }catch{}
   return out;
+}
+// Per-child SERVED tracking → worksheets don't repeat a question until the bank is
+// exhausted (then the backfill tops it up = effectively infinite unique practice).
+async function loadServed(childId, ids){
+  const set=new Set(); if(!ids||!ids.length) return set;
+  try{
+    const inList=ids.map(encodeURIComponent).join(",");
+    const rows=await sb(`/rest/v1/practice_served?select=item_id&child_id=eq.${childId}&topic_id=in.(${inList})&limit=50000`);
+    for(const r of rows) set.add(r.item_id);
+  }catch{}
+  return set;
+}
+async function recordServed(childId, used){
+  const rows=(used||[]).filter(u=>u&&u.item_id).map(u=>({child_id:childId, item_id:u.item_id, topic_id:u.topic_id}));
+  if(!rows.length) return;
+  try{ await fetch(`${SUPABASE_URL}/rest/v1/practice_served?on_conflict=child_id,item_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"return=minimal,resolution=ignore-duplicates"},body:JSON.stringify(rows)}); }catch{}
 }
 const seenKey=(kid,tid)=>`seen:${kid}:${tid}`;
 function sampleBank(kid, tid, items, n=6){

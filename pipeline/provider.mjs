@@ -253,6 +253,45 @@ export async function imageProvider(name) {
   };
 }
 
+// ---- coherence / spell check: catch garbled text before it ships ----
+// A cheap copy-editor pass (Haiku) that flags broken tokens ("fnumber"), bad
+// find-replace artifacts ("eraser band"), dropped letters, nonsense — WITHOUT
+// flagging correct American English or age-appropriate simplicity. Issues become
+// review flags so the lesson is held, protecting the "every fact verified" promise.
+const COHERENCE_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['issues'],
+  properties: { issues: { type: 'array', items: {
+    type: 'object', additionalProperties: false, required: ['quote', 'problem'],
+    properties: { quote: { type: 'string' }, problem: { type: 'string' } },
+  } } },
+};
+export async function coherenceProvider(name) {
+  if (name !== 'claude') return { name: 'mock', async check() { return []; } };
+  let Anthropic;
+  try { ({ default: Anthropic } = await import('@anthropic-ai/sdk')); }
+  catch { throw new Error('coherence check needs @anthropic-ai/sdk installed'); }
+  const client = new Anthropic();
+  return {
+    name: 'claude',
+    async check({ text }) {
+      const system =
+        'You are a meticulous copy editor for a young child\'s lesson. Find only GENUINE text '
+        + 'errors: garbled or broken words ("fnumber", "teh"), wrong words from a bad find-and-replace '
+        + '("eraser band" instead of "rubber band"), dropped or transposed letters, doubled words, or '
+        + 'incoherent fragments. Do NOT flag correct American English, simple age-appropriate wording, '
+        + 'stylistic choices, or anything that is merely informal. Return the exact quote and the problem; '
+        + 'return an empty list if the text is clean.';
+      const res = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001', max_tokens: 1500, system,
+        messages: [{ role: 'user', content: String(text).slice(0, 20000) }],
+        output_config: { format: { type: 'json_schema', schema: COHERENCE_SCHEMA } },
+      });
+      const t = res.content.find((b) => b.type === 'text')?.text || '{}';
+      return JSON.parse(t).issues || [];
+    },
+  };
+}
+
 export async function getProvider(name) {
   if (name === 'claude') return claudeProvider();
   return mockProvider();

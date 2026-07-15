@@ -18,8 +18,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { getProvider } from './provider.mjs';
+import { getProvider, coherenceProvider } from './provider.mjs';
 import { verify } from './verify.mjs';
 import { mascotSVG, seedFromId } from './illustrate.mjs';
 import { GENERATORS } from '../scripts/generators.mjs';
@@ -129,6 +130,22 @@ const britishisms = findBritishisms(JSON.stringify(content));
 // --- 4. Verify ------------------------------------------------------------
 const report = verify(content, { grounding, mathGen });
 if (britishisms.length) report.flags.push({ code: 'britishism', message: `possible British spelling(s): ${[...new Set(britishisms)].slice(0, 8).join(', ')}` });
+
+// Coherence pass — a cheap copy-editor flags garbled text (broken tokens, bad
+// find-replace). Only with the real model; a flag holds the lesson for review.
+if (provider.name === 'claude') {
+  try {
+    const prose = [content.student?.intro,
+      ...(content.student?.examples || []).flatMap((e) => [e.show, e.say]),
+      content.parent?.whyItMatters, content.parent?.howToTeach,
+      ...(content.parent?.watchFor || []), ...(content.parent?.tryAtHome || []),
+      ...((content.practice?.items) || []).map((p) => p.prompt),
+      ...((content.assessment?.items) || []).map((a) => a.prompt)].filter(Boolean).join('\n');
+    const issues = await (await coherenceProvider('claude')).check({ text: prose });
+    for (const it of issues) report.flags.push({ code: 'coherence', message: `${it.problem}: "${String(it.quote).slice(0, 60)}"` });
+    if (issues.length) console.log(`  coherence:     ${issues.length} issue(s) flagged → held for review`);
+  } catch (e) { console.warn(`  coherence check skipped: ${e.message}`); }
+}
 content.provenance.verification = report.passed;
 
 // Auto-review gate (D8): approve when nothing was flagged; otherwise leave it
@@ -154,11 +171,39 @@ report.flags.forEach((f) => console.log(`     ⚠ ${f}`));
 console.log(`  reviewed:      ${content.provenance.reviewed}${content.provenance.reviewed ? ' (auto-approved: cited + verified + no flags)' : '  → held for human review'}`);
 console.log(`  wrote:         ${path.relative(path.join(dir, '..'), outPath)}`);
 
+// Seed the persistent practice bank from the lesson's built-in practice, so the
+// accumulating pool (practice_items) starts populated and worksheets reuse it.
+async function seedPractice() {
+  const SB = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SB || !KEY) return;
+  const items = (content.practice?.items) || [];
+  const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
+  const rows = [];
+  for (const it of items) {
+    const prompt = String(it.prompt || '').trim(); if (!prompt) continue;
+    const ch = sha(topic.id + '|' + norm(prompt));
+    if (it.kind === 'mcq') {
+      const choices = Array.isArray(it.choices) ? it.choices.map(String) : [];
+      if (choices.length < 2 || typeof it.answerIndex !== 'number') continue;
+      rows.push({ topic_id: topic.id, kind: 'mcq', prompt, choices, answer_index: it.answerIndex, answer: null, content_hash: ch, source: 'lesson' });
+    } else if (it.answer) {
+      rows.push({ topic_id: topic.id, kind: 'short', prompt, choices: null, answer_index: null, answer: String(it.answer), content_hash: ch, source: 'lesson' });
+    }
+  }
+  if (!rows.length) return;
+  const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal,resolution=ignore-duplicates' };
+  const res = await fetch(`${SB}/rest/v1/practice_items?on_conflict=topic_id,content_hash`, { method: 'POST', headers: H, body: JSON.stringify(rows) });
+  if (res.ok) console.log(`  practice bank: seeded ${rows.length} item(s) from the lesson`);
+  else console.warn(`  practice seed skipped: HTTP ${res.status}`);
+}
+
 // --- 6. Store to the DB (optional; needs SUPABASE_* env — runs in the Action) ---
 if (process.argv.includes('--store')) {
   try {
     const saved = await storeContentItem(content, { reviewed: content.provenance.reviewed });
     console.log(`  stored:        content_items ${saved?.id || '(ok)'} — the app can now serve this topic`);
+    try { await seedPractice(); } catch (e) { console.warn(`  practice seed skipped: ${e.message}`); }
   } catch (e) {
     console.error(`  store FAILED:  ${e.message}`);
     process.exitCode = 1;
