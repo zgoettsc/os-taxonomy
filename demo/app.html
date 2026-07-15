@@ -355,17 +355,16 @@ async function sb(path, opts = {}){
   return data;
 }
 // Paginated read. PostgREST caps a single response at ~1000 rows regardless of a
-// &limit= in the URL, so a plain GET silently truncates large result sets (e.g. the
-// whole-grade practice bank). Walk with Range headers until a short page comes back.
+// &limit= in the URL, so a plain GET can silently truncate large result sets (e.g. a
+// big whole-grade practice bank). Page with URL offset/limit through the SAME sb()
+// helper the rest of the app uses — no custom Range headers (those trigger a CORS
+// preflight the browser can reject, which silently emptied the bank and printed
+// one-question sheets).
 async function sbAll(path, pageSize=1000){
   const out=[]; const sep = path.includes("?") ? "&" : "?";
-  for(let from=0; ; from+=pageSize){
-    const headers={ apikey: ANON, "Content-Type":"application/json",
-      Authorization: "Bearer " + (session ? session.access_token : ANON),
-      Range: `${from}-${from+pageSize-1}`, "Range-Unit":"items" };
-    const res=await fetch(SUPABASE_URL + path + sep + "limit=" + pageSize, { headers });
-    if(!res.ok){ if(from===0) throw new Error("HTTP "+res.status); break; }
-    const text=await res.text(); const rows=text?JSON.parse(text):[];
+  for(let offset=0; ; offset+=pageSize){
+    const rows=await sb(`${path}${sep}limit=${pageSize}&offset=${offset}`);
+    if(!Array.isArray(rows) || !rows.length) break;
     out.push(...rows);
     if(rows.length < pageSize) break;
   }
