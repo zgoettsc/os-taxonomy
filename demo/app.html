@@ -193,6 +193,9 @@
   .hsearch{width:100%;font:inherit;font-size:.86rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 12px}
   .hsearch::placeholder{color:var(--faint)}
   .hsearch:focus{outline:2px solid var(--navy);outline-offset:1px}
+  .hviewseg{display:inline-flex;gap:2px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:2px;margin:8px 0 2px}
+  .hviewseg button{font:inherit;font-size:.76rem;font-weight:700;border:0;background:none;color:var(--soft);padding:5px 13px;border-radius:8px;cursor:pointer}
+  .hviewseg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,26,46,.14)}
   /* history calendar */
   .histcal{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:6px}
   .histnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -568,6 +571,7 @@ let PVSEED=0;               // shuffle offset for the look-ahead preview
 let HISTMON=null;           // yyyy-mm shown in the history calendar
 let HISTSEL=null;           // yyyy-mm-dd selected in the history calendar
 let HSEARCH="";             // History search box text
+let HVIEW="list";           // History view: 'list' | 'calendar'
 let SEARCHABLE=[];          // topics you can search: this grade + worked-ahead topics
 const TBYID=new Map();      // topic id -> topic object (from the loaded taxonomy)
 const ymd=(d)=>{const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;};
@@ -866,8 +870,30 @@ function renderHistory(wrap){
   inp.placeholder="Find a topic or past session…"; inp.value=HSEARCH; inp.setAttribute("aria-label","Find a topic or session");
   bar.appendChild(inp); wrap.appendChild(bar);
   const out=document.createElement("div"); wrap.appendChild(out);
-  const draw=()=>{ HSEARCH=inp.value; out.innerHTML=""; const q=HSEARCH.trim().toLowerCase(); if(q) drawSearch(out,q); else drawCalendar(out); };
+  const draw=()=>{
+    HSEARCH=inp.value; out.innerHTML="";
+    const q=HSEARCH.trim().toLowerCase();
+    if(q){ drawSearch(out,q); return; }
+    const seg=document.createElement("div"); seg.className="hviewseg";
+    [["list","List"],["calendar","Calendar"]].forEach(([v,lbl])=>{ const b=document.createElement("button"); b.textContent=lbl; b.className=HVIEW===v?"on":""; b.onclick=()=>{ HVIEW=v; draw(); }; seg.appendChild(b); });
+    out.appendChild(seg);
+    const body=document.createElement("div"); out.appendChild(body);
+    if(HVIEW==="list") drawList(body); else drawCalendar(body);
+  };
   inp.oninput=draw; draw();
+}
+// Chronological log — completed sessions newest-first, grouped by day, topics visible.
+function drawList(wrap){
+  const taught=SESSIONS.filter(s=>s.status==="completed" && s.for_date);
+  if(!taught.length){ const n=document.createElement("div"); n.className="note faint"; n.textContent="No sessions completed yet. Finish one above and it'll be logged here to reprint any time."; wrap.appendChild(n); return; }
+  const byDate={}; for(const s of taught){ (byDate[s.for_date] ||= []).push(s); }
+  const dates=Object.keys(byDate).sort((a,b)=>a<b?1:-1);
+  for(const d of dates){
+    const h=document.createElement("div"); h.className="dayhead"; h.style.marginTop="10px";
+    h.innerHTML=`<h3>${dLabel(d)}</h3><div class="faint" style="font-size:.76rem">${byDate[d].length} session${byDate[d].length>1?"s":""}</div>`;
+    wrap.appendChild(h);
+    byDate[d].sort((a,b)=>String(a.started_at).localeCompare(String(b.started_at))).forEach((s,i)=>wrap.appendChild(sessionCard(s, `Session ${i+1}`, printButtons(s))));
+  }
 }
 function drawSearch(wrap, q){
   const topics=SEARCHABLE
