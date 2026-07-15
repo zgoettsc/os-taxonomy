@@ -58,16 +58,26 @@ function frontier(age, mastered) {
     .slice(0, BUFFER);
 }
 
-// union every child's next `buffer` topics
-const wanted = new Map(); // id -> topic
-for (const c of children) {
-  const age = YEAR - c.birth_year;
-  for (const t of frontier(age, masteredBy[c.id] || new Set())) wanted.set(t.id, t);
+// What to keep ready. Two modes:
+//  --age N : the WHOLE grade band (every topic available at age N) — one-time
+//            batch so a grade is perfect end-to-end, never "Basics".
+//  default : each child's next `buffer` ready-frontier topics — ongoing maintenance.
+let need;
+if (argv.age) {
+  const age = Number(argv.age);
+  need = topics.filter((t) => t.ageRangeStart <= age && t.ageRangeEnd >= age);
+  console.log(`GRADE mode · age ${age}: ${need.length} topic(s) in band`);
+} else {
+  const wanted = new Map();
+  for (const c of children) {
+    const age = YEAR - c.birth_year;
+    for (const t of frontier(age, masteredBy[c.id] || new Set())) wanted.set(t.id, t);
+  }
+  need = [...wanted.values()];
+  console.log(`FRONTIER mode · ${children.length} child(ren) · union ${need.length} topic(s) · buffer ${BUFFER}`);
 }
-const need = [...wanted.values()];
 const needLesson = need.filter((t) => !haveLesson.has(t.id));
 const needImages = need.filter((t) => haveLesson.has(t.id) && !haveImages.has(t.id));
-console.log(`${children.length} child(ren) · frontier union ${need.length} topic(s) · buffer ${BUFFER}`);
 console.log(`  missing lesson: ${needLesson.length} · lesson-but-no-images: ${needImages.length} · this run caps at ${MAX}`);
 
 if (DRY) {

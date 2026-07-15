@@ -16,8 +16,13 @@ on:
     - cron: '0 */6 * * *'   # every 6 hours
   workflow_dispatch:
     inputs:
+      age:
+        description: 'Grade mode: generate the WHOLE age band (e.g. 4). Blank = frontier mode.'
+        required: false
+        default: ''
+        type: string
       buffer:
-        description: 'Ready topics to keep ahead per child'
+        description: 'Frontier mode: ready topics to keep ahead per child'
         required: false
         default: '20'
         type: string
@@ -53,6 +58,7 @@ jobs:
           AI_IMAGES: ${{ vars.AI_IMAGES }}
         run: |
           node pipeline/backfill.mjs \
+            ${{ inputs.age && format('--age {0}', inputs.age) || '' }} \
             --buffer "${{ inputs.buffer || '20' }}" \
             --max "${{ inputs.max || '8' }}" \
             ${{ inputs.dry && '--dry' || '' }}
