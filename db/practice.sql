@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Unlimited practice bank. Auto-checkable practice items (multiple-choice and
 -- exact fill-in) generated on demand for a topic, GROUNDED in that topic's already
--- stored citations. Math needs none of this — it's code-generated, correct by
+-- stored citations. Math needs none of this - it's code-generated, correct by
 -- construction, in the app. This table backs the KNOWLEDGE topics.
 --
 -- Paste into the Supabase SQL editor once. Safe to re-run (idempotent).
@@ -20,7 +20,7 @@ create table if not exists public.practice_items (
   created_at   timestamptz not null default now()
 );
 
--- One row per distinct prompt per topic → re-generating never stores duplicates.
+-- One row per distinct prompt per topic -> re-generating never stores duplicates.
 create unique index if not exists practice_items_uniq  on public.practice_items (topic_id, content_hash);
 create index        if not exists practice_items_topic on public.practice_items (topic_id);
 
@@ -33,7 +33,7 @@ create policy practice_read on public.practice_items for select using (true);
 -- ---------------------------------------------------------------------------
 -- Per-child SERVED log: which practice items a child has already been given, so
 -- worksheets never repeat a question until the bank is exhausted. This is what
--- makes practice effectively infinite — serve unseen items, and when a topic runs
+-- makes practice effectively infinite - serve unseen items, and when a topic runs
 -- low the backfill tops the bank up with fresh generated questions.
 -- ---------------------------------------------------------------------------
 create table if not exists public.practice_served (
