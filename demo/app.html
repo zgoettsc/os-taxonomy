@@ -354,6 +354,23 @@ async function sb(path, opts = {}){
   }
   return data;
 }
+// Paginated read. PostgREST caps a single response at ~1000 rows regardless of a
+// &limit= in the URL, so a plain GET silently truncates large result sets (e.g. the
+// whole-grade practice bank). Walk with Range headers until a short page comes back.
+async function sbAll(path, pageSize=1000){
+  const out=[]; const sep = path.includes("?") ? "&" : "?";
+  for(let from=0; ; from+=pageSize){
+    const headers={ apikey: ANON, "Content-Type":"application/json",
+      Authorization: "Bearer " + (session ? session.access_token : ANON),
+      Range: `${from}-${from+pageSize-1}`, "Range-Unit":"items" };
+    const res=await fetch(SUPABASE_URL + path + sep + "limit=" + pageSize, { headers });
+    if(!res.ok){ if(from===0) throw new Error("HTTP "+res.status); break; }
+    const text=await res.text(); const rows=text?JSON.parse(text):[];
+    out.push(...rows);
+    if(rows.length < pageSize) break;
+  }
+  return out;
+}
 async function refreshSession(){
   if(!(session && session.refresh_token)) return false;
   try{
@@ -1212,7 +1229,9 @@ async function fetchPractice(ids){
   const out={}; if(!ids.length) return out;
   try{
     const inList=ids.map(encodeURIComponent).join(",");
-    const rows=await sb(`/rest/v1/practice_items?select=id,topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&limit=5000`);
+    // Paginated — a single request caps at ~1000 rows, which silently truncated the
+    // grade bank and made full topics render as one thin sheet. Page through instead.
+    const rows=await sbAll(`/rest/v1/practice_items?select=id,topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&order=topic_id`);
     for(const r of rows){ (out[r.topic_id] ||= []).push(r); }
   }catch{}
   return out;
@@ -1223,7 +1242,7 @@ async function loadServed(childId, ids){
   const set=new Set(); if(!ids||!ids.length) return set;
   try{
     const inList=ids.map(encodeURIComponent).join(",");
-    const rows=await sb(`/rest/v1/practice_served?select=item_id&child_id=eq.${childId}&topic_id=in.(${inList})&limit=50000`);
+    const rows=await sbAll(`/rest/v1/practice_served?select=item_id&child_id=eq.${childId}&topic_id=in.(${inList})&order=item_id`);
     for(const r of rows) set.add(r.item_id);
   }catch{}
   return set;
