@@ -130,10 +130,13 @@ for (let i = 0; i < examples.length; i++) {
     const ext = asset.ct.includes('png') ? 'png' : asset.ct.includes('webp') ? 'webp' : 'jpg';
     url = await upload(`${base}.${ext}`, asset.buf, asset.ct);
   }
+  // AI illustrations are reliably on-style → auto-approve. Real photos are the
+  // risky ones (irrelevant/cluttered results) → hold for a human glance.
+  const status = meta.kind === 'photo' ? 'pending' : 'approved';
   // Every row MUST have an identical key set — PostgREST bulk insert rejects
   // ragged objects (PGRST102). Fill the photo-only fields with null on AI rows.
   rows.push({
-    topic_id: topicId, slot: i, status: 'approved',
+    topic_id: topicId, slot: i, status,
     kind: meta.kind, source: meta.source, prompt: meta.prompt || null,
     url: url || 'pending://not-stored', storage_path: url ? new URL(url).pathname : null,
     alt: d.alt || '',
