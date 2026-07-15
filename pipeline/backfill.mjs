@@ -25,6 +25,7 @@ const argv = {};
 for (let i = 2; i < process.argv.length; i++) { const a = process.argv[i]; if (a.startsWith('--')) argv[a.slice(2)] = process.argv[i + 1]?.startsWith('--') || process.argv[i + 1] === undefined ? true : process.argv[i + 1]; }
 const BUFFER = Number(argv.buffer) || 20;   // ready topics kept ahead per child
 const MAX = Number(argv.max) || 8;          // max generate/resolve actions per run (cost cap)
+const PRACTICE_TARGET = Number(argv.practice) || 18;   // keep each topic's bank at ≥ this (3 six-question sheets)
 const DRY = !!argv.dry;
 
 const SB = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -35,13 +36,15 @@ async function get(p) { const r = await fetch(SB + p, { headers: H }); if (!r.ok
 // --- taxonomy (offline) + graph/mastery (DB) ---
 const topics = JSON.parse(fs.readFileSync(path.join(dir, '..', 'data', 'topics.json'), 'utf8')).topics;
 const byId = new Map(topics.map((t) => [t.id, t]));
-const [children, deps, masteredRows, doneLessons, doneImages] = await Promise.all([
+const [children, deps, masteredRows, doneLessons, doneImages, donePractice] = await Promise.all([
   get('/rest/v1/children?select=id,first_name,birth_year'),
   get('/rest/v1/dependencies?select=topic_id,prerequisite_id&strength=eq.hard&limit=20000'),
   get('/rest/v1/mastery?select=child_id,topic_id&status=eq.mastered&limit=20000'),
   get('/rest/v1/content_items?select=topic_id&reviewed=eq.true&limit=20000'),
   get('/rest/v1/lesson_images?select=topic_id&limit=20000'),
+  get('/rest/v1/practice_items?select=topic_id&limit=50000').catch(() => []),
 ]);
+const practiceCount = {}; for (const r of donePractice) practiceCount[r.topic_id] = (practiceCount[r.topic_id] || 0) + 1;
 const hard = new Map(); for (const d of deps) { (hard.get(d.topic_id) || hard.set(d.topic_id, []).get(d.topic_id)).push(d.prerequisite_id); }
 const masteredBy = {}; for (const m of masteredRows) { (masteredBy[m.child_id] ||= new Set()).add(m.topic_id); }
 const haveLesson = new Set(doneLessons.map((r) => r.topic_id));
@@ -78,11 +81,16 @@ if (argv.age) {
 }
 const needLesson = need.filter((t) => !haveLesson.has(t.id));
 const needImages = need.filter((t) => haveLesson.has(t.id) && !haveImages.has(t.id));
-console.log(`  missing lesson: ${needLesson.length} · lesson-but-no-images: ${needImages.length} · this run caps at ${MAX}`);
+// Practice top-up: knowledge + non-arithmetic-math topics with a lesson but a thin
+// bank. Arithmetic math is code-generated (infinite) so it needs no stored bank.
+const isArith = (t) => t.subject === 'Mathematics' && /\badd|subtract|division|divide|multipl|\bsum|take away|combin/i.test(t.name);
+const needPractice = need.filter((t) => haveLesson.has(t.id) && !isArith(t) && (practiceCount[t.id] || 0) < PRACTICE_TARGET);
+console.log(`  missing lesson: ${needLesson.length} · lesson-but-no-images: ${needImages.length} · thin practice bank: ${needPractice.length} · this run caps at ${MAX}`);
 
 if (DRY) {
   needLesson.slice(0, MAX).forEach((t) => console.log(`  would generate: ${t.id} ${t.name}`));
   needImages.slice(0, Math.max(0, MAX - needLesson.length)).forEach((t) => console.log(`  would image:    ${t.id} ${t.name}`));
+  needPractice.forEach((t) => console.log(`  would top-up practice (${practiceCount[t.id] || 0}/${PRACTICE_TARGET}): ${t.id} ${t.name}`));
   process.exit(0);
 }
 
@@ -101,5 +109,12 @@ for (const t of needImages) {
   if (budget <= 0) break; budget--;
   console.log(`\n=== images ${t.id} · ${t.name} ===`);
   run('resolve-images.mjs', ['--topic', t.id, '--provider', 'claude', '--store']);
+}
+// 3) top up thin practice banks (generate only the shortfall — existing items are reused)
+for (const t of needPractice) {
+  if (budget <= 0) break; budget--;
+  const short = PRACTICE_TARGET - (practiceCount[t.id] || 0);
+  console.log(`\n=== practice ${t.id} · ${t.name} (+${short}) ===`);
+  run('generate-practice.mjs', ['--topic', t.id, '--count', String(short), '--provider', 'claude', '--store']);
 }
 console.log(`\nBackfill done. Actions used: ${MAX - budget}/${MAX}.`);
