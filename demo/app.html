@@ -547,7 +547,7 @@ async function fetchImages(ids){
   const out={}; if(!ids||!ids.length) return out;
   try{
     const inList=ids.map(encodeURIComponent).join(",");
-    const rows=await sb(`/rest/v1/lesson_images?select=topic_id,slot,kind,url,alt,attribution&status=eq.approved&topic_id=in.(${inList})&limit=500`);
+    const rows=await sbAll(`/rest/v1/lesson_images?select=topic_id,slot,kind,url,alt,attribution&status=eq.approved&topic_id=in.(${inList})&order=topic_id`);
     for(const r of rows){ (out[r.topic_id] ||= {})[r.slot]=r; }
   }catch{}
   return out;
@@ -943,7 +943,7 @@ function topicResultCard(t){
 async function printTopic(t, mode){
   const kid=CURRENT.kid; const card={topic:t, ...laneOf(t)};
   CONTENT=Object.assign(CONTENT, await fetchContent([t.id]));
-  if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages([t.id]));
+  IMAGES=Object.assign(IMAGES, await fetchImages([t.id]));
   let bank={}; if(mode!=="materials") bank=await fetchPractice([t.id]);
   const suffix=mode==="worksheets"?" · worksheet":mode==="materials"?" · materials":"";
   openPrint(`${kid.first_name} — ${glossName(t.name)}${suffix}`, buildPacket(kid, [card], mode, bank));
@@ -1026,7 +1026,7 @@ async function printGrade(mode){
   try{
     const ids=cards.map(c=>c.topic.id);
     CONTENT=Object.assign(CONTENT, await fetchContent(ids));
-    if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages(ids));
+    IMAGES=Object.assign(IMAGES, await fetchImages(ids));
     let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.map(c=>c.topic.id));
     openPrint(`${kid.first_name} — Grade binder (age ${CURRENT.age})`, buildGradePacket(kid, cards, mode, bank));
   }catch(e){ alert("Couldn't build the binder: "+e.message); }
@@ -1089,6 +1089,7 @@ async function printGradePractice(){
   try{
     const ids=cards.map(c=>c.topic.id);
     CONTENT=Object.assign(CONTENT, await fetchContent(ids));
+    IMAGES=Object.assign(IMAGES, await fetchImages(ids));      // for picture-match / circle-the-picture activities
     const bank=await fetchPractice(cards.map(c=>c.topic.id));   // fetch for ALL — procedural non-math topics need their bank too
     const served=await loadServed(kid.id, ids);
     const used=[];
@@ -1218,7 +1219,7 @@ async function printSession(s, mode){
   const cards=sessionCardsFrom(s);
   const ids=cards.map(c=>c.topic.id);
   CONTENT=Object.assign(CONTENT, await fetchContent(ids));
-  if(mode!=="worksheets") IMAGES=Object.assign(IMAGES, await fetchImages(ids));
+  IMAGES=Object.assign(IMAGES, await fetchImages(ids));
   let bank={}; if(mode!=="materials") bank=await fetchPractice(cards.map(c=>c.topic.id));
   const suffix=mode==="worksheets"?" · worksheets":mode==="materials"?" · materials":"";
   openPrint(`${CURRENT.kid.first_name} — ${dLabel(s.for_date)}${suffix}`, buildPacket(CURRENT.kid, cards, mode, bank));
@@ -1438,9 +1439,24 @@ const actDraw=(prompt)=>({kind:"draw",prompt,count:0});
 function actDrawExample(c,sheet){
   const ex=(c&&c.student&&Array.isArray(c.student.examples))?c.student.examples:[];
   const things=ex.map(e=>String((e&&e.show)||"").trim()).filter(x=>x && x.length<=36 && !/[.?!:;]/.test(x) && /[a-z]/i.test(x));
-  if(!things.length) return null;
-  const thing=things[sheet%things.length].replace(/^(a|an|the)\s+/i,"").toLowerCase();
+  if(sheet>=things.length) return null;   // use each example ONCE; let the generic rotation fill later sheets (no repeats)
+  const thing=things[sheet].replace(/^(a|an|the)\s+/i,"").toLowerCase();
   return thing ? {kind:"draw",prompt:`Draw ${/^[aeiou]/i.test(thing)?"an":"a"} ${thing}.`,count:0} : null;
+}
+// Picture activities from the lesson's OWN approved images (no LLM). A short label is
+// pulled from each image's alt text; needs >=2 images for the topic or returns null.
+const _imgWord=(alt)=>String(alt||"").split(/[,.;:]/)[0].replace(/^(a|an|the)\s+/i,"").replace(/\s+(on|in|at|with|of|for|that|which)\b.*$/i,"").trim().split(/\s+/).slice(0,3).join(" ");
+function _topicImages(t){ const m=(typeof IMAGES!=="undefined"&&IMAGES[t.id])||{}; return Object.values(m).filter(im=>im&&im.url&&_imgWord(im.alt)).map(im=>({url:im.url, word:_imgWord(im.alt)})); }
+function actPicMatch(t,sheet){
+  const pics=_topicImages(t); if(pics.length<2) return null;
+  const pick=pics.slice(0, Math.min(3,pics.length)), words=pick.map(p=>p.word);
+  const shuffled=words.map((_,i)=>words[(i+1+sheet)%words.length]);   // deterministic non-aligned order
+  return {kind:"picmatch", prompt:"Draw a line from each picture to its word.", pics:pick.map(p=>p.url), words:shuffled, answer:words.join(", ")};
+}
+function actPicCircle(t,sheet){
+  const pics=_topicImages(t); if(pics.length<2) return null;
+  const target=pics[sheet%pics.length];
+  return {kind:"piccircle", prompt:`Circle the picture of the ${target.word}.`, pics:pics.slice(0, Math.min(4,pics.length)).map(p=>p.url), answer:target.word};
 }
 // --- router: ordered, age-gated, per-sheet activities for a topic ---
 function genActivities(t, childAge, sheet, c){
@@ -1467,6 +1483,9 @@ function genActivities(t, childAge, sheet, c){
     if(/measur|length|height|mass|weight|capacit|compar|duration|\btime|position|spatial|order/.test(hay)) add(actDraw(_rot(["Draw something big and something small.","Draw something tall and something short.","Draw something heavy and something light."],sheet)));
   }
   if(sub==="Science" && age<=6) add(actDrawExample(c,sheet) || actDraw(_rot(["Draw one thing you observed.","Draw what you noticed changing.","Draw it from another side."],sheet)));
+  // Picture activity from the lesson's own images (any subject, ≤8) — null if <2 images.
+  // picmatch once (same image set each time), then circle-a-different-picture per sheet.
+  if(age<=8) add(sheet===0 ? actPicMatch(t,sheet) : actPicCircle(t,sheet));
   if(!out.length && age<=6) add(actDrawExample(c,sheet) || actDraw(_rot(["Draw a picture about what you learned.","Draw the most interesting thing you learned.","Draw and label one thing from today."],sheet)));
   return out.filter(Boolean).slice(0, p.acts);
 }
@@ -1516,6 +1535,10 @@ function wsFromItems(items, fill){
         return q(`<div class="targets">${(it.targets||[]).map(x=>`<span class="tok">${esc(x)}</span>`).join("")}</div>`);
       case "match":
         return q(`<div class="matchgrid"><div class="mcol">${(it.left||[]).map(x=>`<span class="tok">${esc(x)}</span>`).join("")}</div><div class="mcol">${(it.right||[]).map(x=>`<span class="tok">${esc(x)}</span>`).join("")}</div></div>`);
+      case "picmatch":
+        return q(`<div class="picmatch"><div class="pmcol">${(it.pics||[]).map(u=>`<div class="pmpic"><img src="${esc(u)}" alt=""></div>`).join("")}</div><div class="pmcol pmwords">${(it.words||[]).map(w=>`<div class="pmword">${esc(w)}</div>`).join("")}</div></div>`);
+      case "piccircle":
+        return q(`<div class="piccircle">${(it.pics||[]).map(u=>`<div class="pcpic"><img src="${esc(u)}" alt=""></div>`).join("")}</div>`);
     }
     return q(`<div class="writelines"><div class="ln"></div></div>`);   // default: short written answer
   }).join("");
@@ -1526,7 +1549,7 @@ function wsFromItems(items, fill){
     let ans=null;
     if(it.kind==="mcq" && Array.isArray(it.choices)){ const ai=(typeof it.answerIndex==="number")?it.answerIndex:it.answer_index; if(typeof ai==="number") ans=it.choices[ai]; }
     else if(it.kind==="short") ans=it.answer||null;
-    else if(it.kind==="circle"||it.kind==="match") ans=it.answer||null;
+    else if(it.kind==="circle"||it.kind==="match"||it.kind==="picmatch"||it.kind==="piccircle") ans=it.answer||null;
     if(ans) keyRows.push(`${i+1}. <b>${esc(ans)}</b>`);
   });
   return {html, keyRows};
@@ -1690,6 +1713,13 @@ function openPrint(title, inner){
     .tok{font-size:20pt;font-weight:700;color:#2c2c3a;min-width:26px;text-align:center}
     .matchgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 70px;margin:8px 0}
     .mcol{display:flex;flex-direction:column;gap:16px;align-items:center}
+    .picmatch{display:grid;grid-template-columns:auto 1fr;gap:14px 60px;align-items:center;margin:8px 0}
+    .pmcol{display:flex;flex-direction:column;gap:14px}
+    .pmcol.pmwords{align-items:flex-start;justify-content:space-around}
+    .pmpic img,.pcpic img{width:74px;height:74px;object-fit:contain;border:1.4px solid var(--line);border-radius:9px;background:#fff}
+    .pmword{font-size:13pt;font-weight:700;color:#2c2c3a}
+    .piccircle{display:flex;flex-wrap:wrap;gap:18px;margin:8px 0}
+    .pcpic{padding:4px}
 
     /* assessment */
     .crit{display:flex;gap:9px;align-items:flex-start;margin:7px 0;break-inside:avoid}

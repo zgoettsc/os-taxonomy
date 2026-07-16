@@ -66,10 +66,18 @@ trace to cited developmental sources.
   noun-phrase from the lesson's own `student.examples[].show` and asks the child to draw it
   ("Draw a red apple" instead of a generic "draw a picture"), varying by sheet. Used for
   Science and the generic early-topic fallback; falls back to the generic rotation when a
-  lesson has no usable example. First slice of "richer worksheets" — reuses existing lesson
-  data, no schema/pipeline change. (Planned next: picture activities from the lesson's
-  approved images — match/circle-the-picture — and, later, LLM-authored content-specific
-  activity prompts stored in the bank, age-constrained.)
+  lesson has no usable example (and only ONCE per example — later sheets use the generic
+  rotation, never a repeat). First slice of "richer worksheets" — reuses lesson data, no
+  schema/pipeline change.
+- **Picture activities from the lesson's approved images (no LLM).** `actPicMatch` (match
+  each lesson picture to its word) and `actPicCircle` ("Circle the picture of the ___");
+  labels come from each image's `alt`. Needs ≥2 approved `lesson_images` for the topic or
+  returns null, so coverage is partial until image generation has run. picmatch appears once
+  per topic (same image set), then piccircle circles a different picture each sheet — no
+  repeats. Renders as `picmatch`/`piccircle` in `wsFromItems` (+ CSS); all worksheet builders
+  now load `IMAGES` (previously skipped in worksheets mode; the grade binder didn't load them
+  at all). Still to come (Stage 3): **LLM-authored content-specific activities** stored in the
+  bank, age-constrained + review-gated.
 - **Questions kept, flagged for the grown-up.** Each sheet keeps up to **6 text questions**
   (unserved-first, consumed so they never repeat), tagged "🗣 Grown-up reads this aloud" for
   ages ≤6 (pre-readers), then the do-it activities are **added on top** — so an early-years
