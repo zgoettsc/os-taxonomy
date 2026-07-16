@@ -62,6 +62,14 @@ trace to cited developmental sources.
   5 adds copy-words + numerals; 6 adds copy-a-sentence + write name; 7-8 compose sentences,
   motor tapers; 9+ pure Q&A. This is why "write a sentence" no longer appears on a 4-year-old's
   handwriting sheet.
+- **Content-grounded draw prompts (no LLM).** `actDrawExample(c,sheet)` pulls a clean
+  noun-phrase from the lesson's own `student.examples[].show` and asks the child to draw it
+  ("Draw a red apple" instead of a generic "draw a picture"), varying by sheet. Used for
+  Science and the generic early-topic fallback; falls back to the generic rotation when a
+  lesson has no usable example. First slice of "richer worksheets" — reuses existing lesson
+  data, no schema/pipeline change. (Planned next: picture activities from the lesson's
+  approved images — match/circle-the-picture — and, later, LLM-authored content-specific
+  activity prompts stored in the bank, age-constrained.)
 - **Questions kept, flagged for the grown-up.** Each sheet keeps up to **6 text questions**
   (unserved-first, consumed so they never repeat), tagged "🗣 Grown-up reads this aloud" for
   ages ≤6 (pre-readers), then the do-it activities are **added on top** — so an early-years

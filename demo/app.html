@@ -1136,7 +1136,7 @@ function buildPracticePacket(kid, cards, bank, perTopic, served, used){
         const age=(CURRENT&&CURRENT.age)||t.age_range_start||6;
         for(let v=0; v<perTopic; v++){
           const questions=flagGrown(qpool.splice(0,6), age);            // up to 6 unique, consumed
-          const activities=genActivities(t, age, v);                    // varied by sheet index v
+          const activities=genActivities(t, age, v, c);                 // varied by sheet index v; c = lesson content
           const mixed=[...questions, ...activities];
           if(!mixed.length) continue;                                   // nothing to put on this sheet
           const w=wsFromItems(mixed, fill);
@@ -1432,10 +1432,21 @@ function actNumeral(age,sheet){ const p=ageProfile(age); if(!p.numCap) return nu
 // Shape tracing, gated by copy-ability age (circle ~3, cross/square ~4, diamond/triangle ~5).
 function actShape(age,sheet){ const opts=[["circle","○   ○   ○   ○",3],["plus shape","+   +   +   +",4],["square","□   □   □",4],["diamond","◇   ◇   ◇",5],["triangle","△   △   △",5]].filter(s=>s[2]<=age); const s=opts[sheet%opts.length]; return {kind:"trace",prompt:`Trace the ${s[0]}s.`,glyphs:s[1]}; }
 const actDraw=(prompt)=>({kind:"draw",prompt,count:0});
+// Content-specific draw, grounded in the LESSON's own examples (no LLM): "Draw a red
+// apple" instead of a generic "draw a picture". Pulls a clean noun-phrase from
+// student.examples[].show; varies by sheet. Returns null if the lesson has none usable.
+function actDrawExample(c,sheet){
+  const ex=(c&&c.student&&Array.isArray(c.student.examples))?c.student.examples:[];
+  const things=ex.map(e=>String((e&&e.show)||"").trim()).filter(x=>x && x.length<=36 && !/[.?!:;]/.test(x) && /[a-z]/i.test(x));
+  if(!things.length) return null;
+  const thing=things[sheet%things.length].replace(/^(a|an|the)\s+/i,"").toLowerCase();
+  return thing ? {kind:"draw",prompt:`Draw ${/^[aeiou]/i.test(thing)?"an":"a"} ${thing}.`,count:0} : null;
+}
 // --- router: ordered, age-gated, per-sheet activities for a topic ---
-function genActivities(t, childAge, sheet){
+function genActivities(t, childAge, sheet, c){
   const age=Number(childAge)||((t.age_range_start!=null?t.age_range_start:t.ageRangeStart)||6);
   const p=ageProfile(age); if(!p.acts) return [];
+  c=c||getContent(t.id);   // lesson content, for content-specific draw prompts
   const hay=((t.name||"")+" "+(t.domain||"")).toLowerCase(), sub=t.subject, out=[], add=x=>{ if(x) out.push(x); };
   if(sub==="English"){
     if(/pencil|hold|grip|sitting|fine motor|handwriting|trace|pattern|mark[- ]?making|transcription/.test(hay)){
@@ -1455,8 +1466,8 @@ function genActivities(t, childAge, sheet){
     if(/shape|2-?d|3-?d|geomet|circle|square|triangle|rectangle/.test(hay)){ add(actShape(age,sheet)); add(actDraw(age>=5?_rot(["Draw a big shape and a small shape.","Draw a house using shapes.","Draw a face using circles."],sheet):_rot(["Draw a circle.","Draw a square.","Draw a big circle and a small circle."],sheet))); }
     if(/measur|length|height|mass|weight|capacit|compar|duration|\btime|position|spatial|order/.test(hay)) add(actDraw(_rot(["Draw something big and something small.","Draw something tall and something short.","Draw something heavy and something light."],sheet)));
   }
-  if(sub==="Science" && age<=6) add(actDraw(_rot(["Draw one thing you observed.","Draw what you noticed changing.","Draw it from another side."],sheet)));
-  if(!out.length && age<=6) add(actDraw(_rot(["Draw a picture about what you learned.","Draw the most interesting thing you learned.","Draw and label one thing from today."],sheet)));
+  if(sub==="Science" && age<=6) add(actDrawExample(c,sheet) || actDraw(_rot(["Draw one thing you observed.","Draw what you noticed changing.","Draw it from another side."],sheet)));
+  if(!out.length && age<=6) add(actDrawExample(c,sheet) || actDraw(_rot(["Draw a picture about what you learned.","Draw the most interesting thing you learned.","Draw and label one thing from today."],sheet)));
   return out.filter(Boolean).slice(0, p.acts);
 }
 // Keep the 6 text questions but tag them as grown-up-read for pre/early readers (≤6).
@@ -1549,7 +1560,7 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
     const ck="wsact:"+kid.id+":"+t.id; let sheet=parseInt(localStorage.getItem(ck)||"0",10)||0;
     localStorage.setItem(ck, String(sheet+1));
     const questions=flagGrown((items||[]).slice(0,6), age);        // keep 6, flag grown-up-read
-    const mixed=[...questions, ...genActivities(t, age, sheet)];   // then add do-it activities
+    const mixed=[...questions, ...genActivities(t, age, sheet, c)];   // then add do-it activities
     if(!mixed.length) return null;
     return wsFromItems(mixed, fill);
   }
