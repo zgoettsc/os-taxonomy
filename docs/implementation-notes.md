@@ -202,14 +202,23 @@ The app only reads ready content; if a topic isn't ready it degrades to "Basics"
   practice bank count for an age band (raw rows + distinct-by-prompt = the app view),
   plus a histogram and a below-target list. `node pipeline/audit-practice.mjs --age 4`.
   Use it to see the DB truth instead of inferring bank depth from a printout.
-- **Infinite unique practice.** `practice_items` is a persistent per-topic bank: lessons
-  **seed** it with their built-in practice (`generate.mjs` → `seedPractice`), and the
-  **backfill tops each bank up to a target** (`--practice`, default 18 = three 6-Q
-  sheets), generating only the shortfall (existing items are reused). Per-child
-  **`practice_served`** logs which items a child got, so worksheets draw UNSERVED-first
-  and never repeat until the bank is exhausted — then the backfill makes more. The grade
-  Worksheets binder is served-aware (`loadServed`/`recordServed`); the per-session "New
-  worksheets" path still uses local seen-tracking (migratable to `practice_served`).
+- **Bounded, rotating practice pool (NOT "infinite unique").** A topic bears only so many
+  genuinely distinct good questions, and re-seeing a question after a gap is good practice —
+  so the bank is a **bounded pool that rotates**, not an ever-growing one. `practice_items`
+  is seeded by lessons (`generate.mjs` → `seedPractice`) and topped up by the backfill to a
+  **pool target that scales with depth**: `poolTarget(t)` = 18 (ages ≤6, which lean on
+  activities) / 30 (7–9) / 48 (10–13), hard ceiling 54 (`--practice N` overrides). The
+  backfill generates only the shortfall to that target, then stops.
+  - **Rotation (app, `drawFromPool`).** Per child+topic, questions are served in a shuffled
+    order so the child **covers the whole pool before any question repeats**, then it
+    reshuffles and cycles again — spaced repetition, never a duplicate *within* a sheet/binder
+    (the grade binder draws all `perTopic×6` at once so no question is shared across its
+    sheets; a session draws 6). Client-side (localStorage cursor), so it works regardless of
+    DB served-tracking.
+  - **Planned (Phase B): demand-driven growth.** When a child churns through a topic's whole
+    pool repeatedly, bump *that topic's* target a notch (up to the ceiling) and generate the
+    delta. This needs the per-child served signal in the DB (`practice_served`) — blocked on
+    the `recordServed` POST, which currently fails (RLS/schema; error now logged to console).
 - **Commercial-mode toggle** (repo var `COMMERCIAL_MODE=on`, or `--commercial`): when
   on, generation excludes NonCommercial sources AND forbids copyrighted/trademarked
   examples (no Disney/branded characters). OFF by default (fine for personal use).

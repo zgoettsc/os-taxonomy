@@ -1127,16 +1127,16 @@ function buildPracticePacket(kid, cards, bank, perTopic, served, used){
         }
       } else {
         // Text questions: bank + lesson's built-in practice, deduped by prompt, UNSERVED
-        // first so a child never repeats a question until the bank runs out.
+        // deduped by prompt into a bounded pool; drawFromPool rotates it (cover-then-reshuffle).
         const seen=new Set();
         const qpool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
-          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; })
-          .sort((a,b)=> (served.has(a.id)?1:0)-(served.has(b.id)?1:0));
-        // Keep the 6 text questions (flagged grown-up-read for young children), then ADD
+          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
+        // Keep 6 text questions/sheet (flagged grown-up-read for young children), then ADD
         // research-grounded do-it activities that ADVANCE each sheet (no repeats, age-gated).
         const age=(CURRENT&&CURRENT.age)||t.age_range_start||6;
+        const allQ=drawFromPool(kid.id, t.id, qpool, perTopic*6);       // draw the whole binder at once → no question shared across its sheets
         for(let v=0; v<perTopic; v++){
-          const questions=flagGrown(qpool.splice(0,6), age);            // up to 6 unique, consumed
+          const questions=flagGrown(allQ.slice(v*6, v*6+6), age);       // this sheet's 6
           const activities=genActivities(t, age, v, c);                 // varied by sheet index v; c = lesson content
           const mixed=[...questions, ...activities];
           if(!mixed.length) continue;                                   // nothing to put on this sheet
@@ -1253,6 +1253,30 @@ async function recordServed(childId, used){
     const res=await fetch(`${SUPABASE_URL}/rest/v1/practice_served?on_conflict=child_id,item_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"return=minimal,resolution=ignore-duplicates"},body:JSON.stringify(rows)});
     if(!res.ok) console.error(`recordServed failed HTTP ${res.status}:`, (await res.text()).slice(0,300));
   }catch(e){ console.error("recordServed error:", e && e.message); }
+}
+// Bounded ROTATING pool: draw n questions in a per-child/per-topic shuffled order, so a
+// child covers the whole pool before ANY question repeats, then it reshuffles and cycles
+// again (spaced repetition, not "never twice"). The cursor advances across sheets AND across
+// reprints. If the pool changes (backfill added questions), the cycle restarts. Client-side
+// (localStorage), so it works regardless of the DB served-tracking.
+function drawFromPool(kid, tid, pool, n){
+  if(!pool||!pool.length) return [];
+  const keyOf=it=> it.id || ("p:"+String(it.prompt||"").toLowerCase().replace(/\s+/g," ").trim());
+  const byKey=new Map(); for(const it of pool){ const k=keyOf(it); if(k && !byKey.has(k)) byKey.set(k,it); }
+  const keys=[...byKey.keys()];
+  const shuffle=a=>{ a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const ck="pool:"+kid+":"+tid; let st; try{ st=JSON.parse(localStorage.getItem(ck)||"null"); }catch{ st=null; }
+  const sameSet = st && Array.isArray(st.order) && st.order.length===keys.length && st.order.every(k=>byKey.has(k));
+  if(!sameSet) st={order:shuffle(keys), cur:0};
+  const out=[], usedKeys=new Set(), want=Math.min(n, keys.length); let guard=0;
+  while(out.length<want && guard++ < keys.length*4){
+    if(st.cur>=st.order.length){ st.order=shuffle(st.order); st.cur=0; }   // covered the pool → reshuffle, recycle
+    const k=st.order[st.cur++];
+    if(usedKeys.has(k)) continue;                                          // never repeat a question WITHIN one draw
+    usedKeys.add(k); const it=byKey.get(k); if(it) out.push(it);
+  }
+  try{ localStorage.setItem(ck, JSON.stringify(st)); }catch{}
+  return out;
 }
 const seenKey=(kid,tid)=>`seen:${kid}:${tid}`;
 function sampleBank(kid, tid, items, n=6){
@@ -1575,14 +1599,16 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
       // non-arithmetic math (counting, shapes, comparing…) has no generator —
       // fall through to grounded practice below instead of skipping the worksheet.
     }
-    let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
-    if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own
+    // Build the topic's bounded question pool (bank + lesson's own), deduped by prompt.
+    const seen=new Set();
+    const pool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
+      .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
     const age=(CURRENT&&CURRENT.age)||t.age_range_start||6;
     // A per-child/per-topic counter advances the activity progression across reprints, so a
     // re-printed session worksheet shows the NEXT strokes/letters/numbers, never a repeat.
     const ck="wsact:"+kid.id+":"+t.id; let sheet=parseInt(localStorage.getItem(ck)||"0",10)||0;
     localStorage.setItem(ck, String(sheet+1));
-    const questions=flagGrown((items||[]).slice(0,6), age);        // keep 6, flag grown-up-read
+    const questions=flagGrown(drawFromPool(kid.id, t.id, pool, 6), age);   // next 6 in the rotation
     const mixed=[...questions, ...genActivities(t, age, sheet, c)];   // then add do-it activities
     if(!mixed.length) return null;
     return wsFromItems(mixed, fill);
