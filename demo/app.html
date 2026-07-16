@@ -363,10 +363,7 @@ async function sb(path, opts = {}){
 async function sbAll(path, pageSize=1000){
   const out=[]; const sep = path.includes("?") ? "&" : "?";
   for(let offset=0; ; offset+=pageSize){
-    const url=`${path}${sep}limit=${pageSize}&offset=${offset}`;
-    console.log(`[DIAG] sbAll page: ${url}`);
-    const rows=await sb(url);
-    console.log(`[DIAG] sbAll page returned ${Array.isArray(rows)?rows.length:"NOT-ARRAY ("+typeof rows+")"} row(s)`);
+    const rows=await sb(`${path}${sep}limit=${pageSize}&offset=${offset}`);
     if(!Array.isArray(rows) || !rows.length) break;
     out.push(...rows);
     if(rows.length < pageSize) break;
@@ -1228,19 +1225,13 @@ async function printSession(s, mode){
 }
 async function fetchPractice(ids){
   const out={}; if(!ids.length) return out;
-  console.log(`[DIAG] fetchPractice: requesting ${ids.length} topic(s)`);
   try{
     const inList=ids.map(encodeURIComponent).join(",");
     // Paginated — a single request caps at ~1000 rows, which silently truncated the
     // grade bank and made full topics render as one thin sheet. Page through instead.
     const rows=await sbAll(`/rest/v1/practice_items?select=id,topic_id,kind,prompt,choices,answer_index,answer&topic_id=in.(${inList})&order=topic_id`);
     for(const r of rows){ (out[r.topic_id] ||= []).push(r); }
-    const counts=Object.entries(out).map(([k,v])=>`${k}:${v.length}`);
-    console.log(`[DIAG] fetchPractice OK: ${rows.length} rows across ${Object.keys(out).length} topic(s)`);
-    console.log(`[DIAG] per-topic counts:`, counts.join("  "));
-    const empties=ids.filter(id=>!out[id]||!out[id].length);
-    if(empties.length) console.warn(`[DIAG] ${empties.length} topic(s) came back EMPTY:`, empties.join(", "));
-  }catch(e){ console.error(`[DIAG] fetchPractice FAILED — bank will be empty and worksheets thin:`, e && e.message, e); }
+  }catch(e){ console.error("fetchPractice failed:", e && e.message); }
   return out;
 }
 // Per-child SERVED tracking → worksheets don't repeat a question until the bank is
@@ -1257,7 +1248,10 @@ async function loadServed(childId, ids){
 async function recordServed(childId, used){
   const rows=(used||[]).filter(u=>u&&u.item_id).map(u=>({child_id:childId, item_id:u.item_id, topic_id:u.topic_id}));
   if(!rows.length) return;
-  try{ await fetch(`${SUPABASE_URL}/rest/v1/practice_served?on_conflict=child_id,item_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"return=minimal,resolution=ignore-duplicates"},body:JSON.stringify(rows)}); }catch{}
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/practice_served?on_conflict=child_id,item_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"return=minimal,resolution=ignore-duplicates"},body:JSON.stringify(rows)});
+    if(!res.ok) console.error(`recordServed failed HTTP ${res.status}:`, (await res.text()).slice(0,300));
+  }catch(e){ console.error("recordServed error:", e && e.message); }
 }
 const seenKey=(kid,tid)=>`seen:${kid}:${tid}`;
 function sampleBank(kid, tid, items, n=6){
