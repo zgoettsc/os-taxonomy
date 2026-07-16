@@ -78,6 +78,15 @@ trace to cited developmental sources.
   now load `IMAGES` (previously skipped in worksheets mode; the grade binder didn't load them
   at all). Still to come (Stage 3): **LLM-authored content-specific activities** stored in the
   bank, age-constrained + review-gated.
+- **BIG treatment for ages 4–6 (gross-motor).** Young children draw/write with whole-arm
+  movements (proximodistal development — see `docs/early-learning-progressions.md §6b`), so
+  for ages ≤6 the worksheet renders large: big tracing glyphs, tall ruled lines, big
+  draw/colour boxes (~one per page, `.fullpage`), larger picture cards, ~2 activities/page —
+  so a topic spans **several pages** (expected). `richYoungActivities(t,age,c)` assembles ~6
+  varied progression activities + **coloring** (draw-and-colour in a big box; colour code-drawn
+  SVG shape patterns — no line-art needed), and the **6 questions move to their own "Grown-up
+  asks" page** (`.grownpage`). Older bands keep the compact multi-item layout. Scoped to a
+  `.wbig` CSS block; both the grade binder and session worksheet branch on `age<=6`.
 - **Questions kept, flagged for the grown-up.** Each sheet keeps up to **6 text questions**
   (unserved-first, consumed so they never repeat), tagged "🗣 Grown-up reads this aloud" for
   ages ≤6 (pre-readers), then the do-it activities are **added on top** — so an early-years

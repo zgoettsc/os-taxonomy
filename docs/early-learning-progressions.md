@@ -155,6 +155,26 @@ child's counting range** (≤5 at age 4, ≤10 at age 5, ≤20 at age 6). Numera
 
 ---
 
+## 6b. Activity SIZE scales with age (gross-motor before fine-motor)
+
+Motor development is **proximodistal** — it proceeds from the body's center outward, so
+large muscles (shoulder, elbow) are controlled well before the small muscles of the wrist
+and fingers. A young child therefore draws and writes with **big, whole-arm movements** and
+works best with **large tools and large surfaces** (chunky crayons, big paper, easels); small
+boxes and small print physically fight a 3–5-year-old's hand. Control refines with age, so by
+~9–10 normal-size work is comfortable. Practical early-years guidance (OT, Montessori's
+large materials, "work big before small") follows directly from this.
+
+Sources: the fine-motor milestone sources in §2 (control refines gross → fine with age);
+established proximodistal/gross-to-fine developmental principle (developmental psychology).
+
+**How the app uses it:** for **ages 4–6** the worksheet renders in a **BIG** treatment —
+large tracing glyphs, tall ruled writing lines, big draw/colour boxes (roughly one per page),
+larger picture cards, ~2 activities per page — so a topic's worksheet spans **several pages**
+(that's expected and correct). Colouring is included (draw-and-colour in a big box; colour
+code-drawn shape patterns). The size deliberately tapers with age (compact by the older
+bands). Only 4–6 is tuned big for now; 7+ keeps the compact layout.
+
 ## 6. The age-profile the code applies
 
 Distilling §§1–5 into what the engine actually reads. `age` = the **child's** age
