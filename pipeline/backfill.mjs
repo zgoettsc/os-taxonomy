@@ -25,7 +25,17 @@ const argv = {};
 for (let i = 2; i < process.argv.length; i++) { const a = process.argv[i]; if (a.startsWith('--')) argv[a.slice(2)] = process.argv[i + 1]?.startsWith('--') || process.argv[i + 1] === undefined ? true : process.argv[i + 1]; }
 const BUFFER = Number(argv.buffer) || 20;   // ready topics kept ahead per child
 const MAX = Number(argv.max) || 8;          // max generate/resolve actions per run (cost cap)
-const PRACTICE_TARGET = Number(argv.practice) || 18;   // keep each topic's bank at ≥ this (3 six-question sheets)
+// A topic's practice bank is a BOUNDED, rotating pool — not infinite. Target size scales
+// with depth/age (deeper topics bear more distinct questions), capped by a hard ceiling.
+// The app rotates the pool (cover-then-reshuffle), so "never repeat" isn't the goal; a rich
+// enough pool to feel fresh across cycles is. --practice overrides the target for every topic.
+const POOL_CEIL = 54;
+const poolTarget = (t) => {
+  if (argv.practice) return Number(argv.practice);
+  const age = (t.ageRangeStart != null ? t.ageRangeStart : 6);
+  const base = age <= 6 ? 18 : age <= 9 ? 30 : 48;   // 4-6 lean on activities; older topics go deeper
+  return Math.min(POOL_CEIL, base);
+};
 const DRY = !!argv.dry;
 
 const SB = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -102,13 +112,13 @@ const needImages = need.filter((t) => haveLesson.has(t.id) && !haveImages.has(t.
 // topic in the app and DOES need a bank — the old name-only test wrongly skipped it.
 const arithName = (t) => /multipl|divis|subtract|change|difference|\badd|\bsum|plus/i.test(`${t.domain || ''} ${t.name}`);
 const appCodeGenerates = (t) => t.subject === 'Mathematics' && t.type !== 'CONCEPTUAL' && arithName(t);
-const needPractice = need.filter((t) => haveLesson.has(t.id) && !appCodeGenerates(t) && (practiceCount[t.id] || 0) < PRACTICE_TARGET);
+const needPractice = need.filter((t) => haveLesson.has(t.id) && !appCodeGenerates(t) && (practiceCount[t.id] || 0) < poolTarget(t));
 console.log(`  missing lesson: ${needLesson.length} · lesson-but-no-images: ${needImages.length} · thin practice bank: ${needPractice.length} · this run caps at ${MAX}`);
 
 if (DRY) {
   needLesson.slice(0, MAX).forEach((t) => console.log(`  would generate: ${t.id} ${t.name}`));
   needImages.slice(0, Math.max(0, MAX - needLesson.length)).forEach((t) => console.log(`  would image:    ${t.id} ${t.name}`));
-  needPractice.forEach((t) => console.log(`  would top-up practice (${practiceCount[t.id] || 0}/${PRACTICE_TARGET}): ${t.id} ${t.name}`));
+  needPractice.forEach((t) => console.log(`  would top-up practice (${practiceCount[t.id] || 0}/${poolTarget(t)}): ${t.id} ${t.name}`));
   process.exit(0);
 }
 
@@ -131,7 +141,7 @@ for (const t of needImages) {
 // 3) top up thin practice banks (generate only the shortfall — existing items are reused)
 for (const t of needPractice) {
   if (budget <= 0) break; budget--;
-  const short = PRACTICE_TARGET - (practiceCount[t.id] || 0);
+  const short = poolTarget(t) - (practiceCount[t.id] || 0);
   console.log(`\n=== practice ${t.id} · ${t.name} (+${short}) ===`);
   run('generate-practice.mjs', ['--topic', t.id, '--count', String(short), '--provider', 'claude', '--store']);
 }

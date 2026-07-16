@@ -1126,24 +1126,33 @@ function buildPracticePacket(kid, cards, bank, perTopic, served, used){
           sheets.push(sheetHtml(v, `<div class="mgrid">`+probs.map((q,i)=>`<div class="mprob"><span class="qnum">${i+1}.</span> ${q.q} <u></u></div>`).join("")+`</div>`));
         }
       } else {
-        // Text questions: bank + lesson's built-in practice, deduped by prompt, UNSERVED
-        // first so a child never repeats a question until the bank runs out.
+        // Text-question pool: bank + lesson's built-in practice, deduped by prompt.
         const seen=new Set();
         const qpool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
-          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; })
-          .sort((a,b)=> (served.has(a.id)?1:0)-(served.has(b.id)?1:0));
-        // Keep the 6 text questions (flagged grown-up-read for young children), then ADD
-        // research-grounded do-it activities that ADVANCE each sheet (no repeats, age-gated).
+          .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
         const age=(CURRENT&&CURRENT.age)||t.age_range_start||6;
-        for(let v=0; v<perTopic; v++){
-          const questions=flagGrown(qpool.splice(0,6), age);            // up to 6 unique, consumed
-          const activities=genActivities(t, age, v, c);                 // varied by sheet index v; c = lesson content
-          const mixed=[...questions, ...activities];
-          if(!mixed.length) continue;                                   // nothing to put on this sheet
-          const w=wsFromItems(mixed, fill);
-          if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
-          sheets.push(sheetHtml(v, w.html));
-          for(const it of questions){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); }
+        if(age<=6){
+          // YOUNG: big do-it activities (≈2/page, draw & colour a full page each), then a
+          // separate "grown-up asks" page with the 6 questions. Sizing scales down with age.
+          const acts=richYoungActivities(t, age, c);
+          const blocks=acts.map(a=>{ const w=wsFromItems([a], fill); if(w.keyRows.length) keys.push({name:glossName(t.name), rows:w.keyRows}); return `<div class="bigq${a.full?" fullpage":""}">${w.html}</div>`; }).join("");
+          if(blocks) sheets.push(`<section class="wsec wbig"><div class="eyebrow"><span class="num">✏️</span> Things to do</div>${blocks}</section>`);
+          const questions=drawFromPool(kid.id, t.id, qpool, 6);
+          if(questions.length){ const w=wsFromItems(questions, fill); if(w.keyRows.length) keys.push({name:glossName(t.name)+" · questions", rows:w.keyRows});
+            sheets.push(`<section class="wsec grownpage"><div class="eyebrow"><span class="num">🗣</span> Grown-up asks — read these aloud</div>${w.html}</section>`);
+            for(const it of questions){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); } }
+        } else {
+          // OLDER: compact — 6 questions/sheet + progression activities, 3 sheets.
+          const allQ=drawFromPool(kid.id, t.id, qpool, perTopic*6);     // draw the whole binder at once → no question shared across its sheets
+          for(let v=0; v<perTopic; v++){
+            const questions=flagGrown(allQ.slice(v*6, v*6+6), age);
+            const mixed=[...questions, ...genActivities(t, age, v, c)];
+            if(!mixed.length) continue;
+            const w=wsFromItems(mixed, fill);
+            if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
+            sheets.push(sheetHtml(v, w.html));
+            for(const it of questions){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); }
+          }
         }
       }
       if(!sheets.length) return "";
@@ -1253,6 +1262,30 @@ async function recordServed(childId, used){
     const res=await fetch(`${SUPABASE_URL}/rest/v1/practice_served?on_conflict=child_id,item_id`,{method:"POST",headers:{apikey:ANON,Authorization:"Bearer "+(session?session.access_token:ANON),"Content-Type":"application/json",Prefer:"return=minimal,resolution=ignore-duplicates"},body:JSON.stringify(rows)});
     if(!res.ok) console.error(`recordServed failed HTTP ${res.status}:`, (await res.text()).slice(0,300));
   }catch(e){ console.error("recordServed error:", e && e.message); }
+}
+// Bounded ROTATING pool: draw n questions in a per-child/per-topic shuffled order, so a
+// child covers the whole pool before ANY question repeats, then it reshuffles and cycles
+// again (spaced repetition, not "never twice"). The cursor advances across sheets AND across
+// reprints. If the pool changes (backfill added questions), the cycle restarts. Client-side
+// (localStorage), so it works regardless of the DB served-tracking.
+function drawFromPool(kid, tid, pool, n){
+  if(!pool||!pool.length) return [];
+  const keyOf=it=> it.id || ("p:"+String(it.prompt||"").toLowerCase().replace(/\s+/g," ").trim());
+  const byKey=new Map(); for(const it of pool){ const k=keyOf(it); if(k && !byKey.has(k)) byKey.set(k,it); }
+  const keys=[...byKey.keys()];
+  const shuffle=a=>{ a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const ck="pool:"+kid+":"+tid; let st; try{ st=JSON.parse(localStorage.getItem(ck)||"null"); }catch{ st=null; }
+  const sameSet = st && Array.isArray(st.order) && st.order.length===keys.length && st.order.every(k=>byKey.has(k));
+  if(!sameSet) st={order:shuffle(keys), cur:0};
+  const out=[], usedKeys=new Set(), want=Math.min(n, keys.length); let guard=0;
+  while(out.length<want && guard++ < keys.length*4){
+    if(st.cur>=st.order.length){ st.order=shuffle(st.order); st.cur=0; }   // covered the pool → reshuffle, recycle
+    const k=st.order[st.cur++];
+    if(usedKeys.has(k)) continue;                                          // never repeat a question WITHIN one draw
+    usedKeys.add(k); const it=byKey.get(k); if(it) out.push(it);
+  }
+  try{ localStorage.setItem(ck, JSON.stringify(st)); }catch{}
+  return out;
 }
 const seenKey=(kid,tid)=>`seen:${kid}:${tid}`;
 function sampleBank(kid, tid, items, n=6){
@@ -1458,6 +1491,35 @@ function actPicCircle(t,sheet){
   const target=pics[sheet%pics.length];
   return {kind:"piccircle", prompt:`Circle the picture of the ${target.word}.`, pics:pics.slice(0, Math.min(4,pics.length)).map(p=>p.url), answer:target.word};
 }
+// bigger picture-match for the young: more pairs (up to 5), rendered large.
+function actPicMatchBig(t,sheet){
+  const pics=_topicImages(t); if(pics.length<2) return null;
+  const pick=pics.slice(0, Math.min(5,pics.length)), words=pick.map(p=>p.word);
+  const shuffled=words.map((_,i)=>words[(i+1+sheet)%words.length]);
+  return {kind:"picmatch", prompt:"Draw a line from each picture to its word.", pics:pick.map(p=>p.url), words:shuffled, answer:words.join(", "), big:true};
+}
+// Coloring — no line-art needed. Draw-AND-colour in a big box, or colour code-drawn shapes.
+function actDrawColor(c,sheet){
+  const ex=(c&&c.student&&Array.isArray(c.student.examples))?c.student.examples.map(e=>String((e&&e.show)||"").trim()).filter(x=>x&&x.length<=32&&!/[.?!:;]/.test(x)&&/[a-z]/i.test(x)):[];
+  if(ex.length){ const n=ex[sheet%ex.length].replace(/^(a|an|the)\s+/i,"").toLowerCase(); return {kind:"draw", prompt:`Draw and colour ${/^[aeiou]/i.test(n)?"an":"a"} ${n}.`, color:true, big:true, full:true, count:0}; }
+  const phrase=_rot(["your family","your house","a big tree","your favourite animal","the sun and clouds","a rainbow"],sheet);   // self-contained (no article)
+  return {kind:"draw", prompt:`Draw and colour ${phrase}.`, color:true, big:true, full:true, count:0};
+}
+const _COLORSVG=[
+  `<svg viewBox="0 0 320 120" class="csvg" preserveAspectRatio="xMidYMid meet"><circle cx="55" cy="60" r="44"/><rect x="120" y="14" width="90" height="90" rx="10"/><polygon points="278,16 315,104 240,104"/></svg>`,
+  `<svg viewBox="0 0 320 120" class="csvg" preserveAspectRatio="xMidYMid meet"><rect x="14" y="18" width="40" height="84" rx="8"/><rect x="70" y="18" width="40" height="84" rx="8"/><rect x="126" y="18" width="40" height="84" rx="8"/><rect x="182" y="18" width="40" height="84" rx="8"/><rect x="238" y="18" width="40" height="84" rx="8"/></svg>`,
+  `<svg viewBox="0 0 320 120" class="csvg" preserveAspectRatio="xMidYMid meet"><circle cx="160" cy="60" r="24"/><circle cx="160" cy="18" r="20"/><circle cx="160" cy="102" r="20"/><circle cx="118" cy="60" r="20"/><circle cx="202" cy="60" r="20"/><circle cx="128" cy="30" r="18"/><circle cx="192" cy="30" r="18"/><circle cx="128" cy="90" r="18"/><circle cx="192" cy="90" r="18"/></svg>`,
+];
+const actColorPattern=(sheet)=>({kind:"colorsvg", prompt:"Colour in the shapes. Use any colours you like!", svg:_COLORSVG[((sheet%_COLORSVG.length)+_COLORSVG.length)%_COLORSVG.length], big:true, full:true});
+// A rich set of BIG activities for a young child (ages ≤6): varied progression items across
+// a few sheet indices (deduped) + coloring. Marked big; draw/colour take a full page.
+function richYoungActivities(t, age, c){
+  const seen=new Set();
+  const norm=a=>{ if(!a) return null; const k=a.kind+"|"+(a.glyphs||a.copy||(a.pics?JSON.stringify(a.pics):"")||a.prompt||""); if(seen.has(k)) return null; seen.add(k); a.big=true; if(a.kind==="draw"||a.kind==="colorsvg") a.full=true; return a; };
+  const prog=[]; for(const s of [0,1,2]) for(const a of genActivities(t, age, s, c)){ const x=norm(a.kind==="picmatch"?actPicMatchBig(t,s):a); if(x) prog.push(x); }
+  const color=[norm(actDrawColor(c, t.name.length%3)), norm(actColorPattern(t.name.length%3))].filter(Boolean);
+  return [...prog.slice(0,6), ...color].slice(0,8);   // ~6 progression activities + coloring, always included
+}
 // --- router: ordered, age-gated, per-sheet activities for a topic ---
 function genActivities(t, childAge, sheet, c){
   const age=Number(childAge)||((t.age_range_start!=null?t.age_range_start:t.ageRangeStart)||6);
@@ -1530,7 +1592,9 @@ function wsFromItems(items, fill){
       case "write":
         return q((it.copy?`<div class="copyme">${fill(it.copy)}</div>`:"")+`<div class="ruled">${Array.from({length:it.lines||2},()=>`<div class="rule3"></div>`).join("")}</div>`);
       case "draw":
-        return q(`<div class="drawbox">${it.count?`<span class="drawhint">${it.count}</span>`:""}</div>`);
+        return q(`<div class="drawbox${it.color?" tocolor":""}">${it.count?`<span class="drawhint">${it.count}</span>`:""}${it.color?`<span class="colornote">🖍️ colour it in!</span>`:""}</div>`);
+      case "colorsvg":
+        return q(`<div class="colorwrap">${it.svg||""}</div>`);
       case "circle":
         return q(`<div class="targets">${(it.targets||[]).map(x=>`<span class="tok">${esc(x)}</span>`).join("")}</div>`);
       case "match":
@@ -1575,14 +1639,25 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
       // non-arithmetic math (counting, shapes, comparing…) has no generator —
       // fall through to grounded practice below instead of skipping the worksheet.
     }
-    let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
-    if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own
+    // Build the topic's bounded question pool (bank + lesson's own), deduped by prompt.
+    const seen=new Set();
+    const pool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
+      .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
     const age=(CURRENT&&CURRENT.age)||t.age_range_start||6;
     // A per-child/per-topic counter advances the activity progression across reprints, so a
     // re-printed session worksheet shows the NEXT strokes/letters/numbers, never a repeat.
     const ck="wsact:"+kid.id+":"+t.id; let sheet=parseInt(localStorage.getItem(ck)||"0",10)||0;
     localStorage.setItem(ck, String(sheet+1));
-    const questions=flagGrown((items||[]).slice(0,6), age);        // keep 6, flag grown-up-read
+    if(age<=6){
+      // YOUNG: big activities (draw & colour full-page each), then a grown-up questions page.
+      const keyRows=[];
+      const blocks=richYoungActivities(t, age, c).map(a=>{ const w=wsFromItems([a], fill); keyRows.push(...w.keyRows); return `<div class="bigq${a.full?" fullpage":""}">${w.html}</div>`; });
+      const questions=drawFromPool(kid.id, t.id, pool, 6);
+      let html=`<div class="wbig">${blocks.join("")}</div>`;
+      if(questions.length){ const qw=wsFromItems(questions, fill); keyRows.push(...qw.keyRows); html+=`<div class="grownpage"><div class="eyebrow"><span class="num">🗣</span> Grown-up asks — read these aloud</div>${qw.html}</div>`; }
+      return blocks.length||questions.length ? {html, keyRows} : null;
+    }
+    const questions=flagGrown(drawFromPool(kid.id, t.id, pool, 6), age);   // next 6 in the rotation
     const mixed=[...questions, ...genActivities(t, age, sheet, c)];   // then add do-it activities
     if(!mixed.length) return null;
     return wsFromItems(mixed, fill);
@@ -1720,6 +1795,20 @@ function openPrint(title, inner){
     .pmword{font-size:13pt;font-weight:700;color:#2c2c3a}
     .piccircle{display:flex;flex-wrap:wrap;gap:18px;margin:8px 0}
     .pcpic{padding:4px}
+    .drawbox.tocolor{position:relative} .colornote{position:absolute;bottom:8px;right:12px;font-size:10pt;color:var(--muted)}
+    .colorwrap{margin:10px 0;text-align:center} .csvg{width:100%;max-width:480px;height:auto}
+    .csvg *{fill:#fff;stroke:#3a3a46;stroke-width:3;stroke-linejoin:round}
+    /* BIG treatment for young children (ages 4-6): large marks, ~2 activities per page,
+       draw/colour a full page each. Sizing scales DOWN with age — this is the youngest. */
+    .wbig .q{break-inside:avoid;margin:0 0 30px} .wbig .qtext{font-size:15pt}
+    .wbig .tracerow{font-size:52pt;letter-spacing:16px;line-height:1.6}
+    .wbig .copyme{font-size:40pt;letter-spacing:8px}
+    .wbig .ruled .rule3{margin:52px 0 16px} .wbig .ruled .rule3::before{bottom:22px} .wbig .ruled .rule3::after{bottom:44px}
+    .wbig .drawbox{height:340px} .wbig .drawbox.tocolor{height:360px}
+    .wbig .pmpic img,.wbig .pcpic img{width:120px;height:120px} .wbig .pmword,.wbig .tok{font-size:26pt}
+    .wbig .targets{gap:26px} .wbig .csvg{max-width:620px}
+    .bigq{break-inside:avoid} .bigq.fullpage{min-height:8.4in;break-inside:avoid}
+    .grownpage{break-before:page}
 
     /* assessment */
     .crit{display:flex;gap:9px;align-items:flex-start;margin:7px 0;break-inside:avoid}
