@@ -1134,19 +1134,18 @@ function buildPracticePacket(kid, cards, bank, perTopic, served, used){
         const qpool=[...((bank&&bank[t.id])||[]), ...((c&&c.practice&&Array.isArray(c.practice.items))?c.practice.items:[])]
           .filter(it=>{ const k=String(it.prompt||"").toLowerCase().trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; })
           .sort((a,b)=> (served.has(a.id)?1:0)-(served.has(b.id)?1:0));
-        // Code-generated do-it activities (trace/write/draw/circle/match) MIXED IN with
-        // the questions, per an age/topic blend. Activities may recur across sheets (motor
-        // repetition is fine); questions are consumed so they never repeat.
-        const acts=genActivities(t), blend=activityBlend(t);
+        // Keep the 6 text questions (flagged grown-up-read for young children), then ADD
+        // research-grounded do-it activities that ADVANCE each sheet (no repeats, age-gated).
+        const age=(CURRENT&&CURRENT.age)||t.age_range_start||6;
         for(let v=0; v<perTopic; v++){
-          const activities=[]; for(let a=0; a<blend.act && acts.length; a++) activities.push(acts[(v*blend.act+a)%acts.length]);
-          const questions=qpool.splice(0, blend.q);
-          const mixed=_interleave(activities, questions);
+          const questions=flagGrown(qpool.splice(0,6), age);            // up to 6 unique, consumed
+          const activities=genActivities(t, age, v);                    // varied by sheet index v
+          const mixed=[...questions, ...activities];
           if(!mixed.length) continue;                                   // nothing to put on this sheet
           const w=wsFromItems(mixed, fill);
           if(w.keyRows.length) keys.push({name:glossName(t.name)+" · sheet "+(v+1), rows:w.keyRows});
           sheets.push(sheetHtml(v, w.html));
-          for(const it of mixed){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); }
+          for(const it of questions){ if(it.id) used.push({item_id:it.id, topic_id:t.id}); }
         }
       }
       if(!sheets.length) return "";
@@ -1377,71 +1376,97 @@ function genProblems(t, n){
   if(!gen) return null;
   return Array.from({length:n}, gen);
 }
-// ---- code-generated ACTIVITY items: trace / write / draw / circle / match ----
-// Pre-readers can't answer text questions; early topics need do-it-with-a-pencil work.
-// These are deterministic (no LLM, no stored bank) and get MIXED IN with the text
-// questions on each worksheet. Routing (genActivities) is by subject + age + name.
-const _pick=(arr,seed)=>arr[Math.abs(seed|0)%arr.length];
-function _lettersFor(t){
-  // trace the letters this topic is about if it names any (e.g. "Sounds: s a t p"), else A–D
-  const m=(t.name+" "+(t.domain||"")).match(/:\s*([a-z](?:[ ,/]+[a-z]\b){1,5})/i);
-  const set=(m?m[1].replace(/[^a-z]/gi,""):"").slice(0,4).toUpperCase() || "ABCD".slice(0,3+(t.name.length%2));
-  return set.split("").map(ch=>ch+" "+ch.toLowerCase()).join("   ");
+// ============================================================================
+// Code-generated do-it ACTIVITIES (trace / write / draw / circle / match).
+// Grounded in docs/early-learning-progressions.md — every rule here (which strokes,
+// which letters, whether words/sentences are allowed, number caps) traces to a cited
+// developmental source. Deterministic and a pure function of (topic, childAge, sheet):
+// each sheet indexes further along an ORDERED progression, so a topic's worksheets 1-2-3
+// never repeat, and content is gated to what a child that age can actually do.
+// ----------------------------------------------------------------------------
+// Pre-writing strokes in developmental order, each with the youngest age it's copy-able
+// (OT Toolbox / NAPA / Zascavage 2020). We gate to the OLDER end where sources differ.
+const STROKES=[
+  {glyph:"|   |   |   |   |", minAge:3, label:"down-lines"},
+  {glyph:"—   —   —   —",    minAge:3, label:"across-lines"},
+  {glyph:"○   ○   ○   ○",    minAge:3, label:"circles"},
+  {glyph:"+   +   +   +",     minAge:4, label:"plus shapes"},
+  {glyph:"/   /   /   /",     minAge:5, label:"slanted lines"},
+  {glyph:"□   □   □",         minAge:5, label:"squares"},
+  {glyph:"\\   \\   \\   \\", minAge:5, label:"slanted lines"},
+  {glyph:"×   ×   ×   ×",     minAge:5, label:"X shapes"},
+  {glyph:"△   △   △",         minAge:6, label:"triangles"},
+  {glyph:"/\\/\\/\\/\\",      minAge:6, label:"zig-zags"},
+  {glyph:"∿  ∿  ∿  ∿",        minAge:6, label:"waves"},
+];
+// Letters in phonics sound-order (SATPIN → Letters & Sounds Phase 2-3) for reading topics;
+// formation order (magic-c first, HWT) for handwriting topics.
+const PHONICS_LETTERS="s a t p i n m d g o c k e u r h b f l j v w x y z q".split(" ");
+const FORM_LETTERS="c o a d g q l i t u s e w r n m h b p k v x y z f j".split(" ");
+const CVC_WORDS=["cat","dog","sun","hat","pig","bed","map","red","cup","fox","bus","net","pen","top","van","bag","mum","dad"];
+const COPY_SENTENCES=["I can see a cat.","The sun is hot.","I like to run.","We had fun today.","My dog is big.","I can hop and jump."];
+const ageProfile=(age)=>{
+  age=Number(age)||6;
+  if(age<=4) return {letters:2, name:"trace", words:false, sentence:false, numCap:5,  numeral:"trace", acts:6};
+  if(age===5) return {letters:3, name:"copy",  words:true,  sentence:false, numCap:10, numeral:"write", acts:4};
+  if(age===6) return {letters:4, name:"write", words:true,  sentence:"copy",    numCap:20, numeral:"write", acts:3};
+  if(age<=8)  return {letters:0, name:"write", words:false, sentence:"compose", numCap:0,  numeral:"write", acts:1};
+  return {letters:0, name:null, words:false, sentence:false, numCap:0, numeral:null, acts:0};
+};
+function _letterSeq(t){
+  const m=(t.name+" "+(t.domain||"")).match(/:\s*([a-z](?:[ ,/]+[a-z]\b){1,7})/i);   // topic names its letters?
+  const named=m?[...new Set(m[1].toLowerCase().replace(/[^a-z]/g,"").split(""))]:[];
+  if(named.length) return named;
+  return /handwriting|pencil|hold|sitting|transcription|form|trace/.test(((t.name||"")+" "+(t.domain||"")).toLowerCase()) ? FORM_LETTERS : PHONICS_LETTERS;
 }
-const traceGlyphs=(g,prompt)=>({kind:"trace",prompt:prompt||"Trace over the light letters.",glyphs:g});
-const writeRuled=(prompt,copy,lines)=>({kind:"write",prompt,copy:copy||"",lines:lines||2});
-const drawItem=(prompt,count)=>({kind:"draw",prompt,count:count||0});
-const circleItem=(prompt,targets,answer)=>({kind:"circle",prompt,targets,answer});
-const matchItem=(prompt,left,right,answer)=>({kind:"match",prompt,left,right,answer});
-function _scatter(ch){ const o=["m","r","o","e","a","t","n","i"]; const row=[]; for(let i=0;i<8;i++) row.push(i%3===0?ch:_pick(o,i*7).toUpperCase()); return row; }
-function genActivities(t){
-  const hay=((t.name||"")+" "+(t.domain||"")).toLowerCase(), sub=t.subject;
-  const age=(t.age_range_start!=null?t.age_range_start:t.ageRangeStart)||6, early=age<=6;
-  const N=3+(t.name.length%4), out=[];   // small stable count 3–6
+const _slice=(arr,n,sheet)=>{ const span=Math.max(1,arr.length-n+1); const s=(sheet*n)%span; return arr.slice(s,s+n); };
+const _rot=(list,i)=>list[((i%list.length)+list.length)%list.length];   // pick a different prompt each sheet
+// --- individual activity generators, each varied by `sheet` ---
+function actStroke(age,sheet){ const o=STROKES.filter(s=>s.minAge<=age); if(!o.length) return null; const s=o[sheet%o.length]; return {kind:"trace",prompt:`Trace the ${s.label}. Keep your pencil on the path.`,glyphs:s.glyph}; }
+function actLetters(t,age,sheet){ const p=ageProfile(age); if(!p.letters) return null; const picks=_slice(_letterSeq(t),p.letters,sheet); const g=picks.map(ch=>ch.toUpperCase()+" "+ch).join("     "); return {kind:"trace",prompt:p.name==="write"?"Copy the letters.":"Trace the letters.",glyphs:g}; }
+function actName(age,sheet){ const p=ageProfile(age); sheet=sheet||0;
+  if(p.name==="trace") return {kind:"write",prompt:_rot(["Trace your name.","Trace your name again, nice and slow.","Trace your name, then say each letter aloud."],sheet),copy:"{{name}}",lines:2};
+  if(p.name==="copy")  return {kind:"write",prompt:_rot(["Copy your name, then write it again.","Write your name two times.","Write your name, then draw yourself."],sheet),copy:"{{name}}",lines:2};
+  return {kind:"write",prompt:_rot(["Write your name.","Write your name in your best writing.","Write your name, then draw a picture of yourself."],sheet),copy:"",lines:2}; }
+function actWord(age,sheet){ if(!ageProfile(age).words) return null; return {kind:"write",prompt:"Copy the word.",copy:CVC_WORDS[sheet%CVC_WORDS.length],lines:1}; }
+function actSentence(age,sheet){ const s=ageProfile(age).sentence; if(s==="copy") return {kind:"write",prompt:"Copy the sentence.",copy:COPY_SENTENCES[sheet%COPY_SENTENCES.length],lines:2}; if(s==="compose") return {kind:"write",prompt:"Write a sentence about what you learned.",copy:"",lines:3}; return null; }
+function actCircleLetter(t,age,sheet){ const seq=_letterSeq(t); const L=(seq[sheet%seq.length]||"s").toUpperCase(); const d=["M","R","O","E","A","T","N","I","U","P"].filter(x=>x!==L); const row=[]; for(let i=0;i<8;i++) row.push(i%3===0?L:d[(i+sheet)%d.length]); return {kind:"circle",prompt:`Circle every letter ${L}.`,targets:row,answer:`all the ${L}`}; }
+function actMatchCase(sheet){ const set=_slice(PHONICS_LETTERS,3,sheet).map(x=>x.toUpperCase()); const low=set.map(x=>x.toLowerCase()); return {kind:"match",prompt:"Draw a line to match big and small letters.",left:set,right:[low[1],low[2],low[0]],answer:set.map(x=>x+"–"+x.toLowerCase()).join(", ")}; }
+function actDrawCount(age,sheet){ const cap=ageProfile(age).numCap; if(!cap) return null; const n=1+((sheet*2+2)%cap); return {kind:"draw",prompt:`Draw ${n} dots in the box.`,count:n}; }
+function actCircleGroup(age,sheet){ const cap=ageProfile(age).numCap; if(!cap) return null; const n=Math.max(2,1+((sheet+2)%cap)); return {kind:"circle",prompt:`Circle the group that has ${n}.`,targets:["●".repeat(Math.max(1,n-1)),"●".repeat(n),"●".repeat(n+2)],answer:`the group of ${n}`}; }
+function actNumeral(age,sheet){ const p=ageProfile(age); if(!p.numCap) return null; const n=sheet%(Math.min(p.numCap,10)+1); return p.numeral==="trace" ? {kind:"trace",prompt:`Trace the number ${n}.`,glyphs:`${n}    ${n}    ${n}    ${n}`} : {kind:"write",prompt:`Write the number ${n}.`,copy:String(n),lines:1}; }
+// Shape tracing, gated by copy-ability age (circle ~3, cross/square ~4, diamond/triangle ~5).
+function actShape(age,sheet){ const opts=[["circle","○   ○   ○   ○",3],["plus shape","+   +   +   +",4],["square","□   □   □",4],["diamond","◇   ◇   ◇",5],["triangle","△   △   △",5]].filter(s=>s[2]<=age); const s=opts[sheet%opts.length]; return {kind:"trace",prompt:`Trace the ${s[0]}s.`,glyphs:s[1]}; }
+const actDraw=(prompt)=>({kind:"draw",prompt,count:0});
+// --- router: ordered, age-gated, per-sheet activities for a topic ---
+function genActivities(t, childAge, sheet){
+  const age=Number(childAge)||((t.age_range_start!=null?t.age_range_start:t.ageRangeStart)||6);
+  const p=ageProfile(age); if(!p.acts) return [];
+  const hay=((t.name||"")+" "+(t.domain||"")).toLowerCase(), sub=t.subject, out=[], add=x=>{ if(x) out.push(x); };
   if(sub==="English"){
-    if(/pencil|hold|grip|sitting|fine motor|\bhand|handwriting|trace|pattern|mark[- ]?making/.test(hay)){
-      out.push(traceGlyphs("|  |  |  |      ╱ ╱ ╱      ○ ○ ○ ○","Trace the lines and shapes. Keep your pencil on the path."));
-      out.push(traceGlyphs(_lettersFor(t),"Trace the letters."));
-      out.push(writeRuled("Write your name.","",2));
+    if(/pencil|hold|grip|sitting|fine motor|handwriting|trace|pattern|mark[- ]?making|transcription/.test(hay)){
+      add(actStroke(age,sheet)); add(actLetters(t,age,sheet)); add(actName(age,sheet)); add(actWord(age,sheet));
     }
-    if(/letter|alphabet|sound|phonic|grapheme|rhyme|blend|digraph|onset|rime|\bword|read/.test(hay)){
-      const L=_lettersFor(t).trim().charAt(0);
-      out.push(traceGlyphs(_lettersFor(t),"Trace the letters."));
-      out.push(circleItem(`Circle every letter ${L}.`,_scatter(L),`all the ${L}`));
-      out.push(matchItem("Draw a line to match big and small letters.",["A","B","C"],["c","a","b"],"A–a, B–b, C–c"));
-      out.push(writeRuled("Copy the word.",_pick(["cat","dog","sun","hat","pig","red","map","bed"],t.name.length),1));
+    if(/letter|alphabet|sound|phonic|grapheme|blend|digraph|onset|rime|read|print|\bword|spell|segment|vocab/.test(hay)){
+      add(actLetters(t,age,sheet)); add(actCircleLetter(t,age,sheet)); add(actMatchCase(sheet)); add(actWord(age,sheet));
     }
-    if(/sentence|writing|compose|spelling|caption/.test(hay)) out.push(writeRuled("Write a sentence about your day.","",3));
-    if(/talk|discuss|listen|speak|oral|aloud|opinion|express|story|retell|describ/.test(hay)) out.push(drawItem("Draw a picture about what you talked about.",0));
+    if(/sentence|compose|caption|writing/.test(hay)) add(actSentence(age,sheet));
+    if(/rhyme/.test(hay)) add(actDraw(_rot(["Draw two things that rhyme.","Draw a cat and something that rhymes with it.","Draw three things that rhyme."],sheet)));
+    if(/talk|discuss|listen|speak|oral|aloud|opinion|express|story|retell|describ|question/.test(hay)) add(actDraw(_rot(["Draw a picture about what you talked about.","Draw the person or thing you talked about.","Draw your favourite part."],sheet)));
   }
   if(sub==="Mathematics"){
-    if(/count|number|quantit|how many|total|one more|pair|bond|subitis|ten[- ]?frame|numeral|combin|shar/.test(hay)){
-      out.push(drawItem(`Draw ${N} dots in the box.`,N));
-      out.push(circleItem(`Circle the group that has ${N}.`,["●".repeat(Math.max(1,N-1)),"●".repeat(N),"●".repeat(N+1)],`the group of ${N}`));
-      out.push(writeRuled(`Write the number ${N}.`,String(N),1));
+    if(/count|number|quantit|how many|total|one more|pair|bond|subitis|ten[- ]?frame|numeral|combin|shar|\badd|subtract/.test(hay)){
+      add(actDrawCount(age,sheet)); add(actCircleGroup(age,sheet)); add(actNumeral(age,sheet));
     }
-    if(/shape|2-?d|3-?d|geomet|circle|square|triangle|rectangle/.test(hay)){
-      out.push(traceGlyphs("△  △  △        □  □  □        ○  ○  ○","Trace the shapes."));
-      out.push(drawItem("Draw a triangle, a square, and a circle.",0));
-    }
-    if(/measur|length|height|mass|weight|capacit|compar|duration|\btime|position|spatial|order/.test(hay))
-      out.push(drawItem("Draw something big and something small.",0));
+    if(/shape|2-?d|3-?d|geomet|circle|square|triangle|rectangle/.test(hay)){ add(actShape(age,sheet)); add(actDraw(age>=5?_rot(["Draw a big shape and a small shape.","Draw a house using shapes.","Draw a face using circles."],sheet):_rot(["Draw a circle.","Draw a square.","Draw a big circle and a small circle."],sheet))); }
+    if(/measur|length|height|mass|weight|capacit|compar|duration|\btime|position|spatial|order/.test(hay)) add(actDraw(_rot(["Draw something big and something small.","Draw something tall and something short.","Draw something heavy and something light."],sheet)));
   }
-  if(sub==="Science" && early) out.push(drawItem("Draw one thing you observed.",0));
-  if(early && !out.length) out.push(drawItem("Draw a picture about what you learned.",0));
-  return out;
+  if(sub==="Science" && age<=6) add(actDraw(_rot(["Draw one thing you observed.","Draw what you noticed changing.","Draw it from another side."],sheet)));
+  if(!out.length && age<=6) add(actDraw(_rot(["Draw a picture about what you learned.","Draw the most interesting thing you learned.","Draw and label one thing from today."],sheet)));
+  return out.filter(Boolean).slice(0, p.acts);
 }
-// How many activities vs text questions per sheet — activities dominate for the very
-// young and motor topics, taper to pure Q&A for older knowledge topics.
-function activityBlend(t){
-  const age=(t.age_range_start!=null?t.age_range_start:t.ageRangeStart)||6;
-  const hay=((t.name||"")+" "+(t.domain||"")).toLowerCase();
-  if(/pencil|hold|grip|sitting|trace|fine motor|handwriting|mark[- ]?making/.test(hay)) return {act:3,q:1};
-  if(age<=6) return {act:2,q:3};
-  if(age<=8) return {act:1,q:5};
-  return {act:0,q:6};   // older → pure written Q&A
-}
-const _interleave=(a,b)=>{ const out=[],n=Math.max(a.length,b.length); for(let i=0;i<n;i++){ if(i<a.length)out.push(a[i]); if(i<b.length)out.push(b[i]); } return out; };
+// Keep the 6 text questions but tag them as grown-up-read for pre/early readers (≤6).
+const flagGrown=(items,age)=>(items||[]).map(q=>({...q, grown: age<=6}));
 // ---- render the printable packet from the DB (content_items body schema) ----
 // Ink-light: white pages, color only as thin accents (rules, hollow bubbles,
 // small labels). One topic = teaching guide + lesson + worksheet; answer key at
@@ -1470,7 +1495,8 @@ function sourcesFooter(c){
 // fresh bank items). Bank rows use answer_index (snake); lesson items answerIndex.
 function wsFromItems(items, fill){
   const html=items.map((it,i)=>{
-    const q=(inner)=>`<div class="q"><p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt||"")}</p>${inner}</div>`;
+    const tag=it.grown?`<div class="grownlbl">🗣 Grown-up reads this aloud</div>`:"";   // pre-readers can't read the questions
+    const q=(inner)=>`<div class="q">${tag}<p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt||"")}</p>${inner}</div>`;
     switch(it.kind){
       case "mcq":
         if(Array.isArray(it.choices)) return q(`<ul class="choices">${it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("")}</ul>`);
@@ -1478,7 +1504,7 @@ function wsFromItems(items, fill){
       case "trace":
         return q(`<div class="tracerow">${esc(it.glyphs||"")}</div>`);
       case "write":
-        return q((it.copy?`<div class="copyme">${esc(it.copy)}</div>`:"")+`<div class="ruled">${Array.from({length:it.lines||2},()=>`<div class="rule3"></div>`).join("")}</div>`);
+        return q((it.copy?`<div class="copyme">${fill(it.copy)}</div>`:"")+`<div class="ruled">${Array.from({length:it.lines||2},()=>`<div class="rule3"></div>`).join("")}</div>`);
       case "draw":
         return q(`<div class="drawbox">${it.count?`<span class="drawhint">${it.count}</span>`:""}</div>`);
       case "circle":
@@ -1523,11 +1549,13 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
     }
     let items = c ? sampleBank(kid.id, t.id, (bank&&bank[t.id])||[], 6) : null;   // fresh from the bank
     if((!items||!items.length) && c && c.practice && Array.isArray(c.practice.items)) items=c.practice.items; // fallback: lesson's own
-    items=items||[];
-    // Mix in code-generated do-it activities (trace/write/draw/…) per the age/topic blend.
-    const acts=genActivities(t), blend=activityBlend(t), activities=[];
-    for(let a=0; a<blend.act && acts.length; a++) activities.push(acts[a%acts.length]);
-    const mixed=_interleave(activities, items.slice(0, blend.q||6));
+    const age=(CURRENT&&CURRENT.age)||t.age_range_start||6;
+    // A per-child/per-topic counter advances the activity progression across reprints, so a
+    // re-printed session worksheet shows the NEXT strokes/letters/numbers, never a repeat.
+    const ck="wsact:"+kid.id+":"+t.id; let sheet=parseInt(localStorage.getItem(ck)||"0",10)||0;
+    localStorage.setItem(ck, String(sheet+1));
+    const questions=flagGrown((items||[]).slice(0,6), age);        // keep 6, flag grown-up-read
+    const mixed=[...questions, ...genActivities(t, age, sheet)];   // then add do-it activities
     if(!mixed.length) return null;
     return wsFromItems(mixed, fill);
   }
@@ -1643,6 +1671,7 @@ function openPrint(title, inner){
     .writelines .ln{border-bottom:1.5px solid var(--rule);margin:18px 0}
     .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-top:6px}
     .mprob{font-size:12pt;font-variant-numeric:tabular-nums} .mprob u{display:inline-block;min-width:62px;border-bottom:1.5px solid var(--rule);text-decoration:none}
+    .grownlbl{font-family:system-ui,sans-serif;font-size:7.5pt;letter-spacing:.05em;text-transform:uppercase;color:var(--teal);font-weight:800;margin-bottom:2px}
     /* do-it activities: trace / write (ruled) / draw / circle / match */
     .tracerow{font-family:"Comic Sans MS","Chalkboard SE",system-ui,sans-serif;font-size:30pt;letter-spacing:8px;line-height:1.5;color:#d3d3e2;-webkit-text-stroke:.4px #c2c2d6;margin:8px 0}
     .copyme{font-family:"Comic Sans MS","Chalkboard SE",system-ui,sans-serif;font-size:22pt;letter-spacing:3px;color:#d3d3e2;margin:4px 0}
