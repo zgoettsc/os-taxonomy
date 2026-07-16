@@ -1529,15 +1529,17 @@ const _COLORSVG=[
   `<svg viewBox="0 0 320 120" class="csvg" preserveAspectRatio="xMidYMid meet"><rect x="14" y="18" width="40" height="84" rx="8"/><rect x="70" y="18" width="40" height="84" rx="8"/><rect x="126" y="18" width="40" height="84" rx="8"/><rect x="182" y="18" width="40" height="84" rx="8"/><rect x="238" y="18" width="40" height="84" rx="8"/></svg>`,
   `<svg viewBox="0 0 320 120" class="csvg" preserveAspectRatio="xMidYMid meet"><circle cx="160" cy="60" r="24"/><circle cx="160" cy="18" r="20"/><circle cx="160" cy="102" r="20"/><circle cx="118" cy="60" r="20"/><circle cx="202" cy="60" r="20"/><circle cx="128" cy="30" r="18"/><circle cx="192" cy="30" r="18"/><circle cx="128" cy="90" r="18"/><circle cx="192" cy="90" r="18"/></svg>`,
 ];
-const actColorPattern=(sheet)=>({kind:"colorsvg", prompt:"Colour in the shapes. Use any colours you like!", svg:_COLORSVG[((sheet%_COLORSVG.length)+_COLORSVG.length)%_COLORSVG.length], big:true, full:true});
+const actColorPattern=(sheet)=>({kind:"colorsvg", prompt:"Colour in the shapes. Use any colours you like!", svg:_COLORSVG[((sheet%_COLORSVG.length)+_COLORSVG.length)%_COLORSVG.length], big:true});
 // A rich set of BIG activities for a young child (ages ≤6): varied progression items across
 // a few sheet indices (deduped) + coloring. Marked big; draw/colour take a full page.
 function richYoungActivities(t, age, c){
   const seen=new Set();
-  const norm=a=>{ if(!a) return null; const k=a.kind+"|"+(a.glyphs||a.copy||(a.pics?JSON.stringify(a.pics):"")||a.prompt||""); if(seen.has(k)) return null; seen.add(k); a.big=true; if(a.kind==="draw"||a.kind==="colorsvg") a.full=true; return a; };
+  // Only the open draw-AND-colour gets a full page; everything else is ~half-page (≈2/page),
+  // so a topic lands at ~3-5 pages (activities + 1 grown-up page), not 7-8.
+  const norm=a=>{ if(!a) return null; const k=a.kind+"|"+(a.glyphs||a.copy||(a.pics?JSON.stringify(a.pics):"")||a.prompt||""); if(seen.has(k)) return null; seen.add(k); a.big=true; a.full=(a.kind==="draw" && !!a.color); return a; };
   const prog=[]; for(const s of [0,1,2]) for(const a of genActivities(t, age, s, c)){ const x=norm(a.kind==="picmatch"?actPicMatchBig(t,s,c):a); if(x) prog.push(x); }
   const color=[norm(actDrawColor(c, t.name.length%3)), norm(actColorPattern(t.name.length%3))].filter(Boolean);
-  return [...prog.slice(0,6), ...color].slice(0,8);   // ~6 progression activities + coloring, always included
+  return [...prog.slice(0,4), ...color].slice(0,6);   // ~4 progression activities + 2 coloring
 }
 // --- router: ordered, age-gated, per-sheet activities for a topic ---
 function genActivities(t, childAge, sheet, c){
