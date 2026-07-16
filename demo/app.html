@@ -1135,8 +1135,9 @@ function buildPracticePacket(kid, cards, bank, perTopic, served, used){
           // YOUNG: big do-it activities (≈2/page, draw & colour a full page each), then a
           // separate "grown-up asks" page with the 6 questions. Sizing scales down with age.
           const acts=richYoungActivities(t, age, c);
-          const blocks=acts.map(a=>{ const w=wsFromItems([a], fill); if(w.keyRows.length) keys.push({name:glossName(t.name), rows:w.keyRows}); return `<div class="bigq${a.full?" fullpage":""}">${w.html}</div>`; }).join("");
-          if(blocks) sheets.push(`<section class="wsec wbig"><div class="eyebrow"><span class="num">✏️</span> Things to do</div>${blocks}</section>`);
+          if(acts.length){ const aw=wsFromItems(acts, fill);   // ONE call → activities numbered 1,2,3,4,5…
+            if(aw.keyRows.length) keys.push({name:glossName(t.name), rows:aw.keyRows});
+            sheets.push(`<section class="wsec wbig"><div class="eyebrow"><span class="num">✏️</span> Things to do</div>${aw.html}</section>`); }
           const questions=drawFromPool(kid.id, t.id, qpool, 6);
           if(questions.length){ const w=wsFromItems(questions, fill); if(w.keyRows.length) keys.push({name:glossName(t.name)+" · questions", rows:w.keyRows});
             sheets.push(`<section class="wsec grownpage"><div class="eyebrow"><span class="num">🗣</span> Grown-up asks — read these aloud</div>${w.html}</section>`);
@@ -1476,24 +1477,42 @@ function actDrawExample(c,sheet){
   const thing=things[sheet].replace(/^(a|an|the)\s+/i,"").toLowerCase();
   return thing ? {kind:"draw",prompt:`Draw ${/^[aeiou]/i.test(thing)?"an":"a"} ${thing}.`,count:0} : null;
 }
-// Picture activities from the lesson's OWN approved images (no LLM). A short label is
-// pulled from each image's alt text; needs >=2 images for the topic or returns null.
-const _imgWord=(alt)=>String(alt||"").split(/[,.;:]/)[0].replace(/^(a|an|the)\s+/i,"").replace(/\s+(on|in|at|with|of|for|that|which)\b.*$/i,"").trim().split(/\s+/).slice(0,3).join(" ");
-function _topicImages(t){ const m=(typeof IMAGES!=="undefined"&&IMAGES[t.id])||{}; return Object.values(m).filter(im=>im&&im.url&&_imgWord(im.alt)).map(im=>({url:im.url, word:_imgWord(im.alt)})); }
-function actPicMatch(t,sheet){
-  const pics=_topicImages(t); if(pics.length<2) return null;
+// Picture activities from the lesson's OWN approved images (no LLM). The label is the
+// concrete NOUN the image depicts — taken from the matching lesson example's `show`
+// (falling back to alt), cleaned to a short noun. Images whose label isn't a clean,
+// concrete noun (e.g. "sitting correctly", "holding a pencil") are SKIPPED, so we never
+// print garbled sentence-fragment "words". Needs >=2 clean-labelled images or returns null.
+function _cleanNoun(s){
+  let w=String(s||"").toLowerCase().replace(/["“”().]/g,"").split(/[,.;:!?]/)[0].trim();
+  w=w.replace(/^(a|an|the|some|this|that|your|their)\s+/,"").trim();
+  const words=w.split(/\s+/).filter(Boolean);
+  if(!words.length || words.length>2) return "";                 // too long → not a clean label
+  if(/(ing|correctly)$|^(hold|sit|show|point|use|make|draw|write|form|keep|place|grip)/.test(words[0])) return ""; // action phrase → not a noun
+  return w;
+}
+function _topicImages(t,c){
+  const m=(typeof IMAGES!=="undefined"&&IMAGES[t.id])||{};
+  const ex=(c&&c.student&&Array.isArray(c.student.examples))?c.student.examples:[];
+  const out=[];
+  for(const slot of Object.keys(m)){ const im=m[slot]; if(!im||!im.url) continue;
+    const word=_cleanNoun((ex[slot]&&ex[slot].show)||im.alt);
+    if(word) out.push({url:im.url, word}); }
+  return out;
+}
+function actPicMatch(t,sheet,c){
+  const pics=_topicImages(t,c); if(pics.length<2) return null;
   const pick=pics.slice(0, Math.min(3,pics.length)), words=pick.map(p=>p.word);
   const shuffled=words.map((_,i)=>words[(i+1+sheet)%words.length]);   // deterministic non-aligned order
   return {kind:"picmatch", prompt:"Draw a line from each picture to its word.", pics:pick.map(p=>p.url), words:shuffled, answer:words.join(", ")};
 }
-function actPicCircle(t,sheet){
-  const pics=_topicImages(t); if(pics.length<2) return null;
+function actPicCircle(t,sheet,c){
+  const pics=_topicImages(t,c); if(pics.length<2) return null;
   const target=pics[sheet%pics.length];
   return {kind:"piccircle", prompt:`Circle the picture of the ${target.word}.`, pics:pics.slice(0, Math.min(4,pics.length)).map(p=>p.url), answer:target.word};
 }
 // bigger picture-match for the young: more pairs (up to 5), rendered large.
-function actPicMatchBig(t,sheet){
-  const pics=_topicImages(t); if(pics.length<2) return null;
+function actPicMatchBig(t,sheet,c){
+  const pics=_topicImages(t,c); if(pics.length<2) return null;
   const pick=pics.slice(0, Math.min(5,pics.length)), words=pick.map(p=>p.word);
   const shuffled=words.map((_,i)=>words[(i+1+sheet)%words.length]);
   return {kind:"picmatch", prompt:"Draw a line from each picture to its word.", pics:pick.map(p=>p.url), words:shuffled, answer:words.join(", "), big:true};
@@ -1516,7 +1535,7 @@ const actColorPattern=(sheet)=>({kind:"colorsvg", prompt:"Colour in the shapes. 
 function richYoungActivities(t, age, c){
   const seen=new Set();
   const norm=a=>{ if(!a) return null; const k=a.kind+"|"+(a.glyphs||a.copy||(a.pics?JSON.stringify(a.pics):"")||a.prompt||""); if(seen.has(k)) return null; seen.add(k); a.big=true; if(a.kind==="draw"||a.kind==="colorsvg") a.full=true; return a; };
-  const prog=[]; for(const s of [0,1,2]) for(const a of genActivities(t, age, s, c)){ const x=norm(a.kind==="picmatch"?actPicMatchBig(t,s):a); if(x) prog.push(x); }
+  const prog=[]; for(const s of [0,1,2]) for(const a of genActivities(t, age, s, c)){ const x=norm(a.kind==="picmatch"?actPicMatchBig(t,s,c):a); if(x) prog.push(x); }
   const color=[norm(actDrawColor(c, t.name.length%3)), norm(actColorPattern(t.name.length%3))].filter(Boolean);
   return [...prog.slice(0,6), ...color].slice(0,8);   // ~6 progression activities + coloring, always included
 }
@@ -1547,7 +1566,7 @@ function genActivities(t, childAge, sheet, c){
   if(sub==="Science" && age<=6) add(actDrawExample(c,sheet) || actDraw(_rot(["Draw one thing you observed.","Draw what you noticed changing.","Draw it from another side."],sheet)));
   // Picture activity from the lesson's own images (any subject, ≤8) — null if <2 images.
   // picmatch once (same image set each time), then circle-a-different-picture per sheet.
-  if(age<=8) add(sheet===0 ? actPicMatch(t,sheet) : actPicCircle(t,sheet));
+  if(age<=8) add(sheet===0 ? actPicMatch(t,sheet,c) : actPicCircle(t,sheet,c));
   if(!out.length && age<=6) add(actDrawExample(c,sheet) || actDraw(_rot(["Draw a picture about what you learned.","Draw the most interesting thing you learned.","Draw and label one thing from today."],sheet)));
   return out.filter(Boolean).slice(0, p.acts);
 }
@@ -1582,7 +1601,7 @@ function sourcesFooter(c){
 function wsFromItems(items, fill){
   const html=items.map((it,i)=>{
     const tag=it.grown?`<div class="grownlbl">🗣 Grown-up reads this aloud</div>`:"";   // pre-readers can't read the questions
-    const q=(inner)=>`<div class="q">${tag}<p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt||"")}</p>${inner}</div>`;
+    const q=(inner)=>`<div class="q${it.full?" fullpage":""}">${tag}<p class="qtext"><span class="qnum">${i+1}.</span>${fill(it.prompt||"")}</p>${inner}</div>`;
     switch(it.kind){
       case "mcq":
         if(Array.isArray(it.choices)) return q(`<ul class="choices">${it.choices.map(ch=>`<li><span class="bubble"></span>${esc(ch)}</li>`).join("")}</ul>`);
@@ -1650,12 +1669,13 @@ function topicPacket(kid, t, lane, fill, N, keys, mode, bank){
     localStorage.setItem(ck, String(sheet+1));
     if(age<=6){
       // YOUNG: big activities (draw & colour full-page each), then a grown-up questions page.
-      const keyRows=[];
-      const blocks=richYoungActivities(t, age, c).map(a=>{ const w=wsFromItems([a], fill); keyRows.push(...w.keyRows); return `<div class="bigq${a.full?" fullpage":""}">${w.html}</div>`; });
+      const acts=richYoungActivities(t, age, c), keyRows=[];
+      const aw=acts.length?wsFromItems(acts, fill):{html:"",keyRows:[]};   // ONE call → 1,2,3,4,5…
+      keyRows.push(...aw.keyRows);
       const questions=drawFromPool(kid.id, t.id, pool, 6);
-      let html=`<div class="wbig">${blocks.join("")}</div>`;
+      let html=acts.length?`<div class="wbig">${aw.html}</div>`:"";
       if(questions.length){ const qw=wsFromItems(questions, fill); keyRows.push(...qw.keyRows); html+=`<div class="grownpage"><div class="eyebrow"><span class="num">🗣</span> Grown-up asks — read these aloud</div>${qw.html}</div>`; }
-      return blocks.length||questions.length ? {html, keyRows} : null;
+      return (acts.length||questions.length) ? {html, keyRows} : null;
     }
     const questions=flagGrown(drawFromPool(kid.id, t.id, pool, 6), age);   // next 6 in the rotation
     const mixed=[...questions, ...genActivities(t, age, sheet, c)];   // then add do-it activities
@@ -1788,11 +1808,10 @@ function openPrint(title, inner){
     .tok{font-size:20pt;font-weight:700;color:#2c2c3a;min-width:26px;text-align:center}
     .matchgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 70px;margin:8px 0}
     .mcol{display:flex;flex-direction:column;gap:16px;align-items:center}
-    .picmatch{display:grid;grid-template-columns:auto 1fr;gap:14px 60px;align-items:center;margin:8px 0}
-    .pmcol{display:flex;flex-direction:column;gap:14px}
-    .pmcol.pmwords{align-items:flex-start;justify-content:space-around}
+    .picmatch{display:grid;grid-template-columns:auto 1fr;column-gap:110px;margin:10px 0;align-items:start}
+    .pmcol{display:flex;flex-direction:column;gap:16px}
     .pmpic img,.pcpic img{width:74px;height:74px;object-fit:contain;border:1.4px solid var(--line);border-radius:9px;background:#fff}
-    .pmword{font-size:13pt;font-weight:700;color:#2c2c3a}
+    .pmwords .pmword{min-height:74px;display:flex;align-items:center;font-size:13pt;font-weight:700;color:#2c2c3a}  /* each word aligns to its picture row */
     .piccircle{display:flex;flex-wrap:wrap;gap:18px;margin:8px 0}
     .pcpic{padding:4px}
     .drawbox.tocolor{position:relative} .colornote{position:absolute;bottom:8px;right:12px;font-size:10pt;color:var(--muted)}
@@ -1806,8 +1825,9 @@ function openPrint(title, inner){
     .wbig .ruled .rule3{margin:52px 0 16px} .wbig .ruled .rule3::before{bottom:22px} .wbig .ruled .rule3::after{bottom:44px}
     .wbig .drawbox{height:340px} .wbig .drawbox.tocolor{height:360px}
     .wbig .pmpic img,.wbig .pcpic img{width:120px;height:120px} .wbig .pmword,.wbig .tok{font-size:26pt}
+    .wbig .pmwords .pmword{min-height:120px} .wbig .picmatch{column-gap:140px}
     .wbig .targets{gap:26px} .wbig .csvg{max-width:620px}
-    .bigq{break-inside:avoid} .bigq.fullpage{min-height:8.4in;break-inside:avoid}
+    .wbig .q.fullpage{min-height:8.4in;break-inside:avoid}
     .grownpage{break-before:page}
 
     /* assessment */
