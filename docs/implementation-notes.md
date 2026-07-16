@@ -43,23 +43,31 @@ Home layout: **In progress → Up next → Prepare ahead → Whole-grade binder 
 - **Session size** = **new topics per subject** (default 1, adjustable 1–3 per child
   in Settings). Breadth-first / interleaved. Reviews are NOT yet woven in (see below).
 
-### Worksheet formats — do-it activities mixed with text questions
+### Worksheet formats — do-it activities, age-gated and non-repeating
 Worksheets are no longer text-only. Alongside `mcq`/`short` questions, the app renders
-**code-generated activity items** (no LLM, no stored bank — deterministic like the math
-generator): **trace** (faint letters/shapes to trace), **write** (three-line ruled
-handwriting rows, optional word to copy), **draw** (an empty box, optional count hint),
-**circle** (a row of glyphs to circle), and **match** (two columns to line up). Pre-readers
-can't answer written questions, so early/motor topics need pencil work.
-- `genActivities(t)` routes a topic to appropriate formats by **subject + age + name**
-  (handwriting → trace + write-name; phonics/letters → trace + circle + match-case + copy;
-  counting → draw-N + circle-group + write-number; shapes → trace/draw shape; talk topics →
-  draw-about-it). `activityBlend(t)` sets how many activities vs questions per sheet:
-  handwriting `3a/1q`, ages ≤6 `2a/3q`, ages 7–8 `1a/5q`, older `0a/6q` (pure Q&A).
-- Activities are **interleaved** with the text questions on every sheet (`_interleave`),
-  may recur across a topic's sheets (motor repetition is fine), and carry no answer-key row
-  (they're open-ended). Because activities need no bank, an early topic with an empty bank
-  still prints a real worksheet. Renders in `wsFromItems`; both the grade Worksheets binder
-  (`buildPracticePacket`) and the per-session worksheet (`buildWorksheet`) use them.
+**code-generated activity items** (no LLM, no stored bank — deterministic): **trace**
+(faint letters/shapes/strokes), **write** (three-line ruled handwriting rows, optional
+model to copy), **draw** (an empty box, optional count), **circle** (glyphs to circle),
+**match** (two columns). The whole engine is **grounded in `docs/early-learning-progressions.md`**
+— which strokes, which letters, whether words/sentences are allowed, and number caps all
+trace to cited developmental sources.
+- **Pure function of `(topic, childAge, sheetIndex)`.** Every generator indexes into an
+  ORDERED progression by `sheetIndex`, so a topic's worksheets 1-2-3 never repeat: strokes
+  advance `| → — → ○ → +`; letters advance in **formation order** (handwriting topics) or
+  **phonics sound order** SATPIN (reading topics), or the topic's own named letters; numbers
+  and draw prompts rotate. A first attempt used STATIC templates → identical rows on every
+  sheet; that was the bug this replaced.
+- **Age-gated by the child's actual age** (`ageProfile`, from the research doc): ≤4 gets
+  pre-writing strokes + trace 2 letters + trace name + draw/count ≤5, NO words or sentences;
+  5 adds copy-words + numerals; 6 adds copy-a-sentence + write name; 7-8 compose sentences,
+  motor tapers; 9+ pure Q&A. This is why "write a sentence" no longer appears on a 4-year-old's
+  handwriting sheet.
+- **Questions kept, flagged for the grown-up.** Each sheet keeps up to **6 text questions**
+  (unserved-first, consumed so they never repeat), tagged "🗣 Grown-up reads this aloud" for
+  ages ≤6 (pre-readers), then the do-it activities are **added on top** — so an early-years
+  sheet runs ~9-14 items. Renders in `wsFromItems`; both the grade Worksheets binder
+  (`buildPracticePacket`, sheetIndex = sheet number) and the per-session worksheet
+  (`buildWorksheet`, sheetIndex from a per-child/per-topic reprint counter) use it.
 
 ### Print packet
 Ink-light (white pages, thin color accents). Modes: **Full** (guide + lesson +
